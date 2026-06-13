@@ -12,12 +12,12 @@ import {
   Home, BookOpen, Route, MessageCircle, BarChart3, Users, User, LogOut, Menu,
   GraduationCap, Search, Trophy, Medal, TrendingUp,
   Code2, Target, Compass, Wrench, Brain,
-  GitBranch, ChevronDown, Gift,
+  GitBranch, ChevronDown, Gift, Crown,
 } from 'lucide-react';
 
 // ─── 工具箱工具列表 ────
 const TOOLBOX_ITEMS = [
-  { label: '错题本',     icon: BookOpen,  href: '/tools',             color: 'text-rose-500',    bg: 'bg-rose-50 dark:bg-rose-900/30'     },
+  { label: '错题本',     icon: BookOpen,  href: '/notes',             color: 'text-rose-500',    bg: 'bg-rose-50 dark:bg-rose-900/30'     },
   { label: '弱项强化',   icon: Target,    href: '/weakness-training', color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-900/30' },
   { label: '知识图谱',   icon: GitBranch, href: '/knowledge-graph',   color: 'text-sky-500',     bg: 'bg-sky-50 dark:bg-sky-900/30'       },
   { label: '代码实验室', icon: Code2,     href: '/code-lab',          color: 'text-indigo-500',  bg: 'bg-indigo-50 dark:bg-indigo-900/30' },
@@ -255,7 +255,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </kbd>
           </Button>
 
-          {/* 右侧操作区：通知 → 产品可视化 → 邀请 → 头像 */}
+          {/* 右侧操作区：通知 → 产品可视化 → 升级套餐 → 邀请 → 头像 */}
           <div className="flex items-center gap-1.5">
             {/* 通知铃 */}
             {user && <NotificationBell />}
@@ -267,14 +267,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </Link>
 
+            {/* 升级套餐 */}
+            <Link to="/invite?tab=plans">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-500 transition-colors" title="升级套餐">
+                <Crown className="w-4 h-4" />
+              </Button>
+            </Link>
+
             <Separator orientation="vertical" className="h-5 mx-0.5" />
 
-            {/* 邀请有礼·积分与套餐 */}
+            {/* 邀请有礼·积分 */}
             {user && (
               <Link to="/invite">
                 <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white border-0 shadow-sm px-3">
                   <Gift className="w-3.5 h-3.5" />
-                  <span className="hidden lg:inline">邀请有礼 · 积分套餐</span>
+                  <span className="hidden lg:inline">邀请有礼 · 积分</span>
                   <span className="lg:hidden">邀请</span>
                 </Button>
               </Link>

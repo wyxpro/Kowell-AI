@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, MicOff, PhoneOff, Volume2, VolumeX, Video, VideoOff, PhoneCall, Phone } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Video, VideoOff, PhoneCall } from 'lucide-react';
 
 // 老师头像 — 使用真实 Unsplash 教师形象
 const TEACHER_AVATAR = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&auto=format';
@@ -17,11 +17,12 @@ interface VoiceCallModalProps {
 export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
   const [phase, setPhase] = useState<CallPhase>('idle');
   const [muted, setMuted] = useState(false);
-  const [speakerOn, setSpeakerOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
+  const [camOn, setCamOn] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // 打开时重置并开始拨号
   useEffect(() => {
@@ -29,15 +30,14 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
       setPhase('ringing');
       setElapsed(0);
       setMuted(false);
-      setSpeakerOn(true);
-      setCamOn(true);
-      // 模拟2.5秒后接通
+      setCamOn(false);
       ringTimeoutRef.current = setTimeout(() => setPhase('connected'), 2500);
     } else {
       setPhase('idle');
       clearTimers();
+      stopCamera();
     }
-    return () => clearTimers();
+    return () => { clearTimers(); stopCamera(); };
   }, [open]);
 
   // 计时器
@@ -49,6 +49,31 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
     }
   }, [phase]);
 
+  // 摄像头开关
+  useEffect(() => {
+    if (camOn) {
+      navigator.mediaDevices?.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+        .then(stream => {
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(() => {});
+          }
+        })
+        .catch(() => setCamOn(false));
+    } else {
+      stopCamera();
+    }
+  }, [camOn]);
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) videoRef.current.srcObject = null;
+  };
+
   const clearTimers = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (ringTimeoutRef.current) { clearTimeout(ringTimeoutRef.current); ringTimeoutRef.current = null; }
@@ -56,6 +81,7 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
 
   const handleHangup = () => {
     clearTimers();
+    stopCamera();
     onClose();
   };
 
@@ -94,7 +120,6 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
                   exit={{ opacity: 0 }}
                   className="flex flex-col items-center px-8 py-12 gap-6"
                 >
-                  {/* 脉冲头像 */}
                   <div className="relative">
                     {[1, 2, 3].map(i => (
                       <motion.div
@@ -121,7 +146,6 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
                       正在呼叫...
                     </motion.p>
                   </div>
-                  {/* 挂断按钮 */}
                   <div className="mt-4 flex flex-col items-center gap-1">
                     <button
                       type="button"
@@ -143,17 +167,16 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
                   animate={{ opacity: 1 }}
                   className="relative"
                 >
-                  {/* 对方全屏画面（老师背景） */}
+                  {/* 对方全屏画面 */}
                   <div className="relative w-full h-[480px] md:h-[520px] overflow-hidden">
                     <img
                       src={TEACHER_AVATAR}
                       alt="老师画面"
                       className="w-full h-full object-cover object-top"
                     />
-                    {/* 暗色遮罩 */}
                     <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60" />
 
-                    {/* 右上角：自己小画面 */}
+                    {/* 右上角：自己摄像头小画面 */}
                     <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -161,9 +184,13 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
                       className="absolute top-4 right-4 w-20 h-24 rounded-xl overflow-hidden ring-2 ring-white/40 shadow-lg bg-zinc-800"
                     >
                       {camOn ? (
-                        <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
-                          <Video className="w-6 h-6 text-white/40" />
-                        </div>
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-full object-cover scale-x-[-1]"
+                        />
                       ) : (
                         <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
                           <VideoOff className="w-5 h-5 text-white/30" />
@@ -178,8 +205,8 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
                       </span>
                     </div>
 
-                    {/* 底部控制栏 */}
-                    <div className="absolute bottom-0 left-0 right-0 px-6 pb-7 pt-8">
+                    {/* 底部控制栏：静音 + 摄像头 + 挂断 （3个按钮）*/}
+                    <div className="absolute bottom-0 left-0 right-0 px-8 pb-7 pt-8">
                       <div className="flex items-end justify-around">
                         {/* 静音 */}
                         <CtrlBtn
@@ -187,13 +214,6 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
                           label={muted ? '取消静音' : '静音'}
                           active={muted}
                           onClick={() => setMuted(v => !v)}
-                        />
-                        {/* 扬声器 */}
-                        <CtrlBtn
-                          icon={speakerOn ? Volume2 : VolumeX}
-                          label={speakerOn ? '关扬声器' : '开扬声器'}
-                          active={!speakerOn}
-                          onClick={() => setSpeakerOn(v => !v)}
                         />
                         {/* 挂断 — 红色中央大按钮 */}
                         <div className="flex flex-col items-center gap-1">
@@ -212,13 +232,6 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
                           label={camOn ? '关摄像头' : '开摄像头'}
                           active={!camOn}
                           onClick={() => setCamOn(v => !v)}
-                        />
-                        {/* 切换语音 */}
-                        <CtrlBtn
-                          icon={Phone}
-                          label="切换语音"
-                          active={false}
-                          onClick={() => {}}
                         />
                       </div>
                     </div>

@@ -611,7 +611,7 @@ export default function LearningPathPage() {
           </div>
         ) : (
           /* 画板区域：左工具栏 + 主画布 */
-          <div className="flex gap-0 rounded-2xl border border-border overflow-hidden" style={{ minHeight: 640 }}>
+          <div className="flex gap-0 rounded-2xl border border-border overflow-hidden" style={{ minHeight: 420 }}>
 
             {/* ── 左侧工具面板 ── */}
             <div className="w-14 shrink-0 flex flex-col items-center gap-1 py-3 px-1 bg-card border-r border-border">
@@ -694,7 +694,7 @@ export default function LearningPathPage() {
                   transform: `scale(${zoom})`,
                   transformOrigin: 'top left',
                   width: `${Math.max(path.stages.length * 300 + 200, 1000)}px`,
-                  minHeight: '580px',
+                  minHeight: '380px',
                   position: 'relative',
                 }}
               >

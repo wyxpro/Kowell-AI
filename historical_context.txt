@@ -1,1712 +1,4 @@
- <div className="flex mb-3">
-                      {[...Array(reviews[current].rating)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                      ))}
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
-                      "{reviews[current].text}"
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      <div className="flex items-center justify-between mt-4">
-        <button
-          type="button"
-          onClick={() => setCurrent(c => (c - 1 + reviews.length) % reviews.length)}
-          className="p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <div className="flex gap-1.5">
-          {reviews.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setCurrent(i)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${i === current ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/30'}`}
-            />
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => setCurrent(c => (c + 1) % reviews.length)}
-          className="p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
-```
-New String: ```
-/* 单张评价卡片 */
-function ReviewCard({ review }: { review: typeof reviews[0] }) {
-  const avatarColors = [
-    'from-violet-500 to-purple-600',
-    'from-sky-500 to-cyan-600',
-    'from-emerald-500 to-teal-600',
-    'from-amber-500 to-orange-600',
-    'from-rose-500 to-pink-600',
-    'from-indigo-500 to-blue-600',
-  ];
-  const colorIdx = review.name.charCodeAt(0) % avatarColors.length;
-  return (
-    <div className="w-72 shrink-0 rounded-2xl border border-border/60 bg-card/90 backdrop-blur-sm shadow-md p-5 mx-2 select-none">
-      <div className="flex items-start gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarColors[colorIdx]} flex items-center justify-center shrink-0 text-white font-bold text-sm shadow-md`}>
-          {review.avatar}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-semibold text-sm">{review.name}</span>
-            <span className="text-[11px] text-muted-foreground">{review.role}</span>
-          </div>
-          <div className="flex mt-0.5 gap-0.5">
-            {[...Array(review.rating)].map((_, i) => (
-              <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
-            ))}
-          </div>
-        </div>
-        <Quote className="w-5 h-5 text-primary/30 shrink-0" />
-      </div>
-      <p className="text-xs text-muted-foreground leading-relaxed text-pretty mb-3">
-        {review.text}
-      </p>
-      <Badge variant="secondary" className="text-[10px] px-2 py-0.5">{review.tag}</Badge>
-    </div>
-  );
-}
-
-/* 无限滚动行 */
-function MarqueeRow({ items, direction = 'left', speed = 28 }: {
-  items: typeof reviews;
-  direction?: 'left' | 'right';
-  speed?: number;
-}) {
-  const doubled = [...items, ...items];
-  const pausedRef = useRef(false);
-  const posRef = useRef(0);
-  const rafRef = useRef(0);
-  const rowRef = useRef<HTMLDivElement>(null);
-  const CARD_W = 304; // 288px card + 2*8px mx
-
-  useEffect(() => {
-    const totalW = items.length * CARD_W;
-    const step = direction === 'left' ? -speed / 60 : speed / 60;
-    const animate = () => {
-      if (!pausedRef.current) {
-        posRef.current += step;
-        if (posRef.current <= -totalW) posRef.current += totalW;
-        if (posRef.current >= 0) posRef.current -= totalW;
-        if (rowRef.current) rowRef.current.style.transform = `translateX(${posRef.current}px)`;
-      }
-      rafRef.current = requestAnimationFrame(animate);
-    };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [direction, speed, items.length]);
-
-  return (
-    <div
-      className="overflow-hidden"
-      onMouseEnter={() => { pausedRef.current = true; }}
-      onMouseLeave={() => { pausedRef.current = false; }}
-    >
-      <div ref={rowRef} className="flex" style={{ willChange: 'transform' }}>
-        {doubled.map((r, i) => <ReviewCard key={i} review={r} />)}
-      </div>
-    </div>
-  );
-}
-
-function ReviewCarousel() {
-  const row1 = reviews.slice(0, Math.ceil(reviews.length / 2));
-  const row2 = reviews.slice(Math.ceil(reviews.length / 2));
-  // 补足偶数以视觉均衡
-  const fill = reviews[0];
-  const r2 = row2.length < 3 ? [...row2, fill, fill] : row2;
-  return (
-    <div className="space-y-4 overflow-hidden">
-      <MarqueeRow items={row1} direction="left" speed={26} />
-      <MarqueeRow items={r2} direction="right" speed={22} />
-    </div>
-  );
-}
-```
-
-</action>
-<observation>
-The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
-
-</observation>
-<action>
-**FileEditAction**
-Path: [/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx]
-Thought: 
-Command: str_replace
-Old String: ```
-      {/* ─── 用户画像 ─── */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <Badge className="mb-3 bg-secondary/15 text-secondary border-secondary/30">适合人群</Badge>
-            <h2 className="text-3xl font-bold text-balance">为各类学习者量身打造</h2>
-          </motion.div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {userProfiles.map((p, i) => (
-              <FloatingCard key={i} delay={i * 0.1}>
-                <Card className="h-full border-0 bg-card shadow-md hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-4xl mb-3">{p.icon}</div>
-                    <h3 className="font-semibold mb-1">{p.title}</h3>
-                    <p className="text-xs text-muted-foreground text-pretty">{p.desc}</p>
-                  </CardContent>
-                </Card>
-              </FloatingCard>
-            ))}
-          </div>
-        </div>
-      </section>
-```
-New String: ```
-      {/* ─── 适合人群（重新设计） ─── */}
-      <section className="py-24 px-4 bg-muted/20 overflow-hidden">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
-            <Badge className="mb-3 bg-secondary/15 text-secondary border-secondary/30">适合人群</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">为各类学习者量身打造</h2>
-            <p className="text-muted-foreground text-pretty max-w-xl mx-auto">无论你的目标是什么，智学伴都有专属方案助你高效达成</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {userProfiles.map((p, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.07, duration: 0.5 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="group"
-              >
-                <div className="relative h-full rounded-2xl border border-border/50 bg-card shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden p-6 flex flex-col gap-4">
-                  {/* 顶部渐变装饰 */}
-                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${p.color} opacity-80`} />
-                  {/* 背景光晕 */}
-                  <div className={`absolute -top-8 -right-8 w-28 h-28 rounded-full bg-gradient-to-br ${p.color} opacity-5 group-hover:opacity-10 transition-opacity blur-xl`} />
-
-                  {/* 图标 */}
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${p.color} ${p.glow} shadow-lg flex items-center justify-center shrink-0`}>
-                    <p.icon className="w-6 h-6 text-white" />
-                  </div>
-
-                  {/* 内容 */}
-                  <div className="flex-1">
-                    <h3 className="font-bold text-base mb-1.5">{p.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed text-pretty mb-3">{p.desc}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {p.tags.map(tag => (
-                        <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/50">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-```
-
-</action>
-<observation>
-The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
-
-</observation>
-<action>
-**FileEditAction**
-Path: [/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx]
-Thought: 
-Command: str_replace
-Old String: ```
-      {/* ─── 用户评价 ─── */}
-      <section id="用户评价" className="py-24 px-4">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <Badge className="mb-3 bg-amber-500/15 text-amber-500 border-amber-500/30">口碑见证</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">学习者的真实故事</h2>
-            <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-              {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
-              <span className="ml-2">5.0 / 5.0 · 来自 50,000+ 用户</span>
-            </div>
-          </motion.div>
-          <FloatingCard>
-            <ReviewCarousel />
-          </FloatingCard>
-        </div>
-      </section>
-```
-New String: ```
-      {/* ─── 用户评价（双行错位无限轮播） ─── */}
-      <section id="用户评价" className="py-24 overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <Badge className="mb-3 bg-amber-500/15 text-amber-500 border-amber-500/30">口碑见证</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">学习者的真实故事</h2>
-            <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
-              {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
-              <span className="ml-2 font-medium text-foreground">5.0</span>
-              <span className="ml-1 text-muted-foreground">/ 5.0 · 来自 50,000+ 用户</span>
-            </div>
-          </motion.div>
-        </div>
-        {/* 全宽双行轮播，使用负边距突破 max-w 限制 */}
-        <div className="-mx-4 md:-mx-8">
-          <ReviewCarousel />
-        </div>
-      </section>
-```
-
-</action>
-<observation>
-The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
-
-</observation>
-<action>
-**FileEditAction**
-Path: [/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx]
-Thought: 
-Command: str_replace
-Old String: ```
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan, i) => (
-              <FloatingCard key={i} delay={i * 0.12}>
-                <div className={`relative h-full rounded-2xl border flex flex-col overflow-hidden ${plan.highlight
-                  ? 'border-primary shadow-2xl scale-105'
-                  : 'border-border shadow-lg'
-                  }`}>
-                  {plan.highlight && (
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-emerald-500" />
-                  )}
-                  {plan.highlight && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-primary text-primary-foreground shadow-lg px-3">最受欢迎</Badge>
-                    </div>
-                  )}
-                  <div className={`p-6 bg-gradient-to-br ${plan.color} text-white`}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 rounded-xl bg-white/20">
-                        <plan.icon className="w-5 h-5" />
-                      </div>
-                      <span className="font-bold text-lg">{plan.name}</span>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">{plan.price}</span>
-                      <span className="text-white/80 text-sm">{plan.period}</span>
-                    </div>
-                    <p className="text-white/80 text-sm mt-1">{plan.desc}</p>
-                  </div>
-                  <div className="p-6 bg-card flex-1 flex flex-col">
-                    <ul className="space-y-3 flex-1">
-                      {plan.features.map((feat, j) => (
-                        <li key={j} className="flex items-start gap-2.5 text-sm">
-                          <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                          <span className="text-foreground/80">{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      className="mt-6 w-full"
-                      variant={plan.highlight ? 'default' : 'outline'}
-                      asChild
-                    >
-                      <Link to="/login">
-                        {plan.cta}<ArrowRight className="w-4 h-4 ml-1.5" />
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </FloatingCard>
-            ))}
-          </div>
-```
-New String: ```
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-            {plans.map((plan, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-                whileHover={{ y: -6 }}
-                className="h-full"
-              >
-                <div className={`relative h-full rounded-2xl flex flex-col overflow-hidden transition-all duration-300 ${
-                  plan.highlight
-                    ? 'border-2 border-primary shadow-2xl ring-4 ring-primary/10'
-                    : 'border border-border/60 shadow-lg hover:shadow-xl'
-                }`}>
-                  {/* 顶部彩色渐变头 */}
-                  <div className={`p-7 bg-gradient-to-br ${plan.color} text-white relative overflow-hidden`}>
-                    {/* 装饰光晕 */}
-                    <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
-                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/10 to-transparent" />
-                    <div className="relative">
-                      <div className="flex items-center gap-3 mb-5">
-                        <div className="p-2.5 rounded-xl bg-white/20 shadow-inner backdrop-blur-sm">
-                          <plan.icon className="w-5 h-5" />
-                        </div>
-                        <span className="font-bold text-lg">{plan.name}</span>
-                      </div>
-                      <div className="flex items-baseline gap-1.5 mb-1">
-                        <span className="text-5xl font-extrabold tracking-tight">{plan.price}</span>
-                        <span className="text-white/70 text-sm">{plan.period}</span>
-                      </div>
-                      <p className="text-white/75 text-sm">{plan.desc}</p>
-                    </div>
-                  </div>
-
-                  {/* 功能列表 */}
-                  <div className="p-6 bg-card flex-1 flex flex-col">
-                    <ul className="space-y-3 flex-1 mb-6">
-                      {plan.features.map((feat, j) => (
-                        <li key={j} className="flex items-start gap-2.5">
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                            plan.highlight ? 'bg-primary/10' : 'bg-muted'
-                          }`}>
-                            <CheckCircle2 className={`w-3 h-3 ${plan.highlight ? 'text-primary' : 'text-muted-foreground'}`} />
-                          </div>
-                          <span className="text-sm text-foreground/80 leading-relaxed">{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      className={`w-full h-11 text-sm font-semibold ${plan.highlight ? 'shadow-lg shadow-primary/20' : ''}`}
-                      variant={plan.highlight ? 'default' : 'outline'}
-                      asChild
-                    >
-                      <Link to="/login">
-                        {plan.cta}<ArrowRight className="w-4 h-4 ml-1.5" />
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-```
-
-</action>
-<observation>
-The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
-
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-THOUGHT: 现在先做 lint 检查，看有哪些问题：
-COMMAND:
-cd /workspace/app-bu7wnuu44l4x && npx tsc --noEmit --skipLibCheck 2>&1 | head -50
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-THOUGHT: TypeScript 通过，继续做 lint 检查：
-COMMAND:
-cd /workspace/app-bu7wnuu44l4x && npm run lint 2>&1 | tail -30
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-Checked 110 files in 1367ms. No fixes applied.
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-cd /workspace/app-bu7wnuu44l4x && npx vite build 2>&1 | tail -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-dist/assets/AnimatePresence-DvW9Obcv.js            19.73 kB │ gzip:   7.64 kB
-dist/assets/select-CEjtydHp.js                     20.93 kB │ gzip:   7.10 kB
-dist/assets/ReportPage-CyhmVcKT.js                 22.37 kB │ gzip:   7.89 kB
-dist/assets/EvaluationPage-Ds9gLCXb.js             25.61 kB │ gzip:   7.65 kB
-dist/assets/LearningPathPage-D8crtMY0.js           26.04 kB │ gzip:   8.26 kB
-dist/assets/TutoringPage-SjcFwdZI.js               26.95 kB │ gzip:   8.72 kB
-dist/assets/HomePage-kK6xOvXs.js                   29.60 kB │ gzip:  10.53 kB
-dist/assets/ProfilePage-d1nqHnsx.js                31.09 kB │ gzip:   9.34 kB
-dist/assets/StrategyPage-BnMkXewa.js               32.01 kB │ gzip:   9.61 kB
-dist/assets/AppLayout-Beo2BjTy.js                  47.38 kB │ gzip:  13.75 kB
-dist/assets/proxy-B-qe4DBY.js                     112.27 kB │ gzip:  37.03 kB
-dist/assets/generateCategoricalChart-BuHjjNM4.js  348.00 kB │ gzip:  94.37 kB
-dist/assets/index-D1-tXlbw.js                     496.34 kB │ gzip: 150.65 kB
-dist/assets/LandingPage-BxoxaW9U.js               535.20 kB │ gzip: 136.71 kB
-✓ built in 2.17s
-[plugin builtin:vite-reporter] 
-(!) Some chunks are larger than 500 kB after minification. Consider:
-- Using dynamic import() to code-split the application
-- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-THOUGHT: 构建成功！LandingPage 体积提示是因为新增了 Three.js，用动态 import 拆分一下：
-COMMAND:
-grep -n "WorkflowDef\|type Workflow" /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx | head -10
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-33:interface WorkflowDef {
-42:const WORKFLOWS: WorkflowDef[] = [
-104:function WorkflowPanel({ wf }: { wf: WorkflowDef }) {
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**FileEditAction**
-Path: [/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx]
-Thought: Good，类型定义存在。将 Three.js 做 lazy 拆分：
-Command: str_replace
-Old String: ```
-import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
-import * as THREE from 'three';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip,
-} from 'recharts';
-import {
-  GraduationCap, Brain, Target, Zap, Star, Users, ArrowRight, CheckCircle2,
-  Sparkles, BookOpen, Trophy, Code2, Network,
-  MessageCircle, BarChart3, Shield, Infinity as InfinityIcon, Crown, Flame, Globe,
-  Quote, GraduationCap as GradCap,
-} from 'lucide-react';
-```
-New String: ```
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip,
-} from 'recharts';
-import {
-  GraduationCap, Brain, Target, Zap, Star, Users, ArrowRight, CheckCircle2,
-  Sparkles, BookOpen, Trophy, Code2, Network,
-  MessageCircle, BarChart3, Shield, Infinity as InfinityIcon, Crown, Flame, Globe,
-  Quote, GraduationCap as GradCap,
-} from 'lucide-react';
-```
-
-</action>
-<observation>
-The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
-
-</observation>
-<action>
-**FileEditAction**
-Path: [/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx]
-Thought: 用异步导入 Three.js，直接在 HeroBackground useEffect 里 import：
-Command: str_replace
-Old String: ```
-/* ─────────────────────── Three.js 3D Hero 背景 ─────────────────────── */
-function HeroBackground() {
-  const mountRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const mount = mountRef.current;
-    if (!mount) return;
-
-    // ── 场景、相机、渲染器 ──
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, mount.clientWidth / mount.clientHeight, 0.1, 200);
-    camera.position.set(0, 0, 28);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(mount.clientWidth, mount.clientHeight);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
-    mount.appendChild(renderer.domElement);
-
-    // ── 主题色 ──
-    const isDark = document.documentElement.classList.contains('dark');
-    const PRIMARY_H = 162;
-    const primaryColor = new THREE.Color(`hsl(${PRIMARY_H}, 63%, 45%)`);
-    const accentColor = new THREE.Color(`hsl(${PRIMARY_H + 40}, 70%, 55%)`);
-    const deepColor = new THREE.Color(`hsl(220, 70%, 55%)`);
-
-    // ── 雾气 ──
-    scene.fog = new THREE.FogExp2(isDark ? 0x040b10 : 0xeef7f4, 0.018);
-    if (isDark) scene.background = new THREE.Color(0x040b10);
-    else scene.background = new THREE.Color(0xeef7f4);
-
-    // ── 环境光 + 方向光 ──
-    const ambLight = new THREE.AmbientLight(primaryColor, isDark ? 0.4 : 0.7);
-    scene.add(ambLight);
-
-    const dirLight1 = new THREE.DirectionalLight(primaryColor, isDark ? 1.8 : 1.2);
-    dirLight1.position.set(10, 15, 10);
-    scene.add(dirLight1);
-
-    const dirLight2 = new THREE.DirectionalLight(deepColor, isDark ? 1.0 : 0.6);
-    dirLight2.position.set(-10, -8, 5);
-    scene.add(dirLight2);
-
-    const pointLight = new THREE.PointLight(accentColor, isDark ? 2.5 : 1.5, 40);
-    pointLight.position.set(0, 0, 15);
-    scene.add(pointLight);
-
-    // ── 浮动粒子球群 ──
-    const particleCount = 1800;
-    const particleGeo = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    const pColors = new Float32Array(particleCount * 3);
-    const sizes = new Float32Array(particleCount);
-    const colorOptions = [primaryColor, accentColor, deepColor,
-      new THREE.Color(`hsl(${PRIMARY_H + 20}, 80%, 65%)`),
-      new THREE.Color(`hsl(200, 80%, 60%)`),
-    ];
-    for (let i = 0; i < particleCount; i++) {
-      const r = 18 + Math.random() * 20;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = r * Math.cos(phi);
-      const c = colorOptions[Math.floor(Math.random() * colorOptions.length)];
-      pColors[i * 3]     = c.r;
-      pColors[i * 3 + 1] = c.g;
-      pColors[i * 3 + 2] = c.b;
-      sizes[i] = Math.random() * 2.5 + 0.5;
-    }
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    particleGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
-    particleGeo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-    const particleMat = new THREE.ShaderMaterial({
-      vertexShader: `
-        attribute float size;
-        attribute vec3 color;
-        varying vec3 vColor;
-        varying float vAlpha;
-        void main() {
-          vColor = color;
-          vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-          float depth = (-mvPos.z - 10.0) / 50.0;
-          vAlpha = clamp(1.0 - depth, 0.15, 0.9);
-          gl_PointSize = size * (300.0 / -mvPos.z);
-          gl_Position = projectionMatrix * mvPos;
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vColor;
-        varying float vAlpha;
-        void main() {
-          float d = length(gl_PointCoord - vec2(0.5));
-          if (d > 0.5) discard;
-          float alpha = smoothstep(0.5, 0.0, d) * vAlpha;
-          gl_FragColor = vec4(vColor, alpha);
-        }
-      `,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      vertexColors: true,
-    });
-    const particles = new THREE.Points(particleGeo, particleMat);
-    scene.add(particles);
-
-    // ── 中心能量球 ──
-    const coreGeo = new THREE.IcosahedronGeometry(3.5, 4);
-    const coreMat = new THREE.MeshPhysicalMaterial({
-      color: primaryColor,
-      metalness: 0.3,
-      roughness: 0.1,
-      transmission: 0.6,
-      thickness: 1.5,
-      envMapIntensity: 2.0,
-      emissive: primaryColor,
-      emissiveIntensity: isDark ? 0.3 : 0.15,
-    });
-    const core = new THREE.Mesh(coreGeo, coreMat);
-    scene.add(core);
-
-    // ── 外层线框球 ──
-    const wireGeo = new THREE.IcosahedronGeometry(4.6, 2);
-    const wireMat = new THREE.MeshBasicMaterial({
-      color: primaryColor,
-      wireframe: true,
-      transparent: true,
-      opacity: isDark ? 0.12 : 0.08,
-    });
-    const wireSphere = new THREE.Mesh(wireGeo, wireMat);
-    scene.add(wireSphere);
-
-    // ── 轨道环 ──
-    const rings: THREE.Mesh[] = [];
-    const ringConfigs = [
-      { r: 7.5, tube: 0.03, color: primaryColor, opacity: isDark ? 0.5 : 0.35, rotX: Math.PI / 3, rotY: 0 },
-      { r: 10, tube: 0.025, color: accentColor, opacity: isDark ? 0.35 : 0.25, rotX: Math.PI / 5, rotY: Math.PI / 4 },
-      { r: 13, tube: 0.02, color: deepColor, opacity: isDark ? 0.25 : 0.18, rotX: -Math.PI / 4, rotY: Math.PI / 6 },
-    ];
-    ringConfigs.forEach(cfg => {
-      const geo = new THREE.TorusGeometry(cfg.r, cfg.tube, 16, 120);
-      const mat = new THREE.MeshBasicMaterial({
-        color: cfg.color, transparent: true, opacity: cfg.opacity,
-      });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.rotation.x = cfg.rotX;
-      mesh.rotation.y = cfg.rotY;
-      rings.push(mesh);
-      scene.add(mesh);
-    });
-
-    // ── 轨道上的小球节点 ──
-    const orbitNodes: Array<{ mesh: THREE.Mesh; ring: number; angle: number; speed: number }> = [];
-    ringConfigs.forEach((cfg, ri) => {
-      const count = 4 + ri * 2;
-      for (let i = 0; i < count; i++) {
-        const geo = new THREE.SphereGeometry(0.18 + Math.random() * 0.12, 8, 8);
-        const mat = new THREE.MeshPhongMaterial({
-          color: cfg.color,
-          emissive: cfg.color,
-          emissiveIntensity: isDark ? 0.8 : 0.5,
-        });
-        const mesh = new THREE.Mesh(geo, mat);
-        const angle = (i / count) * Math.PI * 2;
-        orbitNodes.push({ mesh, ring: ri, angle, speed: 0.004 + Math.random() * 0.003 });
-        scene.add(mesh);
-      }
-    });
-
-    // ── 鼠标交互 ──
-    let mouseX = 0, mouseY = 0;
-    let targetRotX = 0, targetRotY = 0;
-    const onMouseMove = (e: MouseEvent) => {
-      mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-      mouseY = -(e.clientY / window.innerHeight - 0.5) * 2;
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      const t = e.touches[0];
-      mouseX = (t.clientX / window.innerWidth - 0.5) * 2;
-      mouseY = -(t.clientY / window.innerHeight - 0.5) * 2;
-    };
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-
-    // ── 响应式 ──
-    const onResize = () => {
-      if (!mount) return;
-      camera.aspect = mount.clientWidth / mount.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(mount.clientWidth, mount.clientHeight);
-    };
-    window.addEventListener('resize', onResize);
-
-    // ── 渲染循环 ──
-    const clock = new THREE.Clock();
-    let animId = 0;
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
-      const t = clock.getElapsedTime();
-
-      // 鼠标跟随（惯性）
-      targetRotX += (mouseY * 0.4 - targetRotX) * 0.05;
-      targetRotY += (mouseX * 0.4 - targetRotY) * 0.05;
-
-      // 中心球自转 + 鼠标响应
-      core.rotation.x = t * 0.12 + targetRotX;
-      core.rotation.y = t * 0.18 + targetRotY;
-      core.rotation.z = t * 0.08;
-
-      // 线框球反向缓慢旋转
-      wireSphere.rotation.x = -t * 0.06 + targetRotX * 0.5;
-      wireSphere.rotation.y = -t * 0.09 + targetRotY * 0.5;
-
-      // 轨道环旋转
-      rings[0].rotation.y = t * 0.22 + targetRotY;
-      rings[0].rotation.z = t * 0.08;
-      rings[1].rotation.x = Math.PI / 5 + t * 0.15 + targetRotX * 0.6;
-      rings[1].rotation.z = t * 0.12;
-      rings[2].rotation.y = -t * 0.18 + targetRotY * 0.4;
-      rings[2].rotation.x = -Math.PI / 4 + t * 0.10;
-
-      // 轨道节点运动
-      orbitNodes.forEach(node => {
-        node.angle += node.speed;
-        const cfg = ringConfigs[node.ring];
-        const ring = rings[node.ring];
-        // 在轨道环的局部坐标系中计算位置
-        const localPos = new THREE.Vector3(
-          Math.cos(node.angle) * cfg.r,
-          0,
-          Math.sin(node.angle) * cfg.r,
-        );
-        localPos.applyEuler(ring.rotation);
-        node.mesh.position.copy(localPos);
-        node.mesh.scale.setScalar(0.85 + Math.sin(t * 2.5 + node.angle) * 0.15);
-      });
-
-      // 粒子整体缓慢旋转
-      particles.rotation.y = t * 0.025 + targetRotY * 0.15;
-      particles.rotation.x = t * 0.015 + targetRotX * 0.15;
-
-      // 点光源脉动
-      pointLight.intensity = (isDark ? 2.5 : 1.5) + Math.sin(t * 1.8) * 0.6;
-      pointLight.position.set(
-        Math.sin(t * 0.5) * 8,
-        Math.cos(t * 0.4) * 5,
-        15 + Math.sin(t * 0.7) * 3,
-      );
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('resize', onResize);
-      renderer.dispose();
-      particleGeo.dispose();
-      particleMat.dispose();
-      coreGeo.dispose();
-      coreMat.dispose();
-      wireGeo.dispose();
-      wireMat.dispose();
-      rings.forEach(r => { r.geometry.dispose(); (r.material as THREE.Material).dispose(); });
-      orbitNodes.forEach(n => { n.mesh.geometry.dispose(); (n.mesh.material as THREE.Material).dispose(); });
-      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
-    };
-  }, []);
-
-  return <div ref={mountRef} className="absolute inset-0 w-full h-full" style={{ zIndex: 0 }} />;
-}
-
-
-```
-New String: ```
-/* ─────────────────────── Three.js 3D Hero 背景 ─────────────────────── */
-function HeroBackground() {
-  const mountRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const mount = mountRef.current;
-    if (!mount) return;
-    let cleanup: (() => void) | undefined;
-
-    import('three').then((THREE) => {
-      if (!mountRef.current) return;
-
-      // ── 场景、相机、渲染器 ──
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(60, mount.clientWidth / mount.clientHeight, 0.1, 200);
-      camera.position.set(0, 0, 28);
-
-      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(mount.clientWidth, mount.clientHeight);
-      renderer.outputColorSpace = THREE.SRGBColorSpace;
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.2;
-      mount.appendChild(renderer.domElement);
-
-      // ── 主题色 ──
-      const isDark = document.documentElement.classList.contains('dark');
-      const PRIMARY_H = 162;
-      const primaryColor = new THREE.Color(`hsl(${PRIMARY_H}, 63%, 45%)`);
-      const accentColor = new THREE.Color(`hsl(${PRIMARY_H + 40}, 70%, 55%)`);
-      const deepColor = new THREE.Color(`hsl(220, 70%, 55%)`);
-
-      // ── 雾气 & 背景 ──
-      scene.fog = new THREE.FogExp2(isDark ? 0x040b10 : 0xeef7f4, 0.018);
-      scene.background = new THREE.Color(isDark ? 0x040b10 : 0xeef7f4);
-
-      // ── 光照 ──
-      scene.add(new THREE.AmbientLight(primaryColor, isDark ? 0.4 : 0.7));
-      const dirLight1 = new THREE.DirectionalLight(primaryColor, isDark ? 1.8 : 1.2);
-      dirLight1.position.set(10, 15, 10);
-      scene.add(dirLight1);
-      const dirLight2 = new THREE.DirectionalLight(deepColor, isDark ? 1.0 : 0.6);
-      dirLight2.position.set(-10, -8, 5);
-      scene.add(dirLight2);
-      const pointLight = new THREE.PointLight(accentColor, isDark ? 2.5 : 1.5, 40);
-      pointLight.position.set(0, 0, 15);
-      scene.add(pointLight);
-
-      // ── 粒子群 ──
-      const particleCount = 1800;
-      const particleGeo = new THREE.BufferGeometry();
-      const positions = new Float32Array(particleCount * 3);
-      const pColors = new Float32Array(particleCount * 3);
-      const sizes = new Float32Array(particleCount);
-      const colorOptions = [primaryColor, accentColor, deepColor,
-        new THREE.Color(`hsl(${PRIMARY_H + 20}, 80%, 65%)`),
-        new THREE.Color('hsl(200, 80%, 60%)'),
-      ];
-      for (let i = 0; i < particleCount; i++) {
-        const r = 18 + Math.random() * 20;
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(2 * Math.random() - 1);
-        positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
-        positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-        positions[i * 3 + 2] = r * Math.cos(phi);
-        const c = colorOptions[Math.floor(Math.random() * colorOptions.length)];
-        pColors[i * 3]     = c.r;
-        pColors[i * 3 + 1] = c.g;
-        pColors[i * 3 + 2] = c.b;
-        sizes[i] = Math.random() * 2.5 + 0.5;
-      }
-      particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      particleGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
-      particleGeo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-      const particleMat = new THREE.ShaderMaterial({
-        vertexShader: `
-          attribute float size;
-          attribute vec3 color;
-          varying vec3 vColor;
-          varying float vAlpha;
-          void main() {
-            vColor = color;
-            vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-            float depth = (-mvPos.z - 10.0) / 50.0;
-            vAlpha = clamp(1.0 - depth, 0.15, 0.9);
-            gl_PointSize = size * (300.0 / -mvPos.z);
-            gl_Position = projectionMatrix * mvPos;
-          }
-        `,
-        fragmentShader: `
-          varying vec3 vColor;
-          varying float vAlpha;
-          void main() {
-            float d = length(gl_PointCoord - vec2(0.5));
-            if (d > 0.5) discard;
-            float alpha = smoothstep(0.5, 0.0, d) * vAlpha;
-            gl_FragColor = vec4(vColor, alpha);
-          }
-        `,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        vertexColors: true,
-      });
-      const particles = new THREE.Points(particleGeo, particleMat);
-      scene.add(particles);
-
-      // ── 中心能量球 ──
-      const coreGeo = new THREE.IcosahedronGeometry(3.5, 4);
-      const coreMat = new THREE.MeshPhysicalMaterial({
-        color: primaryColor,
-        metalness: 0.3,
-        roughness: 0.1,
-        transmission: 0.6,
-        thickness: 1.5,
-        envMapIntensity: 2.0,
-        emissive: primaryColor,
-        emissiveIntensity: isDark ? 0.3 : 0.15,
-      });
-      const core = new THREE.Mesh(coreGeo, coreMat);
-      scene.add(core);
-
-      // ── 外层线框球 ──
-      const wireGeo = new THREE.IcosahedronGeometry(4.6, 2);
-      const wireMat = new THREE.MeshBasicMaterial({
-        color: primaryColor, wireframe: true,
-        transparent: true, opacity: isDark ? 0.12 : 0.08,
-      });
-      const wireSphere = new THREE.Mesh(wireGeo, wireMat);
-      scene.add(wireSphere);
-
-      // ── 轨道环 ──
-      const rings: THREE.Mesh[] = [];
-      const ringConfigs = [
-        { r: 7.5,  tube: 0.03,  color: primaryColor, opacity: isDark ? 0.5 : 0.35,  rotX: Math.PI / 3, rotY: 0 },
-        { r: 10,   tube: 0.025, color: accentColor,   opacity: isDark ? 0.35 : 0.25, rotX: Math.PI / 5, rotY: Math.PI / 4 },
-        { r: 13,   tube: 0.02,  color: deepColor,     opacity: isDark ? 0.25 : 0.18, rotX: -Math.PI / 4, rotY: Math.PI / 6 },
-      ];
-      ringConfigs.forEach(cfg => {
-        const geo = new THREE.TorusGeometry(cfg.r, cfg.tube, 16, 120);
-        const mat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: cfg.opacity });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.rotation.x = cfg.rotX;
-        mesh.rotation.y = cfg.rotY;
-        rings.push(mesh);
-        scene.add(mesh);
-      });
-
-      // ── 轨道节点 ──
-      const orbitNodes: Array<{ mesh: THREE.Mesh; ring: number; angle: number; speed: number }> = [];
-      ringConfigs.forEach((cfg, ri) => {
-        const count = 4 + ri * 2;
-        for (let i = 0; i < count; i++) {
-          const geo = new THREE.SphereGeometry(0.18 + Math.random() * 0.12, 8, 8);
-          const mat = new THREE.MeshPhongMaterial({ color: cfg.color, emissive: cfg.color, emissiveIntensity: isDark ? 0.8 : 0.5 });
-          const mesh = new THREE.Mesh(geo, mat);
-          orbitNodes.push({ mesh, ring: ri, angle: (i / count) * Math.PI * 2, speed: 0.004 + Math.random() * 0.003 });
-          scene.add(mesh);
-        }
-      });
-
-      // ── 鼠标交互 ──
-      let mouseX = 0, mouseY = 0, targetRotX = 0, targetRotY = 0;
-      const onMouseMove = (e: MouseEvent) => {
-        mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-        mouseY = -(e.clientY / window.innerHeight - 0.5) * 2;
-      };
-      const onTouchMove = (e: TouchEvent) => {
-        mouseX = (e.touches[0].clientX / window.innerWidth - 0.5) * 2;
-        mouseY = -(e.touches[0].clientY / window.innerHeight - 0.5) * 2;
-      };
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('touchmove', onTouchMove, { passive: true });
-
-      const onResize = () => {
-        camera.aspect = mount.clientWidth / mount.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(mount.clientWidth, mount.clientHeight);
-      };
-      window.addEventListener('resize', onResize);
-
-      // ── 渲染循环 ──
-      const clock = new THREE.Clock();
-      let animId = 0;
-      const animate = () => {
-        animId = requestAnimationFrame(animate);
-        const t = clock.getElapsedTime();
-        targetRotX += (mouseY * 0.4 - targetRotX) * 0.05;
-        targetRotY += (mouseX * 0.4 - targetRotY) * 0.05;
-
-        core.rotation.x = t * 0.12 + targetRotX;
-        core.rotation.y = t * 0.18 + targetRotY;
-        core.rotation.z = t * 0.08;
-        wireSphere.rotation.x = -t * 0.06 + targetRotX * 0.5;
-        wireSphere.rotation.y = -t * 0.09 + targetRotY * 0.5;
-
-        rings[0].rotation.y = t * 0.22 + targetRotY;
-        rings[0].rotation.z = t * 0.08;
-        rings[1].rotation.x = Math.PI / 5 + t * 0.15 + targetRotX * 0.6;
-        rings[1].rotation.z = t * 0.12;
-        rings[2].rotation.y = -t * 0.18 + targetRotY * 0.4;
-        rings[2].rotation.x = -Math.PI / 4 + t * 0.10;
-
-        orbitNodes.forEach(node => {
-          node.angle += node.speed;
-          const cfg = ringConfigs[node.ring];
-          const localPos = new THREE.Vector3(Math.cos(node.angle) * cfg.r, 0, Math.sin(node.angle) * cfg.r);
-          localPos.applyEuler(rings[node.ring].rotation);
-          node.mesh.position.copy(localPos);
-          node.mesh.scale.setScalar(0.85 + Math.sin(t * 2.5 + node.angle) * 0.15);
-        });
-
-        particles.rotation.y = t * 0.025 + targetRotY * 0.15;
-        particles.rotation.x = t * 0.015 + targetRotX * 0.15;
-        pointLight.intensity = (isDark ? 2.5 : 1.5) + Math.sin(t * 1.8) * 0.6;
-        pointLight.position.set(Math.sin(t * 0.5) * 8, Math.cos(t * 0.4) * 5, 15 + Math.sin(t * 0.7) * 3);
-
-        renderer.render(scene, camera);
-      };
-      animate();
-
-      cleanup = () => {
-        cancelAnimationFrame(animId);
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('touchmove', onTouchMove);
-        window.removeEventListener('resize', onResize);
-        renderer.dispose();
-        particleGeo.dispose(); particleMat.dispose();
-        coreGeo.dispose(); coreMat.dispose();
-        wireGeo.dispose(); wireMat.dispose();
-        rings.forEach(r => { r.geometry.dispose(); (r.material as THREE.Material).dispose(); });
-        orbitNodes.forEach(n => { n.mesh.geometry.dispose(); (n.mesh.material as THREE.Material).dispose(); });
-        if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
-      };
-    });
-
-    return () => { cleanup?.(); };
-  }, []);
-
-  return <div ref={mountRef} className="absolute inset-0 w-full h-full" style={{ zIndex: 0 }} />;
-}
-
-
-```
-
-</action>
-<observation>
-The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
-
-</observation>
-<action>
-**FileEditAction**
-Path: [/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx]
-Thought: 移除未使用的 `lazy`/`Suspense` import：
-Command: str_replace
-Old String: ```
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
-```
-New String: ```
-import { useState, useEffect, useRef } from 'react';
-```
-
-</action>
-<observation>
-The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
-
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-THOUGHT: 检查还有没有未使用的 AnimatePresence, FloatingCard：
-COMMAND:
-grep -n "AnimatePresence\|FloatingCard\|ChevronLeft\|ChevronRight\|BookOpen\b" /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-3:import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
-12:  Sparkles, BookOpen, Trophy, Code2, Network,
-554:function FloatingCard({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
-791:              <FloatingCard key={i} delay={i * 0.08}>
-808:              </FloatingCard>
-831:            <FloatingCard>
-870:            </FloatingCard>
-879:                <FloatingCard key={i} delay={i * 0.1}>
-901:                </FloatingCard>
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "AnimatePresence" /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-3:import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**FileEditAction**
-Path: [/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx]
-Thought: 
-Command: str_replace
-Old String: ```
-import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
-```
-New String: ```
-import { motion, useScroll, useTransform } from 'motion/react';
-```
-
-</action>
-<observation>
-The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
-
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "GradCap\b\|GraduationCap as GradCap" /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-14:  Quote, GraduationCap as GradCap,
-159:    icon: GradCap,
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-cd /workspace/app-bu7wnuu44l4x && npx tsc --noEmit --skipLibCheck 2>&1 | head -30
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-cd /workspace/app-bu7wnuu44l4x && npm run lint 2>&1 | tail -10
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-src/pages/LandingPage.tsx(348,20): error TS2503: Cannot find namespace 'THREE'.
-src/pages/LandingPage.tsx(365,39): error TS2503: Cannot find namespace 'THREE'.
-src/pages/LandingPage.tsx(446,67): error TS2503: Cannot find namespace 'THREE'.
-src/pages/LandingPage.tsx(447,82): error TS2503: Cannot find namespace 'THREE'.
-Checked 110 files in 1154ms. No fixes applied.
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-sed -n '340,360p' /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-      const wireMat = new THREE.MeshBasicMaterial({
-        color: primaryColor, wireframe: true,
-        transparent: true, opacity: isDark ? 0.12 : 0.08,
-      });
-      const wireSphere = new THREE.Mesh(wireGeo, wireMat);
-      scene.add(wireSphere);
-
-      // ── 轨道环 ──
-      const rings: THREE.Mesh[] = [];
-      const ringConfigs = [
-        { r: 7.5,  tube: 0.03,  color: primaryColor, opacity: isDark ? 0.5 : 0.35,  rotX: Math.PI / 3, rotY: 0 },
-        { r: 10,   tube: 0.025, color: accentColor,   opacity: isDark ? 0.35 : 0.25, rotX: Math.PI / 5, rotY: Math.PI / 4 },
-        { r: 13,   tube: 0.02,  color: deepColor,     opacity: isDark ? 0.25 : 0.18, rotX: -Math.PI / 4, rotY: Math.PI / 6 },
-      ];
-      ringConfigs.forEach(cfg => {
-        const geo = new THREE.TorusGeometry(cfg.r, cfg.tube, 16, 120);
-        const mat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: cfg.opacity });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.rotation.x = cfg.rotX;
-        mesh.rotation.y = cfg.rotY;
-        rings.push(mesh);
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-AgentThinkAction(thought="The issue is that inside `import('three').then((THREE) => {...})`, TypeScript doesn't recognize the `THREE` namespace for type annotations like `THREE.Mesh[]`. I need to either:\n1. Import the types at the top: `import type * as THREE from 'three'` - this is the cleanest approach since it's just for types and adds no runtime cost\n2. Replace type annotations with local type aliases\n\nThe cleanest fix is to add `import type * as THREE from 'three'` at the top - this gives us the types without bundling the library into the main chunk. The dynamic import handles runtime loading.", action=<ActionType.THINK: 'think'>)
-</action>
-<observation>
-AgentThinkObservation(content='Your thought has been logged.', observation=<ObservationType.THINK: 'think'>)
-</observation>
-<action>
-**FileEditAction**
-Path: [/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx]
-Thought: 动态 `import('three')` 内部用到了 `THREE.Mesh[]` 等类型注解，需要顶层仅引入类型声明：
-Command: str_replace
-Old String: ```
-import { useState, useEffect, useRef } from 'react';
-```
-New String: ```
-import { useState, useEffect, useRef } from 'react';
-import type * as THREE from 'three';
-```
-
-</action>
-<observation>
-The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
-
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-cd /workspace/app-bu7wnuu44l4x && npm run lint 2>&1 | tail -10
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-Checked 110 files in 1293ms. No fixes applied.
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-THOUGHT: Lint 全绿，最终构建验证：
-COMMAND:
-cd /workspace/app-bu7wnuu44l4x && npx vite build 2>&1 | tail -15
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace/app-bu7wnuu44l4x",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-dist/assets/HomePage-q1QMbh-h.js                   29.60 kB │ gzip:  10.53 kB
-dist/assets/ProfilePage-C25Np0BS.js                31.10 kB │ gzip:   9.34 kB
-dist/assets/StrategyPage-SClEtxU_.js               32.01 kB │ gzip:   9.61 kB
-dist/assets/LandingPage-DoML_20U.js                40.00 kB │ gzip:  13.58 kB
-dist/assets/AppLayout-B_W0Q24q.js                  47.38 kB │ gzip:  13.75 kB
-dist/assets/proxy-C9tVro4F.js                     112.27 kB │ gzip:  37.03 kB
-dist/assets/generateCategoricalChart-0_Li8stM.js  348.00 kB │ gzip:  94.38 kB
-dist/assets/index-DIdhCHj6.js                     496.34 kB │ gzip: 150.65 kB
-dist/assets/three.module-D6FfmLSN.js              695.30 kB │ gzip: 176.54 kB
-[plugin builtin:vite-reporter] 
-(!) Some chunks are larger than 500 kB after minification. Consider:
-- Using dynamic import() to code-split the application
-- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 2.23s
-[The command completed with exit code 0.]
-[Current working directory: /workspace/app-bu7wnuu44l4x]
---END AGENT OBSERVATION--
-</observation>
-<action>
-TodoAction(todos=[TodoItem(id='5', status='completed', priority='high', content='官网首页(LandingPage) Hero区域改为Three.js 3D交互背景', details='', group=None, agent_name=None), TodoItem(id='6', status='completed', priority='medium', content="重新设计'适合人群'区块", details='', group=None, agent_name=None), TodoItem(id='7', status='completed', priority='high', content="重新设计'口碑见证'区块为双行错位轮播", details='', group=None, agent_name=None), TodoItem(id='8', status='completed', priority='medium', content="美化定价卡片并删除'最受欢迎'文字", details='', group=None, agent_name=None), TodoItem(id='9', status='completed', priority='medium', content='Lint验证与构建检查', details='', group=None, agent_name=None)], command='update', thought='构建成功。Three.js 已被自动拆分为独立 chunk（`three.module-*.js`），LandingPage 自身从 535KB 降至 **40KB**，Three.js 按需懒加载，完美解决了体积问题。', action=<ActionType.TODO: 'todo'>, content='')
-</action>
-<observation>
-TodoObservation(content="<system-reminder>\nYour todo list has changed. Here are the latest contents of your todo list:\n\n1. 删除竞争战略页顶角多智能体按钮，将MultiAgentSection完整内嵌到页面内 *high* [completed]\n\n2. 重构MultiAgentSection：3个工作流各自独立节点+日志，节点下方显示协作消息日志 *high* [completed]\n\n3. 删除TutoringPage的文字/图解/短视频三模态答题选择器组件 *high* [completed]\n\n4. 删除AppLayout侧边栏笔记/错题本按钮及TOOLBOX_ITEMS中相关条目 *medium* [completed]\n\n5. 官网首页(LandingPage) Hero区域改为Three.js 3D交互背景 *high* [completed]\n\n6. 重新设计'适合人群'区块 *medium* [completed]\n\n7. 重新设计'口碑见证'区块为双行错位轮播 *high* [completed]\n\n8. 美化定价卡片并删除'最受欢迎'文字 *medium* [completed]\n\n9. Lint验证与构建检查 *medium* [completed]\n</system-reminder>", state=TodoState(items=[TodoItem(id='1', status='completed', priority='high', content='删除竞争战略页顶角多智能体按钮，将MultiAgentSection完整内嵌到页面内', details='', group=None, agent_name=None), TodoItem(id='2', status='completed', priority='high', content='重构MultiAgentSection：3个工作流各自独立节点+日志，节点下方显示协作消息日志', details='', group=None, agent_name=None), TodoItem(id='3', status='completed', priority='high', content='删除TutoringPage的文字/图解/短视频三模态答题选择器组件', details='', group=None, agent_name=None), TodoItem(id='4', status='completed', priority='medium', content='删除AppLayout侧边栏笔记/错题本按钮及TOOLBOX_ITEMS中相关条目', details='', group=None, agent_name=None), TodoItem(id='5', status='completed', priority='high', content='官网首页(LandingPage) Hero区域改为Three.js 3D交互背景', details='', group=None, agent_name=None), TodoItem(id='6', status='completed', priority='medium', content="重新设计'适合人群'区块", details='', group=None, agent_name=None), TodoItem(id='7', status='completed', priority='high', content="重新设计'口碑见证'区块为双行错位轮播", details='', group=None, agent_name=None), TodoItem(id='8', status='completed', priority='medium', content="美化定价卡片并删除'最受欢迎'文字", details='', group=None, agent_name=None), TodoItem(id='9', status='completed', priority='medium', content='Lint验证与构建检查', details='', group=None, agent_name=None)], updated_at='2026-06-10T14:09:35.177240+00:00'), system_reminder='', observation=<ObservationType.TODO: 'todo'>)
-</observation>
-<observation>
-Command `bash /workspace/.miaoda/commit.sh app-bu7wnuu44l4x SVNTVUU6ICMgSXNzdWUK5a6M5oiQ5a6Y572RIEhlcm8gVGhyZWUuanMgM0Qg6IOM5pmv5Y+K5aSa5aSEIFVJIOWFqOmdoumHjeaehAo=` executed with exit code 0.
-</observation>
-<action>
-**MCPAction**
-NAME: get_app_detail
-ARGUMENTS: {'appId': 'app-bu7wnuu44l4x', 'userId': 'user-805l89jeg3k2'}
-</action>
-<observation>
-**MCPObservation**
-NAME: get_app_detail
-RESULTS: {"appCreateWay":"SOURCECODE","appDesc":"智学伴：打造个性化学业路径，智能辅导与评估助你精准提升。","appFocus":"RELEASED","appId":"app-bu7wnuu44l4x","name":"个性化学习系统","pluginConfigs":[{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"822bc679-0277-46ac-b8aa-b91f49a3605b","pluginName":"多模态理解大模型"},{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"b4e50937-a645-487a-bbf0-0a70156a8271","pluginName":"文本生成大模型"},{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"be049c59-00cf-420d-b21a-1486dc4c6812","pluginName":"百度AI搜索"},{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"dba02e0f-e6b0-4a2e-b636-ea23c803744a","pluginName":"前端设计指南"},{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"ef7acc98-4b5c-53e1-9bd1-ec81d2af1821","pluginName":"PDF"},{"authFieldKeys":["WECHAT_MINIPROGRAM_LOGIN_APP_ID","WECHAT_MINIPROGRAM_LOGIN_APP_SECRET"],"isConfig":false,"isSupport":false,"pluginKey":"plugin-wechat-miniprogram-login","pluginName":"登录"}],"type":"WEB","versionDesc":"完成官网 Hero Three.js 3D 背景及多处 UI 全面重构","versionId":"app_version-c8u3q1v7km4g","versionLabel":"v32"}
-</observation>
-<action>
-AgentFinishAction(final_thought='# Summary\n完成了 9 项界面迭代升级：竞争战略页多智能体可视化完整内嵌（3 个工作流各自独立节点+协作日志）、智能答疑页移除多模态选择器、侧边栏清理笔记/错题本入口；官网首页 Hero 区域替换为 Three.js 3D 交互背景（中心能量球 + 三层轨道环 + 1800 粒子 + 鼠标惯性跟随）、适合人群 6 卡片重新设计、口碑见证改为双行错位无限滚动轮播、定价卡片全面美化并删除「最受欢迎」标签。所有代码通过 TypeScript 类型检查、Lint 和 Vite 构建，Three.js 动态懒加载使 LandingPage chunk 从 535KB 降至 40KB。', commit_message='# Issue\n完成官网 Hero Three.js 3D 背景及多处 UI 全面重构', task_completed='true', outputs={'status': 'success', 'behavior': 'code_tool', 'suggested_questions': [{'title': '添加暗色模式', 'query': '为 Three.js Hero 背景添加暗色/亮色主题自动切换效果，粒子和轨道颜色随主题变化'}, {'title': '多智能体演示', 'query': '为竞争战略页的多智能体协作可视化添加「启动演示」按钮，点击后节点状态依次动画激活并流式输出协作日志'}, {'title': '口碑数据扩充', 'query': '将口碑见证区块的评价数量扩充到 12 条，并支持从 Supabase 动态加载'}], 'type': 'standard_script', 'finish_type': 'end_code', 'button_actions': [{'type': 'button', 'event': {'args': {'versionId': 'app_version-c8u3q1v7km4g', 'versionDesc': '完成官网 Hero Three.js 3D 背景及多处 UI 全面重构', 'versionLabel': 'v32'}, 'name': 'rollback'}, 'label': '恢复', 'value': '恢复'}], 'app_id': 'app-bu7wnuu44l4x', 'version_id': 'app_version-c8u3q1v7km4g', 'user_id': 'user-805l89jeg3k2'}, thought='全部 9 项任务完成 ✅\n# Summary\n完成了 9 项界面迭代升级：竞争战略页多智能体可视化完整内嵌（3 个工作流各自独立节点+协作日志）、智能答疑页移除多模态选择器、侧边栏清理笔记/错题本入口；官网首页 Hero 区域替换为 Three.js 3D 交互背景（中心能量球 + 三层轨道环 + 1800 粒子 + 鼠标惯性跟随）、适合人群 6 卡片重新设计、口碑见证改为双行错位无限滚动轮播、定价卡片全面美化并删除「最受欢迎」标签。所有代码通过 TypeScript 类型检查、Lint 和 Vite 构建，Three.js 动态懒加载使 LandingPage chunk 从 535KB 降至 40KB。\n\n# Issue\n完成官网 Hero Three.js 3D 背景及多处 UI 全面重构\n\n# Suggested Questions\n- title: 添加暗色模式; query: 为 Three.js Hero 背景添加暗色/亮色主题自动切换效果，粒子和轨道颜色随主题变化\n- title: 多智能体演示; query: 为竞争战略页的多智能体协作可视化添加「启动演示」按钮，点击后节点状态依次动画激活并流式输出协作日志\n- title: 口碑数据扩充; query: 将口碑见证区块的评价数量扩充到 12 条，并支持从 Supabase 动态加载\n\nEND_CODE', action=<ActionType.FINISH: 'finish'>)
-</action>
-<action>
-**RecallAction**
-QUERY: 学习路径界面下面的路径画板支持新增模块，每个卡片自动展开完，不用点击才下滑显示，支持自由拖动；“”A
-</action>
-<action>
-**MessageAction** (source=EventSource.AGENT)
-CONTENT: 好的，正在优化学习路径、答疑与官网宣传页设计，请稍候～
-</action>
-<action>
-SkillAction(skill='threejs', args='', thought='', action=<ActionType.SKILL: 'skill'>, security_risk=None)
-</action>
-<observation>
-SkillObservation(content='Base directory for this skill: /workspace/app-bu7wnuu44l4x/.skills/threejs\n\n# Three.js 3D 生产流水线\n\n## 何时使用\n\n当用户请求以下内容时激活：Three.js 项目、WebGL 场景、3D 可视化、交互式 3D、3D 网页游戏、VR/AR 网页体验、3D 数据展示、3D 产品展示、3D 建筑可视化、3D 动画、着色器特效，或任何基于浏览器的 3D 图形。\n\n## 能力概述\n\n使用 Three.js 构建浏览器端 3D 图形与交互体验的生产流水线。可创建 3D 场景、产品展示、数据可视化、游戏原型、建筑漫游、粒子特效、后期处理画面、自定义着色器——输出为可运行的 HTML/JS 或集成到现有项目中。涵盖：场景管理、几何体、PBR 材质、光照与阴影、骨骼动画、射线交互、模型加载、后处理特效、GLSL 着色器、纹理与环境贴图。\n\n## 质量标准\n\n**首次渲染即 excellence。** 首次加载时必须在视觉上令人震撼。默认光照、默认材质、没有阴影的场景是错的。\n\n**统一美学胜过功能数量。** 所有元素必须服务于统一的视觉语言——一致的色温、协调的材质粗糙度、有意义的光照层次。\n\n**性能意识贯穿始终。** 3D 渲染昂贵。始终关注 draw call、纹理内存、阴影贴图分辨率、几何体面数。在添加特效前先测量帧率。\n\n**主动创意。** 如果用户要求"一个旋转的立方体"，交付一个带有环境反射、柔和阴影、呼吸式缩放动画、以及环境雾的立方体。包含至少一个用户没要求但会欣赏的视觉细节。\n\n**内存管理是工程师的尊严。** Three.js 对象不会自动释放 GPU 内存。对不再使用的 geometry、material、texture 始终调用 `dispose()`。\n\n## 技术栈\n\n| 层级 | 工具 | 用途 |\n|------|------|------|\n| 核心 | Three.js r160+ (ES modules) | 场景图、渲染器、数学、几何体、材质 |\n| 控制器 | `three/addons/controls/` | OrbitControls、FlyControls、DragControls |\n| 加载器 | `three/addons/loaders/` | GLTF、OBJ、FBX、STL、DRACO、KTX2 |\n| 后处理 | `three/addons/postprocessing/` | EffectComposer、泛光、SSAO、景深、胶片颗粒 |\n| 数学 | `three/src/math/` | Vector3、Matrix4、Quaternion、Euler、Color |\n| 着色器 | 自定义 GLSL | ShaderMaterial、RawShaderMaterial、后期处理 ShaderPass |\n\n## 主题索引\n\n| 主题 | 参考文档 | 核心内容 |\n|------|----------|----------|\n| **基础** | `references/fundamentals.md` | Scene、Camera、Renderer、Object3D、数学工具 |\n| **几何体** | `references/geometry.md` | 内置形状、BufferGeometry、InstancedMesh、LOD |\n| **材质** | `references/materials.md` | PBR、Standard/Physical、ShaderMaterial、透明与混合 |\n| **光照** | `references/lighting.md` | 光源类型、阴影、环境贴图、IBL、三点布光 |\n| **动画** | `references/animation.md` | AnimationMixer、GLTF 动画、骨骼动画、Morph targets |\n| **交互** | `references/interaction.md` | Raycaster、控制器、鼠标/触摸/键盘输入 |\n| **加载器** | `references/loaders.md` | GLTF/GLB、OBJ/FBX/STL、加载进度、缓存、错误处理 |\n| **后处理** | `references/postprocessing.md` | EffectComposer、泛光、SSAO、景深、自定义 ShaderPass |\n| **着色器** | `references/shaders.md` | ShaderMaterial、GLSL 内置函数、常用着色器模式 |\n| **纹理** | `references/textures.md` | UV 映射、环境贴图、PBR 贴图集、RenderTarget、程序化纹理 |\n\n## 3D 生产流水线\n\n每个项目遵循相同的路径：\n\n```\n概念 → 场景搭建 → 资源加载 → 材质光照 → 动画交互 → 后期处理 → 性能优化\n```\n\n1. **概念** —— 阐明创意愿景：情绪、构图、色彩世界、独特之处\n2. **场景搭建** —— 创建 Scene、Camera、Renderer，设置渲染参数（antialias、shadowMap、colorSpace）\n3. **资源加载** —— 使用合适的 Loader 加载模型/纹理，处理加载进度与错误回退\n4. **材质光照** —— 配置 PBR 材质、设置光源（至少环境光+方向光+补光）、开启阴影\n5. **动画交互** —— 实现 AnimationMixer、OrbitControls、Raycaster 交互、响应式布局\n6. **后期处理** —— 按需添加泛光、色调映射、色彩校正\n7. **性能优化** —— InstancedMesh 合并、纹理压缩、LOD、阴影质量调优、内存 dispose\n\n## 关键实现要点\n\n### 渲染循环\n\n始终使用 `requestAnimationFrame`，在循环中更新 controls、mixer、uniforms：\n\n```javascript\nconst clock = new THREE.Clock();\n\nfunction animate() {\n  requestAnimationFrame(animate);\n  const delta = clock.getDelta();\n  controls.update();\n  mixer.update(delta);\n  composer.render();\n}\nanimate();\n```\n\n### 内存管理\n\n```javascript\n// 清理几何体\ngeometry.dispose();\n// 清理材质\nmaterial.dispose();\n// 清理纹理\ntexture.dispose();\n// 清理渲染目标\nrenderTarget.dispose();\n```\n\n### 响应式\n\n```javascript\nwindow.addEventListener("resize", () => {\n  camera.aspect = window.innerWidth / window.innerHeight;\n  camera.updateProjectionMatrix();\n  renderer.setSize(window.innerWidth, window.innerHeight);\n  composer.setSize(window.innerWidth, window.innerHeight);\n});\n```\n\n### 阴影优化\n\n```javascript\nrenderer.shadowMap.enabled = true;\nrenderer.shadowMap.type = THREE.PCFSoftShadowMap;\n\ndirectionalLight.castShadow = true;\ndirectionalLight.shadow.mapSize.width = 2048;\ndirectionalLight.shadow.mapSize.height = 2048;\ndirectionalLight.shadow.camera.near = 0.5;\ndirectionalLight.shadow.camera.far = 50;\n```\n\n### ColorSpace 与 Gamma\n\n```javascript\nrenderer.outputColorSpace = THREE.SRGBColorSpace;\nrenderer.toneMapping = THREE.ACESFilmicToneMapping;\nrenderer.toneMappingExposure = 1.0;\n```\n\n## 不要做\n\n- 不要在生产环境使用 `MeshBasicMaterial` 作为主体材质（不接受光照，看起来扁平）\n- 不要加载未压缩的纹理到移动端\n- 不要为每个物体单独创建相同的几何体（使用 `.clone()` 或 InstancedMesh）\n- 不要忘记在场景卸载时 dispose 所有 Three.js 对象\n- 不要在动画循环中创建新的对象（Vector3、Color 等），使用 `.set()` 复用\n\n## 参考文档索引\n\n- `references/fundamentals.md` —— Scene、Camera、Renderer 核心概念\n- `references/geometry.md` —— 所有几何体类型与高级用法\n- `references/materials.md` —— 材质系统与 PBR 工作流\n- `references/lighting.md` —— 光照、阴影、环境贴图\n- `references/animation.md` —— 动画系统与程序化动画\n- `references/interaction.md` —— 射线检测与用户输入\n- `references/loaders.md` —— 模型加载与资源管理\n- `references/postprocessing.md` —— 后期处理特效栈\n- `references/shaders.md` —— 自定义着色器开发\n- `references/textures.md` —— 纹理映射与高级纹理技术', observation=<ObservationType.SKILL: 'skill'>, skill='threejs', success=True, data={'skill_path': '/workspace/miaoda_skills/prompts/managed/threejs/SKILL.md', 'scripts_path': None})
-</observation>
-<action>
-SkillAction(skill='superdesign-frontend', args='', thought='', action=<ActionType.SKILL: 'skill'>, security_risk=None)
-</action>
-<observation>
-SkillObservation(content='Base directory for this skill: /workspace/app-bu7wnuu44l4x/.skills/superdesign-frontend\n\n## 能力概述\n\n本技能为 Agent 提供一套结构化、现代化的前端 UI 设计方法论，帮助生成美观、可用、无障碍的网页界面。\n\n| 属性 | 值 |\n|------|-----|\n| 技能层级 | `helper-tier`（辅助层，前端开发任务时自动触发） |\n| 核心行为 | 指导 Agent 按 4 步工作流生成高质量前端 UI 代码 |\n| 工作模式 | 布局设计 → 主题设计 → 动画设计 → 代码实现 |\n| 支持平台 | Web（桌面端 + 移动端） |\n| 核心能力 | 布局规划、主题定制、微交互动画、响应式设计、无障碍支持、组件设计 |\n\n**设计工作流：**\n1. **布局设计** — 先用 ASCII 绘制页面结构草图\n2. **主题设计** — 定义颜色、字体、间距、阴影\n3. **动画设计** — 规划微交互与过渡效果\n4. **代码实现** — 生成实际 HTML/CSS/JS 代码\n\n详细规范见 `references/` 目录下各专题文档。\n\n---\n\n## 触发条件\n\n### 何时应用\n\n- 用户要求生成 UI 组件（按钮、卡片、表单、导航等）\n- 用户要求创建落地页、营销页、官网\n- 用户要求创建仪表盘、后台管理界面\n- 用户要求美化/重构现有界面\n- 用户需要前端设计建议（配色、布局、字体等）\n\n### 何时不应用\n\n- 纯后端开发任务（API、数据库、服务器配置等，无 UI 需求）\n- 用户明确要求使用特定设计系统（如 Ant Design、Element Plus）且无需通用设计指导\n- 用户只需要简单的文本排版（如 Markdown 文档），无需视觉设计\n\n---\n\n## 工作流概述\n\n### 第一步：布局设计\n\n在编写任何代码之前，先用 ASCII 格式绘制页面布局草图，明确页面结构和内容区域分布。\n\n典型页面结构示例：\n\n```\n┌─────────────────────────────────────┐\n│         顶部导航栏 / 品牌标识        │\n├─────────────────────────────────────┤\n│                                     │\n│            首屏 Banner              │\n│       (标题 + 行动号召按钮)         │\n│                                     │\n├─────────────────────────────────────┤\n│   功能卡片    │  功能卡片  │  功能卡片 │\n├─────────────────────────────────────┤\n│              页脚                    │\n└─────────────────────────────────────┘\n```\n\n### 第二步：主题设计\n\n定义统一的视觉语言：\n- **色彩**：使用 `oklch()` 定义现代色彩，避免通用 Bootstrap 蓝色（`#007bff`）\n- **字体**：从 Google Fonts 中选择（Inter、Outfit、DM Sans 等）\n- **间距**：以 0.25rem（4px）为基础单位\n- **阴影**： subtle，最多 1-2 层\n- **圆角**：现代风格 0.5-1rem，粗野风格 0px\n\n三种预设主题模式见 `references/theme-patterns.md`。\n\n### 第三步：动画设计\n\n使用微语法规划交互效果：\n\n```\n按钮按下: 150ms [缩放1→0.95→1]\n悬停上浮: 200ms [Y轴0→-2px, 阴影增强]\n淡入动画: 400ms 缓出 [Y轴+20→0, 透明度0→1]\n滑入动画: 350ms 缓出 [X轴-100→0, 透明度0→1]\n弹跳效果: 600ms [缩放0.95→1.05→1]\n```\n\n详细规范见 `references/animation-guide.md`。\n\n### 第四步：代码实现\n\n生成实际代码：\n- 原型阶段：使用 CDN 引入 Tailwind CSS、Flowbite、Lucide 图标\n- 生产阶段：使用 npm + Vite 构建（见 `references/implementation-rules.md`）\n- 图片使用 Unsplash 或 placehold.co，禁止虚构图片 URL\n- 始终遵循移动端优先的响应式设计\n\n---\n\n## 输入期望\n\n| 输入项 | 是否必填 | 说明 |\n|--------|----------|------|\n| 用户需求描述 | 是 | 要创建什么页面/组件（如"一个 SaaS 产品落地页"） |\n| 设计偏好 | 否 | 风格偏好（深色/浅色/粗野/玻璃拟态） |\n| 目标平台 | 否 | 桌面端优先或移动端优先（默认移动端优先） |\n| 技术栈限制 | 否 | 是否必须使用特定框架或工具 |\n\n---\n\n## 输出期望\n\n| 输出项 | 是否必填 | 说明 |\n|--------|----------|------|\n| ASCII 布局草图 | 是 | 编码前的页面结构示意 |\n| 主题变量定义 | 是 | CSS 自定义属性（颜色、字体、间距、阴影） |\n| 动画规划 | 条件必填 | 如有交互需求，提供微语法描述 |\n| HTML/CSS/JS 代码 | 是 | 完整可运行的前端代码 |\n| 响应式说明 | 是 | 断点设计（手机/平板/桌面） |\n\n---\n\n## 注意事项\n\n- **避免通用蓝色**：不要使用 Bootstrap 风格的 `#007bff`，它会显得过时\n- **优先 oklch()**：现代浏览器支持 `oklch()` 色彩空间，比 `rgb()`/`hsl()` 更均匀\n- **移动端优先**：始终从移动端布局开始，再用 `@media` 扩展到大屏\n- **CDN 仅用于原型**：Tailwind/Flowbite CDN 适合快速原型，生产环境请使用 npm + 构建工具\n- **语义化 HTML**：使用 `<header>`、`<main>`、`<nav>`、`<section>` 等语义标签\n- **对比度达标**：文字与背景对比度至少 4.5:1，确保可读性\n- **不要虚构图片 URL**：使用 Unsplash 或 placehold.co 的真实链接\n- **动画性能**：优先使用 `transform` 和 `opacity` 实现动画，避免触发重排（layout）', observation=<ObservationType.SKILL: 'skill'>, skill='superdesign-frontend', success=True, data={'skill_path': '/workspace/miaoda_skills/prompts/managed/superdesign-frontend/SKILL.md', 'scripts_path': None})
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "学习报告\|数据报告" /workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx | head -10
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-35:      { path: '/report',             label: '学习报告', icon: TrendingUp    },
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -rn "学习报告\|数据报告" /workspace/app-bu7wnuu44l4x/src/pages/ | grep -v ".js\|dist\|node_modules" | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-/workspace/app-bu7wnuu44l4x/src/pages/ToolsPage.tsx:83:    label: '学习报告',
-/workspace/app-bu7wnuu44l4x/src/pages/HomePage.tsx:45:  { label: '学习报告', desc: '周期学习统计', icon: BarChart3, href: '/report', color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' },
-/workspace/app-bu7wnuu44l4x/src/pages/HomePage.tsx:261:        {/* 打卡 + 学习报告 — 位于快捷操作上方 */}
-/workspace/app-bu7wnuu44l4x/src/pages/HomePage.tsx:271:                  <p className="text-sm font-medium">学习报告</p>
-/workspace/app-bu7wnuu44l4x/src/pages/ReportPage.tsx:149:              <BarChart3 className="w-5 h-5 text-primary" />学习报告
-/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:117:    text: '每周学习报告让我对自己的进度一清二楚，智能建议真的很精准。现在每天都期待打开智学伴！',
-/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:141:    features: ['AI答疑 无限次', '苏格拉底式辅导', '代码实验室全功能', '弱项强化训练', '知识图谱编辑', '学习报告深度版', '优先客服支持'],
-/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:205:    tags: ['学习报告', '数据洞察', '效率最大化'],
-/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx:318:  { feature: '学习报告',          khan: 80, duolingo: 88, xueersi: 90, ape: 85, ifly: 90, us: 78 },
-/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx:447:      { text: '学习报告（周报/月报）', done: true },
-/workspace/app-bu7wnuu44l4x/src/pages/ProfilePage.tsx:308:                      <BarChart3 className="w-4 h-4 mr-1.5" />学习报告
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-wc -l /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx 2>/dev/null; ls /workspace/app-bu7wnuu44l4x/src/pages/ | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
- 1077 /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx
-  684 /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx
- 1761 total
-AgentVizPage.tsx
-BadgesPage.tsx
-CodeLabPage.tsx
-CommunityPage.tsx
-EvaluationPage.tsx
-HomePage.tsx
-InvitePage.tsx
-KnowledgeGraphPage.tsx
-LandingPage.tsx
-LeaderboardPage.tsx
-LearningPathPage.tsx
-LoginPage.tsx
-NotesPage.tsx
-NotFound.tsx
-PortraitPage.tsx
-ProfilePage.tsx
-ReportPage.tsx
-ResourceDetailPage.tsx
-ResourceEditPage.tsx
-ResourceGeneratePage.tsx
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "AI资源生成\|ResourceGenerator\|对话式画像\|ProfileBuilder\|renderMarkdown\|\*\*" /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "markdown\|\*\*\|renderContent\|marked\|ReactMarkdown" /workspace/app-bu7wnuu44l4x/src/pages/ResourceGeneratePage.tsx /workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx 2>/dev/null | head -30
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-/workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx:51:            content: '你好！我是智学伴学习画像助手 🎓\n\n接下来我会通过 **6 个问题** 深入了解你的学习特征，帮助你构建专属的个性化学习画像，让 AI 更精准地为你推荐资源和路径。\n\n我们一起开始吧！\n\n**第一步：请告诉我你的专业方向是什么？**（例如：计算机科学、会计学、机械工程等）',
-/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx:61:          ? '你好！我是智学伴的**苏格拉底式AI导师** 🤔\n\n我不会直接给出答案，而是通过提问引导你自己找到答案。这样能帮助你真正理解知识，而不只是记住答案。\n\n遇到任何问题，和我一起思考吧！'
-/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx:91:      const role = m.role === 'user' ? '**我**' : '**智学伴 AI**';
-/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx:94:    const blob = new Blob([`# 智学伴 答疑对话记录\n\n${md}`], { type: 'text/markdown;charset=utf-8' });
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "PathBoard\|AddModule\|addNode\|newNode\|isOpen\|expanded\|dragg" /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-112:  const [expanded, setExpanded] = useState(isCurrent);
-116:      draggable
-166:            {expanded && (
-226:  const [newNodeTitle, setNewNodeTitle] = useState('');
-227:  const [newNodeDesc, setNewNodeDesc] = useState('');
-319:    if (!path || !newNodeTitle.trim()) return;
-322:      title: newNodeTitle.trim(),
-323:      description: newNodeDesc.trim() || '自定义学习阶段',
-623:                          value={newNodeTitle}
-629:                          value={newNodeDesc}
-636:                          <Button size="sm" className="flex-1 h-7 text-xs" onClick={addStage} disabled={!newNodeTitle.trim()}>确认</Button>
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[95, 180], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx:
-    95 }
-    96 
-    97 interface AIRecommendation { title: string; stages: PathStage[]; reasoning: string; }
-    98 
-    99 // ─── 单节点卡片 ──────────────────────────────────────────────────
-   100 function StageNode({
-   101   stage, index, isCurrent, isCompleted, isLocked,
-   102   onComplete, completing, onDelete,
-   103   onDragStart, onDragOver, onDrop,
-   104 }: {
-   105   stage: PathStage; index: number; isCurrent: boolean; isCompleted: boolean; isLocked: boolean;
-   106   onComplete: () => void; completing: boolean; onDelete: () => void;
-   107   onDragStart: (e: React.DragEvent) => void;
-   108   onDragOver: (e: React.DragEvent) => void;
-   109   onDrop: (e: React.DragEvent) => void;
-   110 }) {
-   111   const theme = STAGE_THEMES[index % STAGE_THEMES.length];
-   112   const [expanded, setExpanded] = useState(isCurrent);
-   113 
-   114   return (
-   115     <div
-   116       draggable
-   117       onDragStart={onDragStart}
-   118       onDragOver={onDragOver}
-   119       onDrop={onDrop}
-   120       className="shrink-0"
-   121       style={{ width: 256 }}
-   122     >
-   123       <motion.div
-   124         initial={{ opacity: 0, y: 20 }}
-   125         animate={{ opacity: 1, y: 0 }}
-   126         transition={{ delay: index * 0.06, type: 'spring', stiffness: 260, damping: 22 }}
-   127         className={`relative bg-card rounded-2xl border-2 shadow-lg transition-all duration-300 select-none group
-   128           ${isCompleted ? 'border-primary/30 opacity-80' : isCurrent ? `border-transparent ring-2 ${theme.ring} ${theme.glow} shadow-xl` : 'border-border opacity-70'}
-   129           ${isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing hover:shadow-xl hover:-translate-y-0.5'}
-   130         `}
-   131       >
-   132         {/* 顶部色带 */}
-   133         <div className={`h-1.5 rounded-t-2xl bg-gradient-to-r ${theme.from} ${theme.to}`} />
-   134 
-   135         <div className="p-4">
-   136           {/* 头部 */}
-   137           <div className="flex items-start gap-2 mb-3">
-   138             <GripVertical className="w-3.5 h-3.5 mt-1 text-muted-foreground/30 shrink-0" />
-   139             <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br ${theme.from} ${theme.to} shadow-sm`}>
-   140               {isCompleted
-   141                 ? <CheckCircle className="w-4 h-4 text-white" />
-   142                 : <span className="text-white text-xs font-bold">{index + 1}</span>}
-   143             </div>
-   144             <div className="flex-1 min-w-0">
-   145               <h3 className="text-sm font-semibold text-balance leading-tight">{stage.title}</h3>
-   146               <div className="flex flex-wrap gap-1 mt-1">
-   147                 {isCurrent   && <Badge className="bg-primary/10 text-primary border-0 text-[10px] h-4">当前阶段</Badge>}
-   148                 {isCompleted && <Badge variant="secondary" className="text-[10px] h-4">✓ 已完成</Badge>}
-   149                 {isLocked    && <Badge variant="outline" className="text-[10px] h-4 text-muted-foreground"><Lock className="w-2.5 h-2.5 mr-0.5" />待解锁</Badge>}
-   150               </div>
-   151             </div>
-   152             <div className="flex items-center gap-1 shrink-0">
-   153               <button type="button" onClick={() => setExpanded(v => !v)}
-   154                 className="text-muted-foreground/50 hover:text-muted-foreground transition-colors p-0.5">
-   155                 <Info className="w-3.5 h-3.5" />
-   156               </button>
-   157               <button type="button" onClick={onDelete}
-   158                 className="text-muted-foreground/30 hover:text-destructive transition-colors p-0.5 opacity-0 group-hover:opacity-100">
-   159                 <Trash2 className="w-3.5 h-3.5" />
-   160               </button>
-   161             </div>
-   162           </div>
-   163 
-   164           {/* 展开详情 */}
-   165           <AnimatePresence initial={false}>
-   166             {expanded && (
-   167               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-   168                 exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+">
    169                 <p className="text-xs text-muted-foreground text-pretty mb-3 leading-relaxed">{stage.description}</p>
    170                 {stage.resources.length > 0 && (
    171                   <div className="space-y-1.5 mb-3">
@@ -5996,4 +4288,1724 @@ grep -n "对标差距\|StrategyPage\|strategy" /workspace/app-bu7wnuu44l4x/src/c
 [The command completed with exit code 0.]
 [Current working directory: /workspace]
 --END AGENT OBSERVATION--
+</observation>
+<action>
+**MessageAction** (source=EventSource.USER)
+CONTENT: ​[image_1781317939713.png](/workspace/app-bu7wnuu44l4x/tasks/image_1781317939713.png)​官网宣传页第一页动态背景删除掉；删除右上角的智能体可视化这个按钮，右边的“竞争战略”改为“产品可视化”下面“对标差距分析”紧靠右边新增一个按钮“多智能体可视化“”，界面把下面的“多智能体协作可视化
+3 条工作流 · 实时监控节点状态与协作消息
+
+资源生成工作流
+4 个协作节点
+
+启动
+需求分析智能体
+
+解析用户画像与课程主题
+
+内容生成智能体
+
+生成教学案例、思维导图
+
+质量审校智能体
+
+校验内容准确性与格式
+
+格式编排智能体
+
+输出结构化最终资源
+
+协作消息日志
+点击「启动」查看实时消息传递...
+
+答疑辅导工作流
+4 个协作节点
+
+启动
+意图理解智能体
+
+解析学生问题与上下文
+
+知识检索智能体
+
+从知识库检索相关内容
+
+苏格拉底引导智能体
+
+组织引导式答疑策略
+
+反馈评估智能体
+
+评估回答效果并记录
+
+协作消息日志
+点击「启动」查看实时消息传递...
+
+学习路径工作流
+4 个协作节点
+
+启动
+画像分析智能体
+
+分析学习画像与薄弱项
+
+目标拆解智能体
+
+将学习目标拆解为阶段
+
+资源匹配智能体
+
+为每阶段匹配最优资源
+
+路径优化智能体
+
+动态调整路径与进度
+
+协作消息日志
+点击「启动」查看实时消息传递...“移动到这个界面来，原来的删除；””学习路径界面的画板“新增节点“按钮移动在””左边第一个按钮的下面；每个卡片按钮支持自由拖动改变位置，画板界面高度扩大一些，左边有一些专业的工具可以选择，功能也要实现；好看美观；学习工具箱下面子菜单恢复为原来的“错题本“按钮在第一个，是原来的学习笔记和错题数据统计界面！学习画像界面里面的“语音通话“按钮移动到”智能答疑”界面里面“”智能答疑：文字的右边显示；
+IMAGE_URL: https://miaoda-conversation-file.cdn.bcebos.com/user-805l89jeg3k2/app-bu7wnuu44l4x/20260613/image_1781317939713.png
+</action>
+<action>
+**MessageAction** (source=EventSource.USER)
+CONTENT: ​[image_1781317939713.png](/workspace/app-bu7wnuu44l4x/tasks/image_1781317939713.png)​官网宣传页第一页动态背景删除掉；删除右上角的智能体可视化这个按钮，右边的“竞争战略”改为“产品可视化”下面“对标差距分析”紧靠右边新增一个按钮“多智能体可视化“”，界面把下面的“多智能体协作可视化
+3 条工作流 · 实时监控节点状态与协作消息
+
+资源生成工作流
+4 个协作节点
+
+启动
+需求分析智能体
+
+解析用户画像与课程主题
+
+内容生成智能体
+
+生成教学案例、思维导图
+
+质量审校智能体
+
+校验内容准确性与格式
+
+格式编排智能体
+
+输出结构化最终资源
+
+协作消息日志
+点击「启动」查看实时消息传递...
+
+答疑辅导工作流
+4 个协作节点
+
+启动
+意图理解智能体
+
+解析学生问题与上下文
+
+知识检索智能体
+
+从知识库检索相关内容
+
+苏格拉底引导智能体
+
+组织引导式答疑策略
+
+反馈评估智能体
+
+评估回答效果并记录
+
+协作消息日志
+点击「启动」查看实时消息传递...
+
+学习路径工作流
+4 个协作节点
+
+启动
+画像分析智能体
+
+分析学习画像与薄弱项
+
+目标拆解智能体
+
+将学习目标拆解为阶段
+
+资源匹配智能体
+
+为每阶段匹配最优资源
+
+路径优化智能体
+
+动态调整路径与进度
+
+协作消息日志
+点击「启动」查看实时消息传递...“移动到这个界面来，原来的删除；””学习路径界面的画板“新增节点“按钮移动在””左边第一个按钮的下面；每个卡片按钮支持自由拖动改变位置，画板界面高度扩大一些，左边有一些专业的工具可以选择，功能也要实现；好看美观；学习工具箱下面子菜单恢复为原来的“错题本“按钮在第一个，是原来的学习笔记和错题数据统计界面！学习画像界面里面的“语音通话“按钮移动到”智能答疑”界面里面“”智能答疑：文字的右边显示；
+IMAGE_URL: https://miaoda-conversation-file.cdn.bcebos.com/user-805l89jeg3k2/app-bu7wnuu44l4x/20260613/image_1781317939713.png
+</action>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[200, 300], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx:
+   200     };
+   201     window.addEventListener('keydown', handler);
+   202     return () => window.removeEventListener('keydown', handler);
+   203   }, []);
+   204 
+   205   return (
+   206     <div className="flex min-h-screen w-full bg-background">
+   207       {/* 桌面端侧边栏 */}
+   208       <aside className="hidden md:block w-60 shrink-0 border-r border-sidebar-border">
+   209         <div className="sticky top-0 h-screen">
+   210           <SidebarContent />
+   211         </div>
+   212       </aside>
+   213 
+   214       {/* 移动端侧边栏 */}
+   215       <Sheet open={open} onOpenChange={setOpen}>
+   216         <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-3">
+   217           <SheetTrigger asChild>
+   218             <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9">
+   219               <Menu className="w-5 h-5" />
+   220             </Button>
+   221           </SheetTrigger>
+   222           <div className="flex items-center gap-2 min-w-0">
+   223             <GraduationCap className="w-5 h-5 text-primary shrink-0" />
+   224             <span className="font-bold text-sm truncate">智学伴</span>
+   225           </div>
+   226           {user && (
+   227             <div className="ml-auto flex items-center gap-1.5 shrink-0">
+   228               <NotificationBell />
+   229               <UserMenu profile={profile} signOut={signOut} />
+   230             </div>
+   231           )}
+   232         </div>
+   233         <SheetContent side="left" className="p-0 w-60 bg-sidebar border-sidebar-border">
+   234           <SheetTitle className="sr-only">导航菜单</SheetTitle>
+   235           <SidebarContent onNavigate={() => setOpen(false)} />
+   236         </SheetContent>
+   237       </Sheet>
+   238 
+   239       {/* 主内容区 */}
+   240       <main className="flex-1 min-w-0 md:pt-0 pt-14 flex flex-col">
+   241         {/* 桌面端顶部栏 */}
+   242         <div className="hidden md:flex items-center justify-between gap-2 px-6 py-3 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-30">
+   243           {/* 搜索框 — 扩大宽度 */}
+   244           <Button
+   245             variant="outline"
+   246             size="sm"
+   247             className="text-muted-foreground hover:text-foreground gap-2 h-8 w-72 justify-start"
+   248             onClick={() => setSearchOpen(true)}
+   249           >
+   250             <Search className="w-3.5 h-3.5 shrink-0" />
+   251             <span className="text-xs flex-1 text-left">搜索资源、课程...</span>
+   252             <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono shrink-0">
+   253               <span>Ctrl</span>+<span>K</span>
+   254             </kbd>
+   255           </Button>
+   256 
+   257           {/* 右侧操作区：通知 → 智能体 → 战略 → 邀请 → 头像 */}
+   258           <div className="flex items-center gap-1.5">
+   259             {/* 通知铃 */}
+   260             {user && <NotificationBell />}
+   261 
+   262             {/* 智能体可视化 */}
+   263             <Link to="/agent-viz">
+   264               <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="智能体可视化">
+   265                 <Bot className="w-4 h-4" />
+   266               </Button>
+   267             </Link>
+   268             {/* 竞争战略 */}
+   269             <Link to="/strategy">
+   270               <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="竞争战略">
+   271                 <Compass className="w-4 h-4" />
+   272               </Button>
+   273             </Link>
+   274 
+   275             <Separator orientation="vertical" className="h-5 mx-0.5" />
+   276 
+   277             {/* 邀请有礼·积分与套餐 */}
+   278             {user && (
+   279               <Link to="/invite">
+   280                 <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white border-0 shadow-sm px-3">
+   281                   <Gift className="w-3.5 h-3.5" />
+   282                   <span className="hidden lg:inline">邀请有礼 · 积分套餐</span>
+   283                   <span className="lg:hidden">邀请</span>
+   284                 </Button>
+   285               </Link>
+   286             )}
+   287 
+   288             {/* 头像 */}
+   289             {user && <UserMenu profile={profile} signOut={signOut} />}
+   290           </div>
+   291         </div>
+   292 
+   293         <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
+   294           <AnimatePresence mode="wait">
+   295             <motion.div
+   296               key={location.pathname}
+   297               initial={{ opacity: 0, y: 10 }}
+   298               animate={{ opacity: 1, y: 0 }}
+   299               exit={{ opacity: 0, y: -10 }}
+   300               transition={{ duration: 0.25 }}
+
+
+</observation>
+<action>
+**CmdRunAction (source=EventSource.AGENT, is_input=False)**
+COMMAND:
+grep -n "MultiAgentSection\|WorkflowPanel\|多智能体\|3 条工作流" /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx | head -20
+</action>
+<observation>
+**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
+  "exit_code": 0,
+  "pid": -1,
+  "username": null,
+  "hostname": null,
+  "working_dir": "/workspace",
+  "py_interpreter_path": null,
+  "prefix": "",
+  "suffix": "\n[The command completed with exit code 0.]"
+})**
+--BEGIN AGENT OBSERVATION--
+20:// ── 多智能体协作可视化面板 ─────────────────────────────────────────
+104:function WorkflowPanel({ wf }: { wf: WorkflowDef }) {
+276:function MultiAgentSection() {
+285:            <h3 className="font-semibold text-sm">多智能体协作可视化</h3>
+286:            <p className="text-[11px] text-muted-foreground">3 条工作流 · 实时监控节点状态与协作消息</p>
+300:              <WorkflowPanel wf={wf} />
+315:  { feature: '多智能体透明化',    khan: 0,  duolingo: 0,  xueersi: 0,  ape: 0,  ifly: 0,  us: 90 },
+326:  { subject: '多智能体', us: 90, avg: 0 },
+401:    title: '多智能体透明化',
+519:              对标国内外 12 款顶级 AI 教育产品，聚焦差距与差异化竞争，打造"国内首个多智能体透明化 AI 学习平台"。
+537:        {/* 标签栏 + 多智能体协作按钮 */}
+706:                      "国内首个多智能体透明化 AI 学习平台" —— 让 AI 辅导的每一步决策都可见、可理解、可信赖，专为高等教育学生打造。
+852:                      content: '专注高等教育学生，以多智能体透明化 AI 辅导为独特卖点，打造"可解释 AI 学习平台"。',
+867:                      content: '多智能体可视化决策链 + 6维学习画像数据 + 高校场景深度集成，构建三重护城河。',
+887:        {/* 多智能体协作可视化 — 始终内嵌显示 */}
+888:        <MultiAgentSection />
+[The command completed with exit code 0.]
+[Current working directory: /workspace]
+--END AGENT OBSERVATION--
+</observation>
+<action>
+AgentThinkAction(thought='Now I have a clear picture. Let me plan all the changes:\n\n1. **LandingPage.tsx** - Remove HeroBackground component usage (keep the section but remove Three.js background)\n2. **AppLayout.tsx** - Remove "智能体可视化" button; Change "竞争战略" button to "产品可视化"; Add "多智能体可视化" button next to "对标差距分析"; Add 错题本 back to TOOLBOX_ITEMS\n3. **routes.tsx** - Add new route for "多智能体可视化" page (/multi-agent-viz) and rename "竞争战略" → "产品可视化"  \n4. **New page: MultiAgentVizPage.tsx** - Create new page with the MultiAgentSection content moved from StrategyPage\n5. **StrategyPage.tsx** - Remove MultiAgentSection from bottom; Rename "竞争战略"→"产品可视化"; Remove "对标差距分析" tab mention (wait, the requirement is to keep "对标差距分析" and add "多智能体可视化" button next to it)\n6. **LearningPathPage.tsx** - Move "新增节点" button to be under left first button; Add drag-and-drop free positioning; Expand canvas height; Add left professional tools panel\n7. **AppLayout.tsx** - Restore 错题本 as first item in TOOLBOX_ITEMS (原来的学习笔记和错题数据统计界面)\n8. **PortraitPage.tsx** - Remove voice call button\n9. **TutoringPage.tsx** - Add voice call button to the right of "智能答疑：" text\n\nKey analysis:\n- The "对标差距分析" and "多智能体可视化" buttons seem to be inside the StrategyPage (now "产品可视化") as tab/navigation buttons\n- I need to find where "对标差距分析" is in StrategyPage\n\nFor LearningPathPage:\n- "新增节点" button moves to be under the first left button (the zoom controls on the left side) - actually re-reading: "左边第一个按钮的下面" - looking at the layout, left first button seems to be zoom in/out. Actually the canvas has buttons in a toolbar at top. The requirement says move "新增节点" button to below the first left button. \n- Actually, I think this means: in the canvas area, create a left panel/toolbar with tools, and put the "新增节点" button there\n- "每个卡片按钮支持自由拖动改变位置" - free drag positioning of stage nodes\n- "画板界面高度扩大" - increase canvas height\n- "左边有一些专业的工具可以选择，功能也要实现" - left panel with tools\n\nFor the LearningPathPage redesign with free dragging, I need to switch from flex layout to absolute positioning with drag events that use clientX/clientY to set positions.\n\nLet me now plan:\n1. Create MultiAgentVizPage.tsx extracting MultiAgentSection from StrategyPage\n2. Modify routes.tsx: add /multi-agent-viz route, rename strategy label\n3. Modify AppLayout.tsx: remove agent-viz button, change strategy to product-viz, add multi-agent-viz button next to 对标差距分析, restore 错题本\n4. Modify StrategyPage.tsx: rename to product viz content, remove MultiAgentSection at bottom, add button to navigate to multi-agent-viz\n5. Modify LandingPage.tsx: remove HeroBackground from hero section\n6. Modify LearningPathPage.tsx: redesign canvas with left toolbar, free drag, larger height, add node button moved\n7. Modify PortraitPage.tsx: remove voice call button\n8. Modify TutoringPage.tsx: add voice call button\n\nFor the AppLayout "对标差距分析" button - looking at the code, line 268-273 shows the top-right buttons. The user says "对标差距分析 紧靠右边新增一个按钮\'多智能体可视化\'" - this refers to the side nav bar buttons. Looking at AppLayout, there\'s a "竞争战略" button - the requirement is:\n- Change "竞争战略" → "产品可视化" \n- Add "多智能体可视化" next to "对标差距分析" - where is "对标差距分析"? This might be inside StrategyPage tabs, not in AppLayout. Let me re-read.\n\nRe-reading: "右边的\'竞争战略\'改为\'产品可视化\'下面\'对标差距分析\'紧靠右边新增一个按钮\'多智能体可视化\'" - this is saying in the right side toolbar in header: change "竞争战略" to "产品可视化", and in AppLayout sidebar, next to "对标差距分析" add a "多智能体可视化" button. But "对标差距分析" is a TAB in StrategyPage, not in AppLayout.\n\nWait - looking again at the image provided. It shows the landing page. The user says the top right corner has buttons. Looking at AppLayout line 262-273: there\'s "智能体可视化" (Bot icon) and "竞争战略" (Compass icon) as icon buttons in the header toolbar.\n\nBut "对标差距分析" doesn\'t appear in AppLayout - it appears as a tab in StrategyPage. So the requirement might mean: in the StrategyPage tab bar, next to the "对标差距分析" tab, add a "多智能体可视化" button/tab.\n\nOR it could mean: in the header/sidebar navigation, the "竞争战略" becomes "产品可视化", and just below that in the sidebar add "多智能体可视化". But "对标差距分析" is not currently in the sidebar.\n\nI\'ll interpret it as: In StrategyPage (now "产品可视化"), the tabs include "对标差距分析" - add "多智能体可视化" as a tab next to it, and make that tab show the MultiAgentSection content instead.\n\nActually re-reading more carefully: "删除右上角的智能体可视化这个按钮，右边的\'竞争战略\'改为\'产品可视化\'下面\'对标差距分析\'紧靠右边新增一个按钮\'多智能体可视化\'\'"\n\nI think this means in the top right area of AppLayout header:\n- Delete "智能体可视化" button\n- Rename "竞争战略" → "产品可视化" \n- Below this button (or next to 对标差距分析), add "多智能体可视化" button\n\nBut "对标差距分析" is a tab in StrategyPage... Let me look at StrategyPage tabs.\n', action=<ActionType.THINK: 'think'>)
+</action>
+<observation>
+AgentThinkObservation(content='Your thought has been logged.', observation=<ObservationType.THINK: 'think'>)
+</observation>
+<action>
+**CmdRunAction (source=EventSource.AGENT, is_input=False)**
+COMMAND:
+grep -n "对标差距\|tab\|Tab" /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx | head -20
+</action>
+<observation>
+**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
+  "exit_code": 0,
+  "pid": -1,
+  "username": null,
+  "hostname": null,
+  "working_dir": "/workspace",
+  "py_interpreter_path": null,
+  "prefix": "",
+  "suffix": "\n[The command completed with exit code 0.]"
+})**
+--BEGIN AGENT OBSERVATION--
+249:            <span className="ml-auto text-[10px] text-muted-foreground tabular-nums">{visibleLogs.length} 条</span>
+263:                <span className="text-[9px] text-muted-foreground font-mono shrink-0 mt-0.5 tabular-nums opacity-60">
+331:// 对标差距分析
+499:  const [activeTab, setActiveTab] = useState<'gap' | 'diff' | 'matrix' | 'roadmap'>('gap');
+541:              { key: 'gap', label: '对标差距分析', icon: Target },
+549:                onClick={() => setActiveTab(t.key)}
+551:                  activeTab === t.key ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+561:        {/* 对标差距分析 */}
+562:        {activeTab === 'gap' && (
+622:                <CardTitle className="text-sm">6.1 对标差距详细分析</CardTitle>
+626:                  <table className="w-full text-sm min-w-[600px]">
+659:                  </table>
+667:        {activeTab === 'diff' && (
+716:        {activeTab === 'matrix' && (
+757:                  <table className="w-full text-sm min-w-[500px]">
+790:                  </table>
+798:        {activeTab === 'roadmap' && (
+[The command completed with exit code 0.]
+[Current working directory: /workspace]
+--END AGENT OBSERVATION--
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[530, 560], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx:
+   530                   <p className="text-[11px] text-white/80">{s.sub}</p>
+   531                 </div>
+   532               ))}
+   533             </div>
+   534           </div>
+   535         </div>
+   536 
+   537         {/* 标签栏 + 多智能体协作按钮 */}
+   538         <div className="flex items-center gap-2 flex-wrap">
+   539           <div className="flex gap-1 p-1 rounded-xl bg-muted w-fit">
+   540             {([
+   541               { key: 'gap', label: '对标差距分析', icon: Target },
+   542               { key: 'diff', label: '差异化优势', icon: Shield },
+   543               { key: 'matrix', label: '功能矩阵', icon: BarChart3 },
+   544               { key: 'roadmap', label: '战略路线图', icon: Compass },
+   545             ] as const).map(t => (
+   546               <button
+   547                 key={t.key}
+   548                 type="button"
+   549                 onClick={() => setActiveTab(t.key)}
+   550                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+   551                   activeTab === t.key ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+   552                 }`}
+   553               >
+   554                 <t.icon className="w-3.5 h-3.5 hidden md:block" />
+   555                 {t.label}
+   556               </button>
+   557             ))}
+   558           </div>
+   559         </div>
+   560 
+
+
+</observation>
+<action>
+TodoAction(todos=[TodoItem(id='1', status='pending', priority=None, content='LandingPage Hero删除Three.js背景', details='直接删除HeroBackground渲染，保留内容区域', group=None, agent_name=None), TodoItem(id='2', status='pending', priority=None, content='AppLayout顶栏：删除智能体可视化，改竞争战略→产品可视化，恢复错题本', details='删除Bot按钮；竞争战略按钮改链接/title；TOOLBOX_ITEMS恢复错题本+学习笔记', group=None, agent_name=None), TodoItem(id='3', status='pending', priority=None, content='StrategyPage标签栏新增多智能体可视化Tab + 移除底部MultiAgentSection', details="在标签栏紧靠对标差距分析右边新增tab；activeTab='agent'时渲染MultiAgentSection；删除底部<MultiAgentSection/>", group=None, agent_name=None), TodoItem(id='4', status='pending', priority=None, content='routes.tsx 竞争战略→产品可视化', details='修改name字段', group=None, agent_name=None), TodoItem(id='5', status='pending', priority=None, content='LearningPathPage：左侧工具栏+新增节点按钮位移+自由拖动+画板扩高', details='左侧工具面板（选择/连线/文字/颜色/删除工具）；节点用绝对定位+mousedown拖动；画板最小高度扩大', group=None, agent_name=None), TodoItem(id='6', status='pending', priority=None, content='PortraitPage删除语音通话按钮，TutoringPage添加语音通话按钮', details='从PortraitPage移除Phone按钮和VoiceCallModal；在TutoringPage标题右边加Phone按钮+VoiceCallModal', group=None, agent_name=None), TodoItem(id='7', status='pending', priority=None, content='Lint验证', details='', group=None, agent_name=None)], command='create', thought='', action=<ActionType.TODO: 'todo'>, content='')
+</action>
+<observation>
+TodoObservation(content="<system-reminder>\nYour todo list has changed. Here are the latest contents of your todo list:\n\n1. LandingPage Hero删除Three.js背景 [pending]\n  直接删除HeroBackground渲染，保留内容区域\n2. AppLayout顶栏：删除智能体可视化，改竞争战略→产品可视化，恢复错题本 [pending]\n  删除Bot按钮；竞争战略按钮改链接/title；TOOLBOX_ITEMS恢复错题本+学习笔记\n3. StrategyPage标签栏新增多智能体可视化Tab + 移除底部MultiAgentSection [pending]\n  在标签栏紧靠对标差距分析右边新增tab；activeTab='agent'时渲染MultiAgentSection；删除底部<MultiAgentSection/>\n4. routes.tsx 竞争战略→产品可视化 [pending]\n  修改name字段\n5. LearningPathPage：左侧工具栏+新增节点按钮位移+自由拖动+画板扩高 [pending]\n  左侧工具面板（选择/连线/文字/颜色/删除工具）；节点用绝对定位+mousedown拖动；画板最小高度扩大\n6. PortraitPage删除语音通话按钮，TutoringPage添加语音通话按钮 [pending]\n  从PortraitPage移除Phone按钮和VoiceCallModal；在TutoringPage标题右边加Phone按钮+VoiceCallModal\n7. Lint验证 [pending]\n</system-reminder>", state=TodoState(items=[TodoItem(id='1', status='pending', priority=None, content='LandingPage Hero删除Three.js背景', details='直接删除HeroBackground渲染，保留内容区域', group=None, agent_name=None), TodoItem(id='2', status='pending', priority=None, content='AppLayout顶栏：删除智能体可视化，改竞争战略→产品可视化，恢复错题本', details='删除Bot按钮；竞争战略按钮改链接/title；TOOLBOX_ITEMS恢复错题本+学习笔记', group=None, agent_name=None), TodoItem(id='3', status='pending', priority=None, content='StrategyPage标签栏新增多智能体可视化Tab + 移除底部MultiAgentSection', details="在标签栏紧靠对标差距分析右边新增tab；activeTab='agent'时渲染MultiAgentSection；删除底部<MultiAgentSection/>", group=None, agent_name=None), TodoItem(id='4', status='pending', priority=None, content='routes.tsx 竞争战略→产品可视化', details='修改name字段', group=None, agent_name=None), TodoItem(id='5', status='pending', priority=None, content='LearningPathPage：左侧工具栏+新增节点按钮位移+自由拖动+画板扩高', details='左侧工具面板（选择/连线/文字/颜色/删除工具）；节点用绝对定位+mousedown拖动；画板最小高度扩大', group=None, agent_name=None), TodoItem(id='6', status='pending', priority=None, content='PortraitPage删除语音通话按钮，TutoringPage添加语音通话按钮', details='从PortraitPage移除Phone按钮和VoiceCallModal；在TutoringPage标题右边加Phone按钮+VoiceCallModal', group=None, agent_name=None), TodoItem(id='7', status='pending', priority=None, content='Lint验证', details='', group=None, agent_name=None)], updated_at='2026-06-13T02:45:53.157732+00:00'), system_reminder='', observation=<ObservationType.TODO: 'todo'>)
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx]
+Thought: Now execute all changes in parallel batches:
+Command: str_replace
+Old String: ```
+        {/* 滚动提示 */}
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 opacity-60"
+        >
+          <div className="w-6 h-10 rounded-full border-2 border-foreground/30 flex justify-center pt-2">
+            <div className="w-1 h-2 bg-foreground/50 rounded-full" />
+          </div>
+        </motion.div>
+      </section>
+```
+New String: ```
+        {/* 滚动提示 */}
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 opacity-60"
+        >
+          <div className="w-6 h-10 rounded-full border-2 border-foreground/30 flex justify-center pt-2">
+            <div className="w-1 h-2 bg-foreground/50 rounded-full" />
+          </div>
+        </motion.div>
+      </section>
+
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[635, 685], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:
+   635             whileHover={{ rotate: 360 }}
+   636             transition={{ duration: 0.6 }}
+   637             className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg"
+   638           >
+   639             <GraduationCap className="w-5 h-5 text-primary-foreground" />
+   640           </motion.div>
+   641           <span className="font-bold text-lg text-foreground">智学伴</span>
+   642         </Link>
+   643         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+   644           {['特色功能', '竞品分析', '用户评价', '会员计划'].map(label => (
+   645             <a
+   646               key={label}
+   647               href={`#${label}`}
+   648               className="text-foreground/70 hover:text-foreground transition-colors"
+   649             >
+   650               {label}
+   651             </a>
+   652           ))}
+   653         </nav>
+   654         <div className="flex items-center gap-3">
+   655           <Button variant="ghost" asChild className="hidden md:inline-flex">
+   656             <Link to="/login">登录</Link>
+   657           </Button>
+   658           <Button asChild className="shadow-lg">
+   659             <Link to="/login">
+   660               <Zap className="w-4 h-4 mr-1.5" />立即使用
+   661             </Link>
+   662           </Button>
+   663         </div>
+   664       </motion.header>
+   665 
+   666       {/* ─── Hero Section ─── */}
+   667       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+   668         <HeroBackground />
+   669 
+   670         {/* 内容 */}
+   671         <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
+   672           <motion.div
+   673             initial={{ opacity: 0, y: -20 }}
+   674             animate={{ opacity: 1, y: 0 }}
+   675             transition={{ duration: 0.8 }}
+   676           >
+   677             <Badge className="mb-6 px-4 py-1.5 text-sm gap-2 bg-primary/15 text-primary border-primary/30">
+   678               <Sparkles className="w-3.5 h-3.5" />
+   679               多智能体个性化学习系统
+   680             </Badge>
+   681           </motion.div>
+   682 
+   683           <motion.h1
+   684             initial={{ opacity: 0, y: 30 }}
+   685             animate={{ opacity: 1, y: 0 }}
+
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+      {/* ─── Hero Section ─── */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <HeroBackground />
+
+        {/* 内容 */}
+        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
+
+```
+New String: ```
+      {/* ─── Hero Section ─── */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+
+        {/* 内容 */}
+        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
+
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+// ─── 工具箱工具列表 ────
+const TOOLBOX_ITEMS = [
+  { label: '弱项强化',   icon: Target,       href: '/weakness-training', color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-900/30' },
+  { label: '知识图谱',   icon: GitBranch,    href: '/knowledge-graph',   color: 'text-sky-500',     bg: 'bg-sky-50 dark:bg-sky-900/30'       },
+  { label: '代码实验室', icon: Code2,        href: '/code-lab',          color: 'text-indigo-500',  bg: 'bg-indigo-50 dark:bg-indigo-900/30' },
+];
+
+```
+New String: ```
+// ─── 工具箱工具列表 ────
+const TOOLBOX_ITEMS = [
+  { label: '错题本',     icon: BookOpen,  href: '/tools',             color: 'text-rose-500',    bg: 'bg-rose-50 dark:bg-rose-900/30'     },
+  { label: '弱项强化',   icon: Target,    href: '/weakness-training', color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-900/30' },
+  { label: '知识图谱',   icon: GitBranch, href: '/knowledge-graph',   color: 'text-sky-500',     bg: 'bg-sky-50 dark:bg-sky-900/30'       },
+  { label: '代码实验室', icon: Code2,     href: '/code-lab',          color: 'text-indigo-500',  bg: 'bg-indigo-50 dark:bg-indigo-900/30' },
+];
+
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+          {/* 右侧操作区：通知 → 智能体 → 战略 → 邀请 → 头像 */}
+          <div className="flex items-center gap-1.5">
+            {/* 通知铃 */}
+            {user && <NotificationBell />}
+
+            {/* 智能体可视化 */}
+            <Link to="/agent-viz">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="智能体可视化">
+                <Bot className="w-4 h-4" />
+              </Button>
+            </Link>
+            {/* 竞争战略 */}
+            <Link to="/strategy">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="竞争战略">
+                <Compass className="w-4 h-4" />
+              </Button>
+            </Link>
+
+```
+New String: ```
+          {/* 右侧操作区：通知 → 产品可视化 → 邀请 → 头像 */}
+          <div className="flex items-center gap-1.5">
+            {/* 通知铃 */}
+            {user && <NotificationBell />}
+
+            {/* 产品可视化 */}
+            <Link to="/strategy">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="产品可视化">
+                <Compass className="w-4 h-4" />
+              </Button>
+            </Link>
+
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/routes.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+  { name: '竞争战略',        path: '/strategy', element: wrap(<StrategyPage />) },
+```
+New String: ```
+  { name: '产品可视化',        path: '/strategy', element: wrap(<StrategyPage />) },
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/routes.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx]
+Thought: Now update StrategyPage: add "多智能体可视化" tab and remove bottom `<MultiAgentSection />`:
+Command: str_replace
+Old String: ```
+        {/* 标签栏 + 多智能体协作按钮 */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex gap-1 p-1 rounded-xl bg-muted w-fit">
+            {([
+              { key: 'gap', label: '对标差距分析', icon: Target },
+              { key: 'diff', label: '差异化优势', icon: Shield },
+              { key: 'matrix', label: '功能矩阵', icon: BarChart3 },
+              { key: 'roadmap', label: '战略路线图', icon: Compass },
+            ] as const).map(t => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setActiveTab(t.key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === t.key ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <t.icon className="w-3.5 h-3.5 hidden md:block" />
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+```
+New String: ```
+        {/* 标签栏 */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex gap-1 p-1 rounded-xl bg-muted w-fit">
+            {([
+              { key: 'gap',   label: '对标差距分析', icon: Target    },
+              { key: 'agent', label: '多智能体可视化', icon: Bot      },
+              { key: 'diff',  label: '差异化优势',   icon: Shield    },
+              { key: 'matrix',label: '功能矩阵',     icon: BarChart3 },
+              { key: 'roadmap',label: '战略路线图',  icon: Compass   },
+            ] as const).map(t => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setActiveTab(t.key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === t.key ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <t.icon className="w-3.5 h-3.5 hidden md:block" />
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx has been edited.
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx', start=0, end=-1, thought="Now find where the tab content section starts and add the 'agent' tab render, and also fix the type:", action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[495, 502], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx:
+   495   xueersi: '#f59e0b', ape: '#3b82f6', ifly: '#8b5cf6',
+   496 };
+   497 
+   498 export default function StrategyPage() {
+   499   const [activeTab, setActiveTab] = useState<'gap' | 'diff' | 'matrix' | 'roadmap'>('gap');
+   500 
+   501   const completedGaps = gapAnalysis.filter(g => g.status === 'done').length;
+   502   const totalScore = Math.round(radarData.reduce((a, b) => a + b.us, 0) / radarData.length);
+
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[558, 580], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx:
+   558             ))}
+   559           </div>
+   560         </div>
+   561 
+   562         {/* 对标差距分析 */}
+   563         {activeTab === 'gap' && (
+   564           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+   565             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   566               {/* 雷达图 */}
+   567               <Card>
+   568                 <CardHeader className="pb-2">
+   569                   <CardTitle className="text-sm">能力雷达对比</CardTitle>
+   570                   <p className="text-xs text-muted-foreground">智学伴 vs 竞品均值</p>
+   571                 </CardHeader>
+   572                 <CardContent>
+   573                   <div className="w-full min-w-0 overflow-hidden">
+   574                     <ResponsiveContainer width="100%" height={280}>
+   575                       <RadarChart data={radarData}>
+   576                         <PolarGrid gridType="polygon" />
+   577                         <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
+   578                         <Radar name="智学伴" dataKey="us" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.25} strokeWidth={2} />
+   579                         <Radar name="竞品均值" dataKey="avg" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground))" fillOpacity={0.1} strokeWidth={1.5} strokeDasharray="4,2" />
+   580                         <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', fontSize: '12px' }} />
+
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+  const [activeTab, setActiveTab] = useState<'gap' | 'diff' | 'matrix' | 'roadmap'>('gap');
+```
+New String: ```
+  const [activeTab, setActiveTab] = useState<'gap' | 'agent' | 'diff' | 'matrix' | 'roadmap'>('gap');
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx has been edited.
+
+</observation>
+<action>
+**CmdRunAction (source=EventSource.AGENT, is_input=False)**
+COMMAND:
+grep -n "多智能体协作可视化.*始终内嵌\|MultiAgentSection />" /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx | tail -10
+</action>
+<observation>
+**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
+  "exit_code": 0,
+  "pid": -1,
+  "username": null,
+  "hostname": null,
+  "working_dir": "/workspace",
+  "py_interpreter_path": null,
+  "prefix": "",
+  "suffix": "\n[The command completed with exit code 0.]"
+})**
+--BEGIN AGENT OBSERVATION--
+888:        {/* 多智能体协作可视化 — 始终内嵌显示 */}
+889:        <MultiAgentSection />
+[The command completed with exit code 0.]
+[Current working directory: /workspace]
+--END AGENT OBSERVATION--
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[883, 900], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx:
+   883               </CardContent>
+   884             </Card>
+   885           </motion.div>
+   886         )}
+   887 
+   888         {/* 多智能体协作可视化 — 始终内嵌显示 */}
+   889         <MultiAgentSection />
+   890       </div>
+   891     </AppLayout>
+   892   );
+   893 }
+   894 
+
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[660, 680], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx:
+   660                   </table>
+   661                 </div>
+   662               </CardContent>
+   663             </Card>
+   664           </motion.div>
+   665         )}
+   666 
+   667         {/* 差异化优势 */}
+   668         {activeTab === 'diff' && (
+   669           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+   670             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   671               {differentiators.map((d, i) => (
+   672                 <motion.div key={d.title} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+   673                   <Card className={`h-full border ${d.border}`}>
+   674                     <CardHeader className="pb-3">
+   675                       <div className="flex items-start justify-between">
+   676                         <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${d.color} flex items-center justify-center`}>
+   677                           <d.icon className="w-5 h-5 text-primary" />
+   678                         </div>
+   679                         <Badge variant="secondary" className="text-xs">{d.advantage}</Badge>
+   680                       </div>
+
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx]
+Thought: Now do all three parallel edits: add `agent` tab content to StrategyPage, remove bottom section, and fix PortraitPage + TutoringPage:
+Command: str_replace
+Old String: ```
+        {/* 差异化优势 */}
+        {activeTab === 'diff' && (
+
+```
+New String: ```
+        {/* 多智能体可视化 */}
+        {activeTab === 'agent' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <MultiAgentSection />
+          </motion.div>
+        )}
+
+        {/* 差异化优势 */}
+        {activeTab === 'diff' && (
+
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+        {/* 多智能体协作可视化 — 始终内嵌显示 */}
+        <MultiAgentSection />
+      </div>
+    </AppLayout>
+  );
+}
+```
+New String: ```
+      </div>
+    </AppLayout>
+  );
+}
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx]
+Thought: Now handle PortraitPage (remove voice) + TutoringPage (add voice) in parallel:
+Command: str_replace
+Old String: ```
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <Brain className="w-5 h-5 text-primary" />学习画像构建
+            </h1>
+            {/* 语音通话按钮 — 紧靠标题右边 */}
+            <Button
+              size="sm"
+              onClick={() => setVoiceCallOpen(true)}
+              className="gap-1.5 rounded-full bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-600 hover:to-violet-600 text-white border-0 shadow-md shadow-sky-500/20"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              语音通话
+            </Button>
+          </div>
+```
+New String: ```
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <Brain className="w-5 h-5 text-primary" />学习画像构建
+            </h1>
+          </div>
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx has been edited.
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[225, 240], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx:
+   225       <VoiceCallModal open={voiceCallOpen} onClose={() => setVoiceCallOpen(false)} />
+   226     </AppLayout>
+   227   );
+   228 }
+   229 
+   230 
+
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+      <VoiceCallModal open={voiceCallOpen} onClose={() => setVoiceCallOpen(false)} />
+    </AppLayout>
+  );
+}
+```
+New String: ```
+      <VoiceCallModal open={false} onClose={() => {}} />
+    </AppLayout>
+  );
+}
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/db/supabase';
+import AppLayout from '@/components/layouts/AppLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import AIChatPanel, { type ChatMsg } from '@/components/ai/AIChatPanel';
+import DigitalTeacher from '@/components/tutoring/DigitalTeacher';
+import { toast } from 'sonner';
+import {
+  MessageCircle, Bot, Sparkles, BookOpen, Lightbulb, Download,
+  Brain, Zap, FileText,
+} from 'lucide-react';
+
+```
+New String: ```
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/db/supabase';
+import AppLayout from '@/components/layouts/AppLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import AIChatPanel, { type ChatMsg } from '@/components/ai/AIChatPanel';
+import DigitalTeacher from '@/components/tutoring/DigitalTeacher';
+import VoiceCallModal from '@/components/voice/VoiceCallModal';
+import { toast } from 'sonner';
+import {
+  MessageCircle, Bot, Sparkles, BookOpen, Lightbulb, Download,
+  Brain, Zap, FileText, Phone,
+} from 'lucide-react';
+
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+export default function TutoringPage() {
+  const { user } = useAuth();
+  const [initialMessages, setInitialMessages] = useState<ChatMsg[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [socraticMode, setSocraticMode] = useState(false);
+```
+New String: ```
+export default function TutoringPage() {
+  const { user } = useAuth();
+  const [initialMessages, setInitialMessages] = useState<ChatMsg[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [socraticMode, setSocraticMode] = useState(false);
+  const [voiceCallOpen, setVoiceCallOpen] = useState(false);
+```
+
+</action>
+<observation>
+ERROR: search text not found in file
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[42, 65], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx:
+    42 
+    43 export default function TutoringPage() {
+    44   const { user } = useAuth();
+    45   const [initialMessages, setInitialMessages] = useState<ChatMsg[]>([]);
+    46   const [loading, setLoading] = useState(true);
+    47   const [messages, setMessages] = useState<ChatMsg[]>([]);
+    48   const [socraticMode, setSocraticMode] = useState(false);
+    49   const [teacherCollapsed, setTeacherCollapsed] = useState(false);
+    50   const [lastAIMsg, setLastAIMsg] = useState('');
+    51 
+    52   useEffect(() => {
+    53     if (!user) { setLoading(false); return; }
+    54     supabase.from('chat_messages')
+    55       .select('*')
+    56       .eq('user_id', user.id)
+    57       .eq('session_type', 'tutoring')
+    58       .order('created_at', { ascending: true })
+    59       .limit(50)
+    60       .then(({ data }) => {
+    61         const welcomeMsg = socraticMode
+    62           ? '你好！我是智学伴的**苏格拉底式AI导师** 🤔\n\n我不会直接给出答案，而是通过提问引导你自己找到答案。这样能帮助你真正理解知识，而不只是记住答案。\n\n遇到任何问题，和我一起思考吧！'
+    63           : '你好！我是智学伴智能答疑助手。支持文字和图片提问。请问有什么可以帮助你？';
+    64         const msgs = Array.isArray(data) && data.length > 0
+    65           ? data.map(m => ({ id: m.id, role: m.role as 'user' | 'assistant', content: m.content }))
+
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+export default function TutoringPage() {
+  const { user } = useAuth();
+  const [initialMessages, setInitialMessages] = useState<ChatMsg[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [socraticMode, setSocraticMode] = useState(false);
+  const [teacherCollapsed, setTeacherCollapsed] = useState(false);
+  const [lastAIMsg, setLastAIMsg] = useState('');
+```
+New String: ```
+export default function TutoringPage() {
+  const { user } = useAuth();
+  const [initialMessages, setInitialMessages] = useState<ChatMsg[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [socraticMode, setSocraticMode] = useState(false);
+  const [teacherCollapsed, setTeacherCollapsed] = useState(false);
+  const [lastAIMsg, setLastAIMsg] = useState('');
+  const [voiceCallOpen, setVoiceCallOpen] = useState(false);
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx has been edited.
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[102, 145], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx:
+   102   };
+   103 
+   104   return (
+   105     <AppLayout>
+   106       <div className="space-y-4">
+   107         <div className="flex items-center justify-between flex-wrap gap-2">
+   108           <h1 className="text-xl font-bold flex items-center gap-2">
+   109             <MessageCircle className="w-5 h-5 text-primary" />
+   110             智能答疑
+   111           </h1>
+   112           <div className="flex items-center gap-2 flex-wrap">
+   113             {/* 苏格拉底模式切换 */}
+   114             <button
+   115               type="button"
+   116               onClick={() => {
+   117                 setSocraticMode(!socraticMode);
+   118                 toast.success(!socraticMode ? '已开启苏格拉底式引导模式 🤔' : '已切换回直接回答模式 ⚡');
+   119               }}
+   120               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+   121                 socraticMode
+   122                   ? 'bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-300'
+   123                   : 'border-border text-muted-foreground hover:border-amber-300 hover:text-amber-600'
+   124               }`}
+   125             >
+   126               {socraticMode ? <Brain className="w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />}
+   127               {socraticMode ? '苏格拉底引导模式' : '直接回答模式'}
+   128             </button>
+   129 
+   130             <Button variant="outline" size="sm" className="gap-1.5" onClick={exportMarkdown}>
+   131               <Download className="w-3.5 h-3.5" />
+   132               导出对话
+   133             </Button>
+   134           </div>
+   135         </div>
+   136 
+   137         {/* 多模态解答形式选择器已移除 */}
+   138 
+   139         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+   140           {/* 左侧：数字人老师面板 */}
+   141           <div className={`lg:col-span-1 ${teacherCollapsed ? 'lg:col-span-1' : ''}`}>
+   142             <Card className="h-[calc(100vh-280px)] min-h-[480px] overflow-hidden">
+   143               <CardContent className="p-3 h-full">
+   144                 <DigitalTeacher
+   145                   lastAIMessage={lastAIMsg}
+
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[195, 220], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx:
+   195           {/* 右侧：使用提示 + 推荐问题（折叠时占1列，否则占1列） */}
+   196           <div className="space-y-4 lg:col-span-1">
+   197             {/* 苏格拉底模式说明 */}
+   198             {socraticMode && (
+   199               <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10">
+   200                 <CardHeader className="pb-2">
+   201                   <CardTitle className="text-sm flex items-center gap-2 text-amber-700 dark:text-amber-300">
+   202                     <Brain className="w-4 h-4" />苏格拉底教学法
+   203                   </CardTitle>
+   204                 </CardHeader>
+   205                 <CardContent className="space-y-2">
+   206                   {[
+   207                     '🤔 AI不直接给答案，引导你思考',
+   208                     '💭 通过提问发现问题本质',
+   209                     '✨ 让理解更深刻、记忆更持久',
+   210                     '🎯 培养独立思考和解题能力',
+   211                   ].map(t => (
+   212                     <p key={t} className="text-xs text-amber-600 dark:text-amber-400">{t}</p>
+   213                   ))}
+   214                 </CardContent>
+   215               </Card>
+   216             )}
+   217             <Card>
+   218               <CardHeader className="pb-3">
+   219                 <CardTitle className="text-base flex items-center gap-2">
+   220                   <Sparkles className="w-4 h-4 text-secondary" />使用提示
+
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[1, 50], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx:
+     1 import { useEffect, useState, useRef } from 'react';
+     2 import { useAuth } from '@/contexts/AuthContext';
+     3 import { supabase } from '@/db/supabase';
+     4 import AppLayout from '@/components/layouts/AppLayout';
+     5 import { Button } from '@/components/ui/button';
+     6 import { Badge } from '@/components/ui/badge';
+     7 import { Progress } from '@/components/ui/progress';
+     8 import { Skeleton } from '@/components/ui/skeleton';
+     9 import { toast } from 'sonner';
+    10 import { motion, AnimatePresence } from 'motion/react';
+    11 import {
+    12   Route, CheckCircle, Target, Sparkles, Plus, Loader2, Trophy,
+    13   Wand2, RotateCcw, FileText, Brain, PenLine, BookOpen, Code2,
+    14   Presentation, Video, Lock, GripVertical, ZoomIn, ZoomOut,
+    15   Maximize2, Info, Trash2, X,
+    16 } from 'lucide-react';
+    17 import type { LearningPath, PathStage } from '@/types/types';
+    18 
+    19 // ─── 资源类型定义 ───────────────────────────────────────────────
+    20 const RESOURCE_TYPES = [
+    21   { id: 'document',  label: '课程文档',   sub: '系统讲解知识点',   icon: FileText,     color: 'text-sky-600',     bg: 'bg-sky-50 dark:bg-sky-900/20',     border: 'border-sky-200 dark:border-sky-800',     active: 'bg-sky-500',     available: true  },
+    22   { id: 'mindmap',   label: '思维导图',   sub: '可视化知识结构',   icon: Brain,        color: 'text-violet-600',  bg: 'bg-violet-50 dark:bg-violet-900/20', border: 'border-violet-200 dark:border-violet-800', active: 'bg-violet-500',  available: true  },
+    23   { id: 'exercise',  label: '练习题',     sub: '配套巩固练习',     icon: PenLine,      color: 'text-amber-600',   bg: 'bg-amber-50 dark:bg-amber-900/20',   border: 'border-amber-200 dark:border-amber-800',   active: 'bg-amber-500',   available: true  },
+    24   { id: 'reading',   label: '拓展阅读',   sub: '推荐相关材料',     icon: BookOpen,     color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20',border: 'border-emerald-200 dark:border-emerald-800',active: 'bg-emerald-500', available: true  },
+    25   { id: 'code',      label: '代码示例',   sub: '可运行代码演示',   icon: Code2,        color: 'text-indigo-600',  bg: 'bg-indigo-50 dark:bg-indigo-900/20', border: 'border-indigo-200 dark:border-indigo-800', active: 'bg-indigo-500',  available: true  },
+    26   { id: 'ppt',       label: 'AI课件PPT', sub: '自动生成演示文稿', icon: Presentation, color: 'text-rose-600',    bg: 'bg-rose-50 dark:bg-rose-900/20',     border: 'border-rose-200 dark:border-rose-800',     active: 'bg-rose-500',    available: false },
+    27   { id: 'video',     label: '教学短视频', sub: '多模态动画讲解',   icon: Video,        color: 'text-orange-600',  bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-200 dark:border-orange-800', active: 'bg-orange-500',  available: false },
+    28 ] as const;
+    29 
+    30 type ResourceId = typeof RESOURCE_TYPES[number]['id'];
+    31 
+    32 // ─── 阶段主题色 ─────────────────────────────────────────────────
+    33 const STAGE_THEMES = [
+    34   { from: 'from-sky-400',     to: 'to-blue-500',    ring: 'ring-sky-400',     glow: 'shadow-sky-200 dark:shadow-sky-900/50'     },
+    35   { from: 'from-violet-400',  to: 'to-purple-500',  ring: 'ring-violet-400',  glow: 'shadow-violet-200 dark:shadow-violet-900/50' },
+    36   { from: 'from-amber-400',   to: 'to-orange-500',  ring: 'ring-amber-400',   glow: 'shadow-amber-200 dark:shadow-amber-900/50'   },
+    37   { from: 'from-emerald-400', to: 'to-teal-500',    ring: 'ring-emerald-400', glow: 'shadow-emerald-200 dark:shadow-emerald-900/50'},
+    38   { from: 'from-rose-400',    to: 'to-pink-500',    ring: 'ring-rose-400',    glow: 'shadow-rose-200 dark:shadow-rose-900/50'     },
+    39 ];
+    40 
+    41 // ─── 按资源类型生成路径模板 ──────────────────────────────────────
+    42 function buildStagesForResource(rid: ResourceId): PathStage[] {
+    43   const base: Record<ResourceId, Array<{ title: string; description: string }>> = {
+    44     document: [
+    45       { title: '基础概念精读', description: '系统阅读课程文档，掌握核心概念与基本原理' },
+    46       { title: '知识点梳理', description: '整理文档要点，建立结构化知识体系' },
+    47       { title: '重难点攻克', description: '针对文档中的难点进行深入理解与记忆' },
+    48       { title: '综合复习巩固', description: '回顾全部文档内容，完成知识闭环' },
+    49     ],
+    50     mindmap: [
+
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx]
+Thought: Now add voice button to TutoringPage header and VoiceCallModal, then tackle LearningPathPage:
+Command: str_replace
+Old String: ```
+  return (
+    <AppLayout>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-primary" />
+            智能答疑
+          </h1>
+```
+New String: ```
+  return (
+    <AppLayout>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-primary" />
+            智能答疑
+            {/* 语音通话按钮 — 紧靠"智能答疑"文字右边 */}
+            <Button
+              size="sm"
+              onClick={() => setVoiceCallOpen(true)}
+              className="gap-1.5 rounded-full bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-600 hover:to-violet-600 text-white border-0 shadow-md shadow-sky-500/20 ml-1"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              语音通话
+            </Button>
+          </h1>
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx has been edited.
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[230, 250], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx:
+   230                 </CardTitle>
+   231               </CardHeader>
+   232               <CardContent className="space-y-3">
+   233                 {tips.map((tip, i) => (
+   234                   <div key={i} className="flex items-start gap-2.5">
+   235                     <tip.icon className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+   236                     <p className="text-xs text-muted-foreground text-pretty">{tip.text}</p>
+   237                   </div>
+   238                 ))}
+   239               </CardContent>
+   240             </Card>
+   241             <Card>
+   242               <CardHeader className="pb-3">
+   243                 <CardTitle className="text-base flex items-center gap-2">
+   244                   <Lightbulb className="w-4 h-4 text-primary" />推荐问题
+   245                 </CardTitle>
+   246               </CardHeader>
+   247               <CardContent className="space-y-2">
+   248                 {suggestedQuestions.map((q, i) => (
+   249                   <button key={i} type="button" className="w-full text-left p-2.5 rounded-lg bg-muted/50 hover:bg-muted text-xs transition-colors text-pretty">
+   250                     {q}
+
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[255, 270], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx:
+   255           </div>
+   256         </div>
+   257       </div>
+   258     </AppLayout>
+   259   );
+   260 }
+   261 
+   262 
+
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+      </div>
+    </AppLayout>
+  );
+}
+```
+New String: ```
+      </div>
+      <VoiceCallModal open={voiceCallOpen} onClose={() => setVoiceCallOpen(false)} />
+    </AppLayout>
+  );
+}
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx has been edited.
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx', start=0, end=-1, thought='Now tackle the LearningPathPage redesign — left toolbar + free drag + bigger canvas. First read the full canvas + node section:', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[100, 215], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx:
+   100 function StageNode({
+   101   stage, index, isCurrent, isCompleted, isLocked,
+   102   onComplete, completing, onDelete,
+   103   onDragStart, onDragOver, onDrop,
+   104 }: {
+   105   stage: PathStage; index: number; isCurrent: boolean; isCompleted: boolean; isLocked: boolean;
+   106   onComplete: () => void; completing: boolean; onDelete: () => void;
+   107   onDragStart: (e: React.DragEvent) => void;
+   108   onDragOver: (e: React.DragEvent) => void;
+   109   onDrop: (e: React.DragEvent) => void;
+   110 }) {
+   111   const theme = STAGE_THEMES[index % STAGE_THEMES.length];
+   112   const [expanded, setExpanded] = useState(true);
+   113 
+   114   return (
+   115     <div
+   116       draggable
+   117       onDragStart={onDragStart}
+   118       onDragOver={onDragOver}
+   119       onDrop={onDrop}
+   120       className="shrink-0"
+   121       style={{ width: 256 }}
+   122     >
+   123       <motion.div
+   124         initial={{ opacity: 0, y: 20 }}
+   125         animate={{ opacity: 1, y: 0 }}
+   126         transition={{ delay: index * 0.06, type: 'spring', stiffness: 260, damping: 22 }}
+   127         className={`relative bg-card rounded-2xl border-2 shadow-lg transition-all duration-300 select-none group
+   128           ${isCompleted ? 'border-primary/30 opacity-80' : isCurrent ? `border-transparent ring-2 ${theme.ring} ${theme.glow} shadow-xl` : 'border-border opacity-70'}
+   129           ${isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing hover:shadow-xl hover:-translate-y-0.5'}
+   130         `}
+   131       >
+   132         {/* 顶部色带 */}
+   133         <div className={`h-1.5 rounded-t-2xl bg-gradient-to-r ${theme.from} ${theme.to}`} />
+   134 
+   135         <div className="p-4">
+   136           {/* 头部 */}
+   137           <div className="flex items-start gap-2 mb-3">
+   138             <GripVertical className="w-3.5 h-3.5 mt-1 text-muted-foreground/30 shrink-0" />
+   139             <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br ${theme.from} ${theme.to} shadow-sm`}>
+   140               {isCompleted
+   141                 ? <CheckCircle className="w-4 h-4 text-white" />
+   142                 : <span className="text-white text-xs font-bold">{index + 1}</span>}
+   143             </div>
+   144             <div className="flex-1 min-w-0">
+   145               <h3 className="text-sm font-semibold text-balance leading-tight">{stage.title}</h3>
+   146               <div className="flex flex-wrap gap-1 mt-1">
+   147                 {isCurrent   && <Badge className="bg-primary/10 text-primary border-0 text-[10px] h-4">当前阶段</Badge>}
+   148                 {isCompleted && <Badge variant="secondary" className="text-[10px] h-4">✓ 已完成</Badge>}
+   149                 {isLocked    && <Badge variant="outline" className="text-[10px] h-4 text-muted-foreground"><Lock className="w-2.5 h-2.5 mr-0.5" />待解锁</Badge>}
+   150               </div>
+   151             </div>
+   152             <div className="flex items-center gap-1 shrink-0">
+   153               <button type="button" onClick={() => setExpanded(v => !v)}
+   154                 className="text-muted-foreground/50 hover:text-muted-foreground transition-colors p-0.5">
+   155                 <Info className="w-3.5 h-3.5" />
+   156               </button>
+   157               <button type="button" onClick={onDelete}
+   158                 className="text-muted-foreground/30 hover:text-destructive transition-colors p-0.5 opacity-0 group-hover:opacity-100">
+   159                 <Trash2 className="w-3.5 h-3.5" />
+   160               </button>
+   161             </div>
+   162           </div>
+   163 
+   164           {/* 展开详情 */}
+   165           <AnimatePresence initial={false}>
+   166             {expanded && (
+   167               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+   168                 exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+   169                 <p className="text-xs text-muted-foreground text-pretty mb-3 leading-relaxed">{stage.description}</p>
+   170                 {stage.resources.length > 0 && (
+   171                   <div className="space-y-1.5 mb-3">
+   172                     <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">配套资源</p>
+   173                     <div className="flex flex-wrap gap-1.5">
+   174                       {stage.resources.map(rId => {
+   175                         const r = RESOURCE_TYPES.find(rt => rt.id === rId);
+   176                         if (!r) return null;
+   177                         return (
+   178                           <div key={rId} className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${r.bg} ${r.color} ${r.border}`}>
+   179                             <r.icon className="w-2.5 h-2.5" />
+   180                             {r.label}
+   181                             {!r.available && <Lock className="w-2 h-2 ml-0.5 opacity-50" />}
+   182                           </div>
+   183                         );
+   184                       })}
+   185                     </div>
+   186                   </div>
+   187                 )}
+   188               </motion.div>
+   189             )}
+   190           </AnimatePresence>
+   191 
+   192           {/* 操作按钮 */}
+   193           {isCurrent && (
+   194             <Button size="sm" disabled={completing} onClick={onComplete}
+   195               className={`w-full h-8 text-xs gap-1.5 bg-gradient-to-r ${theme.from} ${theme.to} border-0 text-white hover:opacity-90`}>
+   196               {completing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Target className="w-3 h-3" />}
+   197               标记完成
+   198             </Button>
+   199           )}
+   200           {isCompleted && (
+   201             <div className="flex items-center gap-1.5 text-xs text-primary font-medium">
+   202               <CheckCircle className="w-3.5 h-3.5" />阶段已完成
+   203             </div>
+   204           )}
+   205         </div>
+   206       </motion.div>
+   207     </div>
+   208   );
+   209 }
+   210 
+   211 // ─── 主页面 ──────────────────────────────────────────────────────
+   212 export default function LearningPathPage() {
+   213   const { user, profile } = useAuth();
+   214   const [path, setPath] = useState<LearningPath | null>(null);
+   215   const [loading, setLoading] = useState(true);
+
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[215, 360], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx:
+   215   const [loading, setLoading] = useState(true);
+   216   const [aiLoading, setAiLoading] = useState(false);
+   217   const [completingId, setCompletingId] = useState<string | null>(null);
+   218   const [showCelebration, setShowCelebration] = useState(false);
+   219   const [recommendation, setRecommendation] = useState<AIRecommendation | null>(null);
+   220   const [zoom, setZoom] = useState(1);
+   221   const [dragIndex, setDragIndex] = useState<number | null>(null);
+   222   const [selectedResource, setSelectedResource] = useState<ResourceId>('document');
+   223   const [generating, setGenerating] = useState(false);
+   224   // 新增节点输入
+   225   const [addingNode, setAddingNode] = useState(false);
+   226   const [newNodeTitle, setNewNodeTitle] = useState('');
+   227   const [newNodeDesc, setNewNodeDesc] = useState('');
+   228   const addInputRef = useRef<HTMLInputElement>(null);
+   229 
+   230   useEffect(() => {
+   231     if (!user) { setLoading(false); return; }
+   232     supabase.from('learning_paths').select('*').eq('user_id', user.id)
+   233       .order('created_at', { ascending: false }).limit(1)
+   234       .then(({ data }) => {
+   235         if (Array.isArray(data) && data.length > 0) setPath(data[0]);
+   236         setLoading(false);
+   237       });
+   238   }, [user]);
+   239 
+   240   useEffect(() => {
+   241     if (addingNode && addInputRef.current) addInputRef.current.focus();
+   242   }, [addingNode]);
+   243 
+   244   // ── 按资源类型生成路径 ──
+   245   const generateByResource = async (rid: ResourceId) => {
+   246     if (!user) return;
+   247     setGenerating(true);
+   248     const rt = RESOURCE_TYPES.find(r => r.id === rid)!;
+   249     const stages = buildStagesForResource(rid);
+   250     // 如有旧路径先删除
+   251     if (path) await supabase.from('learning_paths').delete().eq('id', path.id);
+   252     const { data } = await supabase.from('learning_paths').insert({
+   253       user_id: user.id,
+   254       title: `${rt.label}学习路径`,
+   255       stages, current_stage: 0, progress_percent: 0,
+   256     }).select().maybeSingle();
+   257     if (data) { setPath(data); toast.success(`已生成「${rt.label}」个性化学习路径！`); }
+   258     setGenerating(false);
+   259   };
+   260 
+   261   // ── AI 推荐 ──
+   262   const fetchAIRecommendation = async () => {
+   263     if (!profile) { toast.error('请先完善个人信息'); return; }
+   264     setAiLoading(true);
+   265     try {
+   266       const { data, error } = await supabase.functions.invoke('ai-recommend', { method: 'POST', body: { user_id: profile.id } });
+   267       if (error) throw new Error(await error?.context?.text() || error.message);
+   268       setRecommendation(data as AIRecommendation);
+   269       toast.success('AI 推荐路径已生成！');
+   270     } catch (err) { toast.error(`推荐失败：${(err as Error).message}`); }
+   271     finally { setAiLoading(false); }
+   272   };
+   273 
+   274   const applyRecommendation = async () => {
+   275     if (!user || !recommendation) return;
+   276     const { data } = await supabase.from('learning_paths').insert({
+   277       user_id: user.id, title: recommendation.title,
+   278       stages: recommendation.stages, current_stage: 0, progress_percent: 0,
+   279     }).select().maybeSingle();
+   280     if (data) { setPath(data); setRecommendation(null); toast.success('AI 推荐路径已应用！'); }
+   281   };
+   282 
+   283   // ── 完成阶段 ──
+   284   const completeStage = async (stageId: string) => {
+   285     if (!path) return;
+   286     setCompletingId(stageId);
+   287     const updatedStages = path.stages.map(s => s.id === stageId ? { ...s, completed: true } : s);
+   288     const completedCount = updatedStages.filter(s => s.completed).length;
+   289     const progressPercent = Math.round((completedCount / updatedStages.length) * 100);
+   290     const currentStage = updatedStages.findIndex(s => !s.completed);
+   291     const { data } = await supabase.from('learning_paths').update({
+   292       stages: updatedStages, progress_percent: progressPercent,
+   293       current_stage: currentStage >= 0 ? currentStage : updatedStages.length - 1,
+   294     }).eq('id', path.id).select().maybeSingle();
+   295     if (data) {
+   296       setPath(data);
+   297       if (progressPercent === 100) { setShowCelebration(true); setTimeout(() => setShowCelebration(false), 3500); }
+   298       toast.success('🎉 阶段完成！继续加油！');
+   299     }
+   300     setCompletingId(null);
+   301   };
+   302 
+   303   // ── 删除节点 ──
+   304   const deleteStage = async (stageId: string) => {
+   305     if (!path) return;
+   306     const updatedStages = path.stages.filter(s => s.id !== stageId).map((s, i) => ({ ...s, order: i + 1 }));
+   307     const completedCount = updatedStages.filter(s => s.completed).length;
+   308     const progressPercent = updatedStages.length ? Math.round((completedCount / updatedStages.length) * 100) : 0;
+   309     const currentStage = updatedStages.findIndex(s => !s.completed);
+   310     const { data } = await supabase.from('learning_paths').update({
+   311       stages: updatedStages, progress_percent: progressPercent,
+   312       current_stage: currentStage >= 0 ? currentStage : Math.max(0, updatedStages.length - 1),
+   313     }).eq('id', path.id).select().maybeSingle();
+   314     if (data) { setPath(data); toast.success('节点已删除'); }
+   315   };
+   316 
+   317   // ── 新增节点 ──
+   318   const addStage = async () => {
+   319     if (!path || !newNodeTitle.trim()) return;
+   320     const newStage: PathStage = {
+   321       id: `custom-${Date.now()}`,
+   322       title: newNodeTitle.trim(),
+   323       description: newNodeDesc.trim() || '自定义学习阶段',
+   324       order: path.stages.length + 1,
+   325       resources: [selectedResource],
+   326       completed: false,
+   327     };
+   328     const updatedStages = [...path.stages, newStage];
+   329     const { data } = await supabase.from('learning_paths').update({
+   330       stages: updatedStages,
+   331     }).eq('id', path.id).select().maybeSingle();
+   332     if (data) {
+   333       setPath(data);
+   334       setNewNodeTitle(''); setNewNodeDesc(''); setAddingNode(false);
+   335       toast.success('节点已添加');
+   336     }
+   337   };
+   338 
+   339   // ── 拖拽重排 ──
+   340   const handleDrop = async (dropIndex: number) => {
+   341     if (dragIndex === null || dragIndex === dropIndex || !path) return;
+   342     const stages = [...path.stages];
+   343     const [moved] = stages.splice(dragIndex, 1);
+   344     stages.splice(dropIndex, 0, moved);
+   345     const reordered = stages.map((s, i) => ({ ...s, order: i + 1 }));
+   346     const currentStage = reordered.findIndex(s => !s.completed);
+   347     const { data } = await supabase.from('learning_paths').update({
+   348       stages: reordered,
+   349       current_stage: currentStage >= 0 ? currentStage : reordered.length - 1,
+   350     }).eq('id', path.id).select().maybeSingle();
+   351     if (data) { setPath(data); toast.success('顺序已更新'); }
+   352     setDragIndex(null);
+   353   };
+   354 
+   355   const completedCount = path?.stages.filter(s => s.completed).length ?? 0;
+   356 
+   357   if (loading) return (
+   358     <AppLayout>
+   359       <div className="space-y-4">
+   360         <Skeleton className="h-24 bg-muted rounded-2xl" />
+
+
+</observation>
+<action>
+AgentThinkAction(thought='Now I need to do the big LearningPathPage redesign. The requirements are:\n1. "新增节点"按钮移到左边第一个按钮的下面 - move the add node button to be under the first button on the left (which is the zoom controls)\n2. 每个卡片支持自由拖动改变位置 - free drag positioning (absolute positioning, not just reorder)\n3. 画板界面高度扩大 - increase canvas height\n4. 左边有一些专业的工具可以选择，功能也要实现 - left tool panel with professional tools\n\nThe design needs:\n- Left sidebar with tools: Select (pointer), Add Node (plus), Connect (line), Text label, Color picker, Delete tool\n- Canvas area with absolute positioned nodes that can be freely dragged\n- New node button under the zoom controls (which are the first left-side buttons)\n- Increased canvas height (min-h from 340px to at least 600px)\n\nFor free drag: nodes need absolute position stored with x,y coordinates. I\'ll store node positions in a separate state object `nodePositions: Record<string, {x: number, y: number}>`.\n\nThe current PathStage type might not have position. I\'ll use a separate state for positions.\n\nKey changes to LearningPathPage:\n1. Add `activeTool` state (\'select\' | \'add\' | \'connect\' | \'text\' | \'color\' | \'delete\')\n2. Add `nodePositions` state: Record<string, {x: number, y: number}>\n3. Change canvas from flex layout to relative/absolute layout\n4. Left panel: vertical toolbar with tool icons\n5. Move "新增节点" button to be below the first tool (select) in the left panel\n6. Implement mousedown drag for nodes\n7. Increase min-height to 600px or more\n\nThe left panel tools:\n- 选择 (MousePointer2) - default, select/drag nodes\n- 连线 (GitBranch) - connect nodes (future)\n- 文字 (Type) - add text labels\n- 颜色 (Palette) - change node color\n- 删除 (Trash2) - click to delete node\n\nLet me write the complete redesigned canvas section. The main changes are:\n\n1. Wrap the canvas+nodes section in a flex container: left toolbar (w-12) + canvas area\n2. Left toolbar has tool buttons stacked vertically + "新增节点" button below first tool\n3. Canvas uses relative positioning, nodes absolutely placed\n4. Drag via onMouseDown/onMouseMove/onMouseUp on canvas\n\nI\'ll implement this as a new layout for the canvas area (lines 518-660 roughly).\n\nFor the absolute drag, I need:\n- `nodePositions: Record<string, {x:number,y:number}>` initialized when path loads\n- When path loads, initialize positions in a row (auto-layout)\n- MouseDown on node: start dragging, track delta\n- MouseMove on canvas: update position\n- MouseUp: stop dragging\n\nThis is a significant rewrite of the canvas area. Let me do it cleanly.\n', action=<ActionType.THINK: 'think'>)
+</action>
+<observation>
+AgentThinkObservation(content='Your thought has been logged.', observation=<ObservationType.THINK: 'think'>)
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: Now I'll rewrite the entire canvas section of LearningPathPage with left toolbar + free drag + bigger canvas:
+Command: str_replace
+Old String: ```
+import { useEffect, useState, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/db/supabase';
+import AppLayout from '@/components/layouts/AppLayout';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Route, CheckCircle, Target, Sparkles, Plus, Loader2, Trophy,
+  Wand2, RotateCcw, FileText, Brain, PenLine, BookOpen, Code2,
+  Presentation, Video, Lock, GripVertical, ZoomIn, ZoomOut,
+  Maximize2, Info, Trash2, X,
+} from 'lucide-react';
+import type { LearningPath, PathStage } from '@/types/types';
+
+```
+New String: ```
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/db/supabase';
+import AppLayout from '@/components/layouts/AppLayout';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Route, CheckCircle, Target, Sparkles, Plus, Loader2, Trophy,
+  Wand2, RotateCcw, FileText, Brain, PenLine, BookOpen, Code2,
+  Presentation, Video, Lock, ZoomIn, ZoomOut,
+  Maximize2, Info, Trash2, X, MousePointer2, GitBranch,
+  Type, Palette, Move,
+} from 'lucide-react';
+import type { LearningPath, PathStage } from '@/types/types';
+
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: Now update the state section and add nodePositions + activeTool:
+Command: str_replace
+Old String: ```
+// ─── 主页面 ──────────────────────────────────────────────────────
+export default function LearningPathPage() {
+  const { user, profile } = useAuth();
+  const [path, setPath] = useState<LearningPath | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [recommendation, setRecommendation] = useState<AIRecommendation | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [selectedResource, setSelectedResource] = useState<ResourceId>('document');
+  const [generating, setGenerating] = useState(false);
+  // 新增节点输入
+  const [addingNode, setAddingNode] = useState(false);
+  const [newNodeTitle, setNewNodeTitle] = useState('');
+  const [newNodeDesc, setNewNodeDesc] = useState('');
+  const addInputRef = useRef<HTMLInputElement>(null);
+
+```
+New String: ```
+// ─── 主页面 ──────────────────────────────────────────────────────
+export default function LearningPathPage() {
+  const { user, profile } = useAuth();
+  const [path, setPath] = useState<LearningPath | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [recommendation, setRecommendation] = useState<AIRecommendation | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [selectedResource, setSelectedResource] = useState<ResourceId>('document');
+  const [generating, setGenerating] = useState(false);
+  // 新增节点输入
+  const [addingNode, setAddingNode] = useState(false);
+  const [newNodeTitle, setNewNodeTitle] = useState('');
+  const [newNodeDesc, setNewNodeDesc] = useState('');
+  const addInputRef = useRef<HTMLInputElement>(null);
+
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
+
 </observation>
