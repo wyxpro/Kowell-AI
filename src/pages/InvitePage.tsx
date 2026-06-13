@@ -60,6 +60,7 @@ const ACTION_LABELS: Record<string, string> = {
 export default function InvitePage() {
   const { user, profile } = useAuth();
   const [searchParams] = useSearchParams();
+  const plansOnly = searchParams.get('tab') === 'plans';
 
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') === 'plans' ? 'plans' : 'invite');
   const [inviteCode, setInviteCode] = useState('');
@@ -161,41 +162,48 @@ export default function InvitePage() {
   return (
     <AppLayout>
       <div className="space-y-6 max-w-5xl">
-        {/* 页面标题 */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
-            <Gift className="w-5 h-5 text-white" />
+        {/* 页面标题 — plansOnly时隐藏 */}
+        {!plansOnly && (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
+              <Gift className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-balance">邀请有礼 · 积分与套餐</h1>
+              <p className="text-sm text-muted-foreground">邀请好友赚积分，解锁更多学习特权</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-balance">邀请有礼 · 积分与套餐</h1>
-            <p className="text-sm text-muted-foreground">邀请好友赚积分，解锁更多学习特权</p>
+        )}
+
+        {/* 顶部数据看板 — plansOnly时隐藏 */}
+        {!plansOnly && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[
+              { label: '我的积分', value: balance, icon: Coins, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/30' },
+              { label: '邀请好友', value: inviteRecords.length, icon: Users, color: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-900/30' },
+              { label: '当前套餐', value: plans.find(p => p.id === currentPlanId)?.name ?? '免费版', icon: Crown, color: 'text-violet-500', bg: 'bg-violet-50 dark:bg-violet-900/30' },
+            ].map((stat, i) => (
+              <motion.div key={stat.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
+                <Card className="h-full">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className={`rounded-lg p-2.5 ${stat.bg} ${stat.color} shrink-0`}>
+                      <stat.icon className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-lg font-bold truncate">{stat.value}</p>
+                      <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
-        </div>
+        )}
 
-        {/* 顶部数据看板 */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {[
-            { label: '我的积分', value: balance, icon: Coins, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/30' },
-            { label: '邀请好友', value: inviteRecords.length, icon: Users, color: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-900/30' },
-            { label: '当前套餐', value: plans.find(p => p.id === currentPlanId)?.name ?? '免费版', icon: Crown, color: 'text-violet-500', bg: 'bg-violet-50 dark:bg-violet-900/30' },
-          ].map((stat, i) => (
-            <motion.div key={stat.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
-              <Card className="h-full">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className={`rounded-lg p-2.5 ${stat.bg} ${stat.color} shrink-0`}>
-                    <stat.icon className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-lg font-bold truncate">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* 主体 Tab */}
+        {/* 主体 Tab — plansOnly时直接展示套餐内容，无Tab头 */}
+        {plansOnly ? (
+          <PlansTabContent plans={plans} currentPlanId={currentPlanId} upgradePlan={handleUpgrade} />
+        ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full md:w-auto">
             <TabsTrigger value="invite" className="flex-1 md:flex-none gap-1.5">
@@ -368,171 +376,93 @@ export default function InvitePage() {
 
           {/* ─── Tab: 升级套餐 ─────────────────────────────── */}
           <TabsContent value="plans" className="mt-4">
-            {/* 套餐页头部 banner */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 p-6 text-white shadow-lg mb-5">
-              <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/10 pointer-events-none" />
-              <div className="absolute right-4 bottom-0 w-24 h-24 rounded-full bg-white/5 pointer-events-none" />
-              <div className="relative">
-                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium mb-3">
-                  <Crown className="w-3.5 h-3.5" />解锁更多学习特权
-                </div>
-                <h2 className="text-2xl font-bold mb-1 text-balance">选择最适合你的套餐</h2>
-                <p className="text-white/75 text-sm">年付更优惠 · 随时可取消 · 7天无理由退款</p>
-              </div>
-            </div>
-
-            {/* 4 卡片一行 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {(plans.length > 0 ? plans : [
-                { id: 'free',       name: '免费版', price_month: 0,   price_year: 0,    features: ['10次/月资源生成', '基础学习路径', '社区支持'], sort_order: 1 },
-                { id: 'basic',      name: '基础版', price_month: 19,  price_year: 168,  features: ['50次/月资源生成', '个性化路径', '答疑中心', '工单支持'], sort_order: 2 },
-                { id: 'pro',        name: '高级版', price_month: 49,  price_year: 428,  features: ['200次/月资源生成', '高级AI路径', 'AI深度答疑', '全部工具', '优先支持'], sort_order: 3 },
-                { id: 'enterprise', name: '专业版', price_month: 99,  price_year: 828,  features: ['无限资源生成', '专属顾问', '优先答疑', '全部工具', '团队协作', '数据导出', '专属客服'], sort_order: 4 },
-              ] as Plan[]).map((plan, i) => {
-                const meta = PLAN_META[plan.id] ?? PLAN_META.free;
-                const isCurrent = plan.id === currentPlanId;
-                const PlanIcon = meta.icon;
-
-                return (
-                  <motion.div
-                    key={plan.id}
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.07 }}
-                    className="h-full"
-                  >
-                    <Card className={`h-full flex flex-col relative overflow-hidden transition-all duration-200 ${
-                      isCurrent
-                        ? 'ring-2 ring-primary shadow-lg shadow-primary/10'
-                        : plan.id === 'enterprise'
-                          ? 'ring-1 ring-amber-300/50 hover:shadow-lg hover:shadow-amber-100/50 hover:-translate-y-1'
-                          : 'hover:shadow-md hover:-translate-y-0.5'
-                    }`}>
-                      {/* 当前套餐标记 */}
-                      {isCurrent && (
-                        <div className="absolute top-3 right-3 z-10">
-                          <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5">当前</Badge>
-                        </div>
-                      )}
-                      {/* 推荐标记 */}
-                      {plan.id === 'pro' && !isCurrent && (
-                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-500 to-purple-500" />
-                      )}
-
-                      {/* 套餐头部 */}
-                      <div className={`p-4 bg-gradient-to-br ${meta.gradient}`}>
-                        <div className={`w-9 h-9 rounded-xl ${meta.badge} flex items-center justify-center mb-2.5`}>
-                          <PlanIcon className="w-4.5 h-4.5" />
-                        </div>
-                        <p className="font-bold text-sm mb-1.5">{plan.name}</p>
-                        {plan.price_month === 0 ? (
-                          <p className="text-xl font-black">免费</p>
-                        ) : (
-                          <div>
-                            <p className="text-xl font-black">
-                              ¥{plan.price_month}
-                              <span className="text-xs font-normal text-muted-foreground"> /月</span>
-                            </p>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">年付 ¥{plan.price_year}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <Separator />
-
-                      {/* 功能列表 */}
-                      <CardContent className="flex-1 p-3 space-y-1.5">
-                        {plan.features.map((feat, fi) => (
-                          <div key={fi} className="flex items-start gap-1.5 text-xs">
-                            <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                            <span className="text-muted-foreground leading-snug">{feat}</span>
-                          </div>
-                        ))}
-                      </CardContent>
-
-                      {/* 操作按钮 */}
-                      <div className="p-3 pt-0">
-                        {isCurrent ? (
-                          <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => {}} disabled>
-                            <Check className="w-3 h-3 mr-1" />使用中
-                          </Button>
-                        ) : plan.price_month === 0 ? (
-                          <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={() => {}} disabled>免费使用</Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            className={`w-full h-8 text-xs bg-gradient-to-r border-0 text-white ${
-                              plan.id === 'enterprise'
-                                ? 'from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600'
-                                : plan.id === 'pro'
-                                  ? 'from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700'
-                                  : 'from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700'
-                            }`}
-                            onClick={() => handleUpgrade(plan.id)}
-                          >
-                            <Shield className="w-3 h-3 mr-1" />立即升级
-                          </Button>
-                        )}
-                      </div>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* 功能对比表 */}
-            {plans.length > 0 && (
-              <Card className="mt-5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />功能详细对比
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="text-left px-4 py-3 font-medium text-muted-foreground w-32 whitespace-nowrap">功能</th>
-                          {plans.map(p => (
-                            <th key={p.id} className="px-3 py-3 text-center font-semibold whitespace-nowrap">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${PLAN_META[p.id]?.badge ?? ''}`}>
-                                {p.name}
-                              </span>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          { label: '资源生成', values: ['10次/月', '50次/月', '200次/月', '无限次'] },
-                          { label: '学习路径', values: ['基础', '个性化', '高级AI', '专属顾问'] },
-                          { label: '答疑中心', values: ['×', '✓', 'AI深度', '优先'] },
-                          { label: '工具箱',   values: ['部分', '部分', '全部', '全部'] },
-                          { label: '团队协作', values: ['×', '×', '×', '✓'] },
-                          { label: '数据导出', values: ['×', '×', '×', '✓'] },
-                          { label: '客服支持', values: ['社区', '工单', '优先', '专属'] },
-                        ].map((row, ri) => (
-                          <tr key={ri} className={`border-b border-border last:border-0 ${ri % 2 === 0 ? 'bg-muted/20' : ''}`}>
-                            <td className="px-4 py-2.5 font-medium whitespace-nowrap">{row.label}</td>
-                            {row.values.map((v, vi) => (
-                              <td key={vi} className="px-3 py-2.5 text-center whitespace-nowrap">
-                                <span className={v === '×' ? 'text-muted-foreground/40' : v === '✓' ? 'text-emerald-500' : 'text-foreground text-xs'}>
-                                  {v}
-                                </span>
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <PlansTabContent plans={plans} currentPlanId={currentPlanId} upgradePlan={handleUpgrade} />
           </TabsContent>
         </Tabs>
+        )}
       </div>
     </AppLayout>
+  );
+}
+
+// ─── 套餐内容子组件（plansOnly时直接渲染，无需 TabsContent 包裹） ──────
+function PlansTabContent({
+  plans, currentPlanId, upgradePlan,
+}: {
+  plans: Plan[];
+  currentPlanId: string;
+  upgradePlan: (planId: string) => void;
+}) {
+  const handleUpgrade = (planId: string) => {
+    if (planId === currentPlanId) return;
+    upgradePlan(planId);
+  };
+  const defaultPlans: Plan[] = [
+    { id: 'free',       name: '免费版', price_month: 0,  price_year: 0,   features: ['10次/月资源生成', '基础学习路径', '社区支持'], sort_order: 1 },
+    { id: 'basic',      name: '基础版', price_month: 19, price_year: 168, features: ['50次/月资源生成', '个性化路径', '答疑中心', '工单支持'], sort_order: 2 },
+    { id: 'pro',        name: '高级版', price_month: 49, price_year: 428, features: ['200次/月资源生成', '高级AI路径', 'AI深度答疑', '全部工具', '优先支持'], sort_order: 3 },
+    { id: 'enterprise', name: '专业版', price_month: 99, price_year: 828, features: ['无限资源生成', '专属顾问', '优先答疑', '全部工具', '团队协作', '数据导出', '专属客服'], sort_order: 4 },
+  ];
+  const displayPlans = plans.length > 0 ? plans : defaultPlans;
+  return (
+    <div className="space-y-5">
+      {/* banner */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 p-6 text-white shadow-lg">
+        <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/10 pointer-events-none" />
+        <div className="absolute right-4 bottom-0 w-24 h-24 rounded-full bg-white/5 pointer-events-none" />
+        <div className="relative">
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium mb-3">
+            <Crown className="w-3.5 h-3.5" />解锁更多学习特权
+          </div>
+          <h2 className="text-2xl font-bold mb-1 text-balance">选择最适合你的套餐</h2>
+          <p className="text-white/75 text-sm">年付更优惠 · 随时可取消 · 7天无理由退款</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {displayPlans.map((plan, i) => {
+          const meta = PLAN_META[plan.id] ?? PLAN_META.free;
+          const isCurrent = plan.id === currentPlanId;
+          const PlanIcon = meta.icon;
+          return (
+            <motion.div key={plan.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }} className="h-full">
+              <Card className={`h-full flex flex-col relative overflow-hidden transition-all duration-200 ${isCurrent ? 'ring-2 ring-primary shadow-lg shadow-primary/10' : 'hover:shadow-md hover:-translate-y-0.5'}`}>
+                {isCurrent && <div className="absolute top-3 right-3 z-10"><Badge className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5">当前</Badge></div>}
+                {plan.id === 'pro' && !isCurrent && <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-500 to-purple-500" />}
+                <div className={`p-4 bg-gradient-to-br ${meta.gradient}`}>
+                  <div className={`w-9 h-9 rounded-xl ${meta.badge} flex items-center justify-center mb-2.5`}><PlanIcon className="w-4 h-4" /></div>
+                  <p className="font-bold text-sm mb-1.5">{plan.name}</p>
+                  {plan.price_month === 0 ? <p className="text-xl font-black">免费</p> : (
+                    <div>
+                      <p className="text-xl font-black">¥{plan.price_month}<span className="text-xs font-normal text-muted-foreground"> /月</span></p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">年付 ¥{plan.price_year}</p>
+                    </div>
+                  )}
+                </div>
+                <Separator />
+                <CardContent className="flex-1 p-3 space-y-1.5">
+                  {plan.features.map((feat, fi) => (
+                    <div key={fi} className="flex items-start gap-1.5 text-xs">
+                      <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground leading-snug">{feat}</span>
+                    </div>
+                  ))}
+                </CardContent>
+                <div className="p-3 pt-0">
+                  {isCurrent ? (
+                    <Button variant="outline" size="sm" className="w-full h-8 text-xs" disabled onClick={() => {}}><Check className="w-3 h-3 mr-1" />使用中</Button>
+                  ) : plan.price_month === 0 ? (
+                    <Button variant="outline" size="sm" className="w-full h-8 text-xs" disabled onClick={() => {}}>免费使用</Button>
+                  ) : (
+                    <Button size="sm" className={`w-full h-8 text-xs bg-gradient-to-r border-0 text-white ${plan.id === 'enterprise' ? 'from-amber-400 to-orange-500' : plan.id === 'pro' ? 'from-violet-500 to-purple-600' : 'from-sky-500 to-blue-600'}`} onClick={() => handleUpgrade(plan.id)}>
+                      <Shield className="w-3 h-3 mr-1" />立即升级
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

@@ -1177,8 +1177,8 @@ export default function LandingPage() {
                   { label: '智能答疑', href: '/tutoring' },
                   { label: '学习路径', href: '/learning-path' },
                   { label: '数据报告', href: '/report' },
-                  { label: '知识图谱', href: '/knowledge-graph' },
-                  { label: '竞争战略', href: '/strategy' },
+                  { label: '学习社群', href: '/community' },
+                  { label: '练习评测', href: '/evaluation' },
                 ].map(link => (
                   <li key={link.label}>
                     <Link
@@ -1209,12 +1209,7 @@ export default function LandingPage() {
                   <span>中国 · 互联网教育</span>
                 </li>
               </ul>
-              {/* 快速行动 */}
-              <div className="mt-6">
-                <Button size="sm" asChild className="h-8 text-xs px-4">
-                  <Link to="/login"><Sparkles className="w-3.5 h-3.5 mr-1.5" />免费注册</Link>
-                </Button>
-              </div>
+
             </div>
           </div>
 

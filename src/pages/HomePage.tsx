@@ -277,6 +277,22 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* 画像引导 */}
+        {user && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="rounded-lg p-2 bg-primary/10 text-primary shrink-0"><Brain className="w-5 h-5" /></div>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm text-balance">构建学习画像</p>
+                  <p className="text-xs text-muted-foreground text-pretty">通过对话了解你的学习特征，获得个性化推荐</p>
+                </div>
+              </div>
+              <Button asChild size="sm" className="shrink-0"><Link to="/portrait">开始构建</Link></Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 快捷操作 */}
         <div>
           <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
@@ -302,21 +318,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 画像引导 */}
-        {user && (
-          <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="p-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="rounded-lg p-2 bg-primary/10 text-primary shrink-0"><Brain className="w-5 h-5" /></div>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm text-balance">构建学习画像</p>
-                  <p className="text-xs text-muted-foreground text-pretty">通过对话了解你的学习特征，获得个性化推荐</p>
-                </div>
-              </div>
-              <Button asChild size="sm" className="shrink-0"><Link to="/portrait">开始构建</Link></Button>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </AppLayout>
   );

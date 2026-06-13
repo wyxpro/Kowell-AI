@@ -198,24 +198,50 @@ export default function CommunityPage() {
 
         {/* 圈子视图 */}
         {view === 'circles' && (
-          <div className="space-y-4">
-            {/* 热门圈子横幅 */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/80 to-emerald-500 p-5 text-white">
-              <div className="relative z-10">
-                <p className="text-xs text-white/70 mb-1">探索话题圈子</p>
-                <h2 className="text-lg font-bold">找到志同道合的学习伙伴</h2>
-                <p className="text-white/80 text-sm mt-1">加入圈子，分享学习心得与讨论</p>
-              </div>
-              <div className="absolute -right-4 -top-4 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
+          <div className="space-y-5">
+            {/* ── 顶部数据统计 ── */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: '社群成员', value: '8.2k+', icon: Users, color: 'text-primary', bg: 'bg-primary/10', trend: '+12%' },
+                { label: '今日帖子', value: '326', icon: MessageSquare, color: 'text-sky-500', bg: 'bg-sky-100 dark:bg-sky-900/30', trend: '+8%' },
+                { label: '活跃圈子', value: '7', icon: Hash, color: 'text-violet-500', bg: 'bg-violet-100 dark:bg-violet-900/30', trend: '全部' },
+                { label: '互动总量', value: '12.4k', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-100 dark:bg-rose-900/30', trend: '+24%' },
+              ].map((stat, i) => (
+                <motion.div key={stat.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                  <Card className="h-full hover:shadow-md transition-all duration-200">
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
+                        <stat.icon className={`w-4.5 h-4.5 ${stat.color}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-base font-bold leading-none">{stat.value}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{stat.label}</p>
+                      </div>
+                      <span className="ml-auto text-[10px] font-medium text-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full shrink-0">{stat.trend}</span>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
 
-            {/* 已加入的圈子 */}
+            {/* ── 顶部 Banner ── */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/80 via-emerald-500 to-teal-500 p-5 text-white shadow-lg">
+              <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
+              <div className="absolute right-8 bottom-0 w-20 h-20 rounded-full bg-white/5 pointer-events-none" />
+              <div className="relative">
+                <p className="text-xs text-white/70 mb-1 font-medium">🎯 探索话题圈子</p>
+                <h2 className="text-lg font-bold text-balance">找到志同道合的学习伙伴</h2>
+                <p className="text-white/80 text-sm mt-1">加入圈子，分享学习心得与讨论</p>
+              </div>
+            </div>
+
+            {/* ── 我的圈子 ── */}
             {joinedCircles.filter(c => c !== 'all').length > 0 && (
               <div>
-                <p className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                <p className="text-sm font-semibold text-muted-foreground mb-2.5 flex items-center gap-1.5">
                   <Hash className="w-3.5 h-3.5" />我的圈子
                 </p>
-                <div className="flex gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                   {joinedCircles.filter(c => c !== 'all').map(cid => {
                     const circle = CIRCLES.find(c => c.id === cid);
                     if (!circle) return null;
@@ -240,11 +266,14 @@ export default function CommunityPage() {
               </div>
             )}
 
-            {/* 全部圈子 */}
+            {/* ── 发现圈子 ── */}
             <div>
-              <p className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
-                <TrendingUp className="w-3.5 h-3.5" />发现圈子
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5" />发现圈子
+                </p>
+                <span className="text-xs text-muted-foreground">{CIRCLES.filter(c => c.id !== 'all').length} 个圈子</span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {CIRCLES.filter(c => c.id !== 'all').map((circle, idx) => {
                   const isJoined = joinedCircles.includes(circle.id);
@@ -255,41 +284,44 @@ export default function CommunityPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.04 }}
                     >
-                      <Card className="hover:shadow-md transition-all duration-200 hover:border-primary/30">
+                      <Card className="hover:shadow-md transition-all duration-200 hover:border-primary/30 h-full">
                         <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className={`w-11 h-11 rounded-xl ${circle.bg} flex items-center justify-center shrink-0`}>
-                              <circle.icon className={`w-5 h-5 ${circle.color}`} />
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className={`w-12 h-12 rounded-2xl ${circle.bg} flex items-center justify-center shrink-0 shadow-sm`}>
+                              <circle.icon className={`w-6 h-6 ${circle.color}`} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <h3 className="text-sm font-semibold">{circle.name}</h3>
                                 {circle.hot && (
                                   <Badge className="text-[9px] px-1.5 py-0 bg-red-500/10 text-red-500 border-0 h-4">
                                     <Flame className="w-2.5 h-2.5 mr-0.5" />热门
                                   </Badge>
                                 )}
+                                {isJoined && (
+                                  <Badge className="text-[9px] px-1.5 py-0 bg-emerald-500/10 text-emerald-600 border-0 h-4">已加入</Badge>
+                                )}
                               </div>
-                              <p className="text-xs text-muted-foreground">{circle.members} 名成员</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{circle.members} 名成员</p>
                             </div>
                           </div>
-                          <div className="flex gap-2 mt-3">
+                          <div className="flex gap-2">
                             <Button
                               size="sm"
                               variant={isJoined ? 'outline' : 'default'}
-                              className="flex-1 h-7 text-xs"
+                              className="flex-1 h-8 text-xs gap-1"
                               onClick={() => enterCircle(circle.id)}
                             >
                               进入讨论
-                              <ChevronRight className="w-3 h-3 ml-0.5" />
+                              <ChevronRight className="w-3 h-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 text-xs shrink-0"
+                              className={`h-8 text-xs shrink-0 px-3 transition-colors ${isJoined ? 'border-emerald-300 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : ''}`}
                               onClick={() => toggleJoinCircle(circle.id)}
                             >
-                              {isJoined ? '已加入' : '加入'}
+                              {isJoined ? '已加入' : '+ 加入'}
                             </Button>
                           </div>
                         </CardContent>
@@ -300,23 +332,32 @@ export default function CommunityPage() {
               </div>
             </div>
 
-            {/* 全部帖子入口 */}
-            <button
+            {/* ── 广场·全部 入口 ── */}
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => { setActiveCircle('all'); setView('feed'); }}
-              className="w-full flex items-center justify-between p-4 rounded-xl border border-border bg-card hover:bg-muted/50 hover:border-primary/30 transition-all"
+              className="w-full flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-muted/80 to-muted/40 border border-border hover:border-primary/30 hover:shadow-md transition-all"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Globe className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-emerald-400/20 flex items-center justify-center border border-primary/20">
+                  <Globe className="w-6 h-6 text-primary" />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold">广场·全部</p>
-                  <p className="text-xs text-muted-foreground">浏览所有话题和帖子</p>
+                  <p className="text-sm font-bold">广场 · 全部</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">浏览所有话题和帖子</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] text-emerald-500 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full">{posts.length} 篇帖子</span>
+                    <span className="text-[10px] text-sky-500 font-medium bg-sky-50 dark:bg-sky-900/30 px-1.5 py-0.5 rounded-full">实时更新</span>
+                  </div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </button>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <span className="text-xs hidden sm:inline">进入广场</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </motion.button>
           </div>
         )}
 

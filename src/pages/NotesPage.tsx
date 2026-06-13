@@ -15,6 +15,7 @@ import {
   BookText, Plus, Search, Trash2, Tag, X, Save, StickyNote, Clock,
   Hash, Bold, Italic, List, Code, Heading2, AlignLeft, CheckCircle2,
   Circle, BookMarked, Brain, Target, ChevronDown, ChevronUp, Lightbulb, RefreshCw,
+  ArrowLeft,
 } from 'lucide-react';
 import type { Note, WrongBookEntry } from '@/types/types';
 
@@ -262,15 +263,17 @@ export default function NotesPage() {
     pending: wrongEntries.filter(e => !e.mastered).length,
   };
 
+  const [mobilePane, setMobilePane] = useState<'list' | 'editor'>('list');
+
   return (
     <AppLayout>
       <div className="h-[calc(100vh-120px)] flex flex-col gap-0">
         {/* 顶栏 */}
-        <div className="flex items-center justify-between mb-4 shrink-0">
-          <h1 className="text-xl font-bold flex items-center gap-2">
+        <div className="flex items-center justify-between mb-3 md:mb-4 shrink-0">
+          <h1 className="text-lg md:text-xl font-bold flex items-center gap-2">
             <BookText className="w-5 h-5 text-primary" />我的笔记
           </h1>
-          <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'notes' | 'wrong')}>
+          <Tabs value={activeTab} onValueChange={v => { setActiveTab(v as 'notes' | 'wrong'); setMobilePane('list'); }}>
             <TabsList className="h-8">
               <TabsTrigger value="notes" className="text-xs gap-1.5 px-3">
                 <StickyNote className="w-3.5 h-3.5" />笔记
@@ -288,9 +291,10 @@ export default function NotesPage() {
         <Tabs value={activeTab} className="flex-1 min-h-0">
           {/* ─── 笔记 Tab ─────────────────────────────────────────── */}
           <TabsContent value="notes" className="h-full mt-0">
+            {/* 桌面：两列 | 移动：列表→编辑 切换 */}
             <div className="flex gap-4 h-full">
               {/* 左栏：笔记列表 */}
-              <div className="w-64 shrink-0 flex flex-col gap-2 h-full">
+              <div className={`flex flex-col gap-2 h-full ${mobilePane === 'editor' ? 'hidden md:flex' : 'flex w-full md:w-64'} md:w-64 md:shrink-0`}>
                 <div className="flex gap-1.5">
                   <div className="relative flex-1 min-w-0">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -329,7 +333,7 @@ export default function NotesPage() {
                       <AnimatePresence>
                         {filtered.map((note, i) => (
                           <motion.div key={note.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
-                            <button type="button" onClick={() => selectNote(note)}
+                            <button type="button" onClick={() => { selectNote(note); setMobilePane('editor'); }}
                               className={`w-full text-left p-3 rounded-xl border transition-all ${selected?.id === note.id ? 'bg-primary/5 border-primary/40 shadow-sm' : 'bg-card border-border hover:border-primary/20 hover:bg-muted/30'}`}>
                               <div className="font-medium text-sm truncate">{note.title || '无标题'}</div>
                               <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 text-pretty">{note.content || '空笔记...'}</p>
@@ -352,21 +356,28 @@ export default function NotesPage() {
               </div>
 
               {/* 右栏：专业编辑器 */}
-              <div className="flex-1 min-w-0 h-full">
+              <div className={`flex-1 min-w-0 h-full ${mobilePane === 'list' ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
                 {selected ? (
                   <Card className="h-full flex flex-col overflow-hidden">
+                    {/* 移动端返回按钮 */}
+                    <div className="md:hidden flex items-center gap-2 px-4 pt-3 pb-0 shrink-0">
+                      <button type="button" onClick={() => setMobilePane('list')}
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                        <ArrowLeft className="w-3.5 h-3.5" />返回列表
+                      </button>
+                    </div>
                     {/* 标题行 */}
-                    <div className="px-5 pt-4 pb-3 border-b border-border flex items-center gap-3 shrink-0">
+                    <div className="px-4 md:px-5 pt-3 md:pt-4 pb-3 border-b border-border flex items-center gap-3 shrink-0">
                       <Input
-                        className="text-lg font-bold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent flex-1 min-w-0"
+                        className="text-base md:text-lg font-bold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent flex-1 min-w-0"
                         value={editTitle}
                         onChange={e => setEditTitle(e.target.value)}
                         placeholder="笔记标题..."
                       />
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
                         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
                           onClick={() => setPreviewMode(v => !v)}>
-                          <AlignLeft className="w-3.5 h-3.5" />{previewMode ? '编辑' : '预览'}
+                          <AlignLeft className="w-3.5 h-3.5" /><span className="hidden sm:inline">{previewMode ? '编辑' : '预览'}</span>
                         </Button>
                         <Button size="sm" onClick={saveNote} disabled={saving} className="h-7 px-3 text-xs gap-1">
                           <Save className="w-3.5 h-3.5" />{saving ? '保存中...' : '保存'}
@@ -379,7 +390,7 @@ export default function NotesPage() {
                     </div>
 
                     {/* 标签行 */}
-                    <div className="px-5 py-2 border-b border-border flex items-center gap-2 flex-wrap shrink-0 bg-muted/20">
+                    <div className="px-4 md:px-5 py-2 border-b border-border flex items-center gap-2 flex-wrap shrink-0 bg-muted/20">
                       <Tag className="w-3 h-3 text-muted-foreground shrink-0" />
                       {editTags.map(t => (
                         <button key={t} type="button" onClick={() => removeTag(t)}
@@ -463,20 +474,20 @@ export default function NotesPage() {
           <TabsContent value="wrong" className="h-full mt-0">
             <div className="flex flex-col h-full gap-3">
               {/* 统计卡片 */}
-              <div className="grid grid-cols-3 gap-3 shrink-0">
+              <div className="grid grid-cols-3 gap-2 md:gap-3 shrink-0">
                 {[
                   { label: '全部错题', val: wrongStats.total, icon: BookMarked, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20' },
                   { label: '待复习', val: wrongStats.pending, icon: Target, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' },
                   { label: '已掌握', val: wrongStats.mastered, icon: Brain, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
                 ].map(s => (
-                  <Card key={s.label} className="p-3">
+                  <Card key={s.label} className="p-2.5 md:p-3">
                     <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.bg}`}>
-                        <s.icon className={`w-4 h-4 ${s.color}`} />
+                      <div className={`w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center shrink-0 ${s.bg}`}>
+                        <s.icon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${s.color}`} />
                       </div>
                       <div>
-                        <p className="text-lg font-bold">{s.val}</p>
-                        <p className="text-[11px] text-muted-foreground">{s.label}</p>
+                        <p className="text-base md:text-lg font-bold">{s.val}</p>
+                        <p className="text-[10px] md:text-[11px] text-muted-foreground">{s.label}</p>
                       </div>
                     </div>
                   </Card>
@@ -484,21 +495,23 @@ export default function NotesPage() {
               </div>
 
               {/* 工具栏 */}
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
                 <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                   <Input className="pl-8 h-8 text-xs" placeholder="搜索错题..." value={wrongSearch} onChange={e => setWrongSearch(e.target.value)} />
                 </div>
-                <Tabs value={wrongTab} onValueChange={v => setWrongTab(v as typeof wrongTab)}>
-                  <TabsList className="h-8">
-                    <TabsTrigger value="all" className="text-xs px-2.5">全部</TabsTrigger>
-                    <TabsTrigger value="pending" className="text-xs px-2.5">待复习</TabsTrigger>
-                    <TabsTrigger value="mastered" className="text-xs px-2.5">已掌握</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <Button size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={loadWrongBook}>
-                  <RefreshCw className="w-3.5 h-3.5" />刷新
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Tabs value={wrongTab} onValueChange={v => setWrongTab(v as typeof wrongTab)} className="flex-1 sm:flex-none">
+                    <TabsList className="h-8 w-full sm:w-auto">
+                      <TabsTrigger value="all" className="text-xs px-2 flex-1 sm:flex-none">全部</TabsTrigger>
+                      <TabsTrigger value="pending" className="text-xs px-2 flex-1 sm:flex-none">待复习</TabsTrigger>
+                      <TabsTrigger value="mastered" className="text-xs px-2 flex-1 sm:flex-none">已掌握</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  <Button size="sm" variant="outline" className="h-8 gap-1 text-xs shrink-0" onClick={loadWrongBook}>
+                    <RefreshCw className="w-3.5 h-3.5" /><span className="hidden sm:inline">刷新</span>
+                  </Button>
+                </div>
               </div>
 
               {/* 错题列表 */}

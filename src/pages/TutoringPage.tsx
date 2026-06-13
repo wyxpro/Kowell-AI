@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import AIChatPanel, { type ChatMsg } from '@/components/ai/AIChatPanel';
 import DigitalTeacher from '@/components/tutoring/DigitalTeacher';
 import VoiceCallModal from '@/components/voice/VoiceCallModal';
+import PhotoSearchModal from '@/components/tutoring/PhotoSearchModal';
 import { toast } from 'sonner';
 import {
   MessageCircle, Bot, Sparkles, BookOpen, Lightbulb, Download,
-  Brain, Zap, FileText, Phone,
+  Brain, Zap, FileText, Phone, Camera,
 } from 'lucide-react';
 
 const suggestedQuestions = [
@@ -49,6 +50,7 @@ export default function TutoringPage() {
   const [teacherCollapsed, setTeacherCollapsed] = useState(false);
   const [lastAIMsg, setLastAIMsg] = useState('');
   const [voiceCallOpen, setVoiceCallOpen] = useState(false);
+  const [photoSearchOpen, setPhotoSearchOpen] = useState(false);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -108,7 +110,7 @@ export default function TutoringPage() {
           <h1 className="text-xl font-bold flex items-center gap-2">
             <MessageCircle className="w-5 h-5 text-primary" />
             智能答疑
-            {/* 语音通话按钮 — 紧靠"智能答疑"文字右边 */}
+          {/* 语音通话 + 拍照搜题按钮 */}
             <Button
               size="sm"
               onClick={() => setVoiceCallOpen(true)}
@@ -116,6 +118,14 @@ export default function TutoringPage() {
             >
               <Phone className="w-3.5 h-3.5" />
               语音通话
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setPhotoSearchOpen(true)}
+              className="gap-1.5 rounded-full bg-gradient-to-r from-orange-400 to-rose-500 hover:from-orange-500 hover:to-rose-600 text-white border-0 shadow-md shadow-orange-400/20 ml-1"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              拍照搜题
             </Button>
           </h1>
           <div className="flex items-center gap-2 flex-wrap">
@@ -148,7 +158,7 @@ export default function TutoringPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* 左侧：数字人老师面板 */}
           <div className={`lg:col-span-1 ${teacherCollapsed ? 'lg:col-span-1' : ''}`}>
-            <Card className="h-[calc(100vh-280px)] min-h-[480px] overflow-hidden">
+            <Card className="h-[calc(100vh-240px)] min-h-[520px] overflow-hidden">
               <CardContent className="p-3 h-full">
                 <DigitalTeacher
                   lastAIMessage={lastAIMsg}
@@ -162,7 +172,7 @@ export default function TutoringPage() {
 
           {/* 中间：对话区域 */}
           <div className={teacherCollapsed ? 'lg:col-span-3' : 'lg:col-span-2'}>
-            <Card className="h-[calc(100vh-280px)] min-h-[480px] flex flex-col">
+            <Card className="h-[calc(100vh-240px)] min-h-[520px] flex flex-col">
               <CardHeader className="pb-3 shrink-0">
                 <CardTitle className="text-base flex items-center gap-2">
                   {socraticMode
@@ -256,6 +266,7 @@ export default function TutoringPage() {
         </div>
       </div>
       <VoiceCallModal open={voiceCallOpen} onClose={() => setVoiceCallOpen(false)} />
+      <PhotoSearchModal open={photoSearchOpen} onClose={() => setPhotoSearchOpen(false)} />
     </AppLayout>
   );
 }

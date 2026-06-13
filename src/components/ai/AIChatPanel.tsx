@@ -20,8 +20,12 @@ function MarkdownContent({ content, isUser }: { content: string; isUser: boolean
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    // H1 / H2 / H3
-    if (/^### /.test(line)) {
+    // H1 / H2 / H3 / H4 / H5
+    if (/^##### /.test(line)) {
+      elements.push(<p key={i} className="text-xs font-semibold mt-2 mb-0.5 text-foreground">{renderInline(line.replace(/^#{1,5} /, ''))}</p>);
+    } else if (/^#### /.test(line)) {
+      elements.push(<p key={i} className="text-xs font-bold mt-2 mb-1 text-foreground">{renderInline(line.replace(/^#### /, ''))}</p>);
+    } else if (/^### /.test(line)) {
       elements.push(<h3 key={i} className="text-sm font-bold mt-3 mb-1 text-foreground">{renderInline(line.replace(/^### /, ''))}</h3>);
     } else if (/^## /.test(line)) {
       elements.push(<h2 key={i} className="text-sm font-bold mt-3 mb-1.5 text-foreground border-b border-border/40 pb-1">{renderInline(line.replace(/^## /, ''))}</h2>);

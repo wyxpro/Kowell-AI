@@ -433,6 +433,9 @@ export default function LearningPathPage() {
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
   }, [draggingId]);
 
+  /* 画板在移动端折叠为列表视图 */
+  const [mobileListView, setMobileListView] = useState(false);
+
   const completedCount = path?.stages.filter(s => s.completed).length ?? 0;
 
   if (loading) return (
@@ -446,14 +449,14 @@ export default function LearningPathPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-5 h-full">
+      <div className="flex flex-col gap-4 md:gap-5 h-full">
 
         {/* ══ 资源类型选择器 ══ */}
         <div className="shrink-0">
           <div className="flex items-center justify-between mb-3 gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <Route className="w-5 h-5 text-primary shrink-0" />
-              <h1 className="text-xl font-bold">学习路径</h1>
+              <h1 className="text-lg md:text-xl font-bold truncate">学习路径</h1>
               {path && (
                 <div className="hidden md:flex items-center gap-2">
                   <Badge variant="secondary" className="gap-1">{completedCount}/{path.stages.length} 阶段</Badge>
@@ -461,10 +464,21 @@ export default function LearningPathPage() {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {/* 缩放 */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* 移动端：列表 / 画板 切换 */}
               {path && (
-                <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setMobileListView(v => !v)}
+                  className="md:hidden flex items-center gap-1 px-2 py-1 rounded-lg border border-border text-xs text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  {mobileListView ? <GitBranch className="w-3.5 h-3.5" /> : <GripVertical className="w-3.5 h-3.5" />}
+                  {mobileListView ? '画板' : '列表'}
+                </button>
+              )}
+              {/* 桌面端缩放控制 */}
+              {path && (
+                <div className="hidden md:flex items-center gap-1 bg-muted rounded-lg p-1">
                   <button type="button" onClick={() => setZoom(z => Math.max(0.6, +(z - 0.1).toFixed(1)))}
                     className="w-6 h-6 flex items-center justify-center rounded hover:bg-background transition-colors text-muted-foreground hover:text-foreground">
                     <ZoomOut className="w-3.5 h-3.5" />
@@ -490,20 +504,21 @@ export default function LearningPathPage() {
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               )}
-              <Button size="sm" variant="outline" onClick={fetchAIRecommendation} disabled={aiLoading} className="gap-1.5">
+              <Button size="sm" variant="outline" onClick={fetchAIRecommendation} disabled={aiLoading} className="gap-1.5 text-xs">
                 {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
-                AI 推荐
+                <span className="hidden sm:inline">AI 推荐</span>
+                <span className="sm:hidden">AI</span>
               </Button>
             </div>
           </div>
 
           {/* 资源类型按钮组 */}
-          <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+          <div className="bg-card border border-border rounded-2xl p-3 md:p-4 space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-primary" />
-              选择资源类型，生成对应个性化学习路径
+              选择资源类型，生成个性化学习路径
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-7 gap-2">
               {RESOURCE_TYPES.map(rt => {
                 const isSelected = selectedResource === rt.id;
                 return (
@@ -515,28 +530,24 @@ export default function LearningPathPage() {
                       setSelectedResource(rt.id as ResourceId);
                       generateByResource(rt.id as ResourceId);
                     }}
-                    className={`relative group flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200
+                    className={`relative group flex flex-col items-center gap-1 md:gap-1.5 p-2 md:p-3 rounded-xl border-2 transition-all duration-200
                       ${isSelected
                         ? `${rt.border} ${rt.bg} scale-[1.03] shadow-sm`
                         : 'border-border hover:border-border/80 hover:bg-muted/50'}
                       ${generating ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:scale-[1.02]'}
                     `}
                   >
-                    {/* 即将上线标签 */}
                     {!rt.available && (
-                      <span className="absolute -top-1.5 -right-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border whitespace-nowrap">
+                      <span className="absolute -top-1.5 -right-1 text-[8px] font-bold px-1 py-0.5 rounded-full bg-muted text-muted-foreground border border-border whitespace-nowrap hidden sm:block">
                         即将上线
                       </span>
                     )}
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
+                    <div className={`w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-colors
                       ${isSelected ? `${rt.bg}` : 'bg-muted group-hover:bg-muted/80'}`}>
-                      <rt.icon className={`w-4 h-4 ${isSelected ? rt.color : 'text-muted-foreground'}`} />
+                      <rt.icon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isSelected ? rt.color : 'text-muted-foreground'}`} />
                     </div>
-                    <span className={`text-[11px] font-medium text-center leading-tight ${isSelected ? rt.color : 'text-muted-foreground'}`}>
+                    <span className={`text-[10px] md:text-[11px] font-medium text-center leading-tight ${isSelected ? rt.color : 'text-muted-foreground'}`}>
                       {rt.label}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground/70 text-center leading-tight hidden lg:block">
-                      {rt.sub}
                     </span>
                     {generating && isSelected && (
                       <Loader2 className="w-3 h-3 animate-spin text-primary absolute top-1 left-1" />
@@ -599,17 +610,60 @@ export default function LearningPathPage() {
         {/* ══ 主画板 ══ */}
         {!path ? (
           <div className="flex-1 flex items-center justify-center rounded-2xl border border-dashed border-border">
-            <div className="text-center p-10">
-              <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-5">
-                <Route className="w-10 h-10 text-muted-foreground/30" />
+            <div className="text-center p-8 md:p-10">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4 md:mb-5">
+                <Route className="w-8 h-8 md:w-10 md:h-10 text-muted-foreground/30" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">选择上方资源类型，一键生成学习路径</h3>
+              <h3 className="text-base md:text-lg font-semibold mb-2 text-balance">选择上方资源类型，一键生成学习路径</h3>
               <p className="text-sm text-muted-foreground max-w-sm text-pretty">
                 系统将结合你的学习画像与所选资源类型，为你规划科学的个性化学习步骤
               </p>
             </div>
           </div>
         ) : (
+          /* 移动端：列表视图 / 桌面端：画板视图 */
+          mobileListView ? (
+            /* ── 移动端列表模式 ── */
+            <div className="flex flex-col gap-3 md:hidden">
+              {path.stages.map((stage, index) => {
+                const theme = STAGE_THEMES[index % STAGE_THEMES.length];
+                const isCurrent = index === path.current_stage && !stage.completed;
+                return (
+                  <motion.div key={stage.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
+                    <div className={`rounded-2xl border-2 p-4 transition-all ${
+                      stage.completed ? 'border-primary/30 bg-primary/5' : isCurrent ? 'border-primary/50 bg-primary/5 shadow-sm' : 'border-border bg-card'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${theme.from} ${theme.to} flex items-center justify-center shrink-0 shadow-sm`}>
+                          {stage.completed
+                            ? <CheckCircle className="w-4 h-4 text-white" />
+                            : stage.completed === false && isCurrent
+                              ? <Target className="w-4 h-4 text-white" />
+                              : <Lock className="w-4 h-4 text-white/70" />
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground font-mono">#{index + 1}</span>
+                            {isCurrent && <Badge className="text-[9px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-0">当前</Badge>}
+                            {stage.completed && <Badge className="text-[9px] px-1.5 py-0 h-4 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border-0">已完成</Badge>}
+                          </div>
+                          <p className="text-sm font-semibold mt-0.5 text-balance">{stage.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 text-pretty line-clamp-2">{stage.description}</p>
+                        </div>
+                      </div>
+                      {!stage.completed && (
+                        <Button size="sm" className="w-full mt-3 h-8 text-xs gap-1.5" onClick={() => completeStage(stage.id)} disabled={completingId === stage.id}>
+                          {completingId === stage.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                          标记完成
+                        </Button>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
           /* 画板区域：左工具栏 + 主画布 */
           <div className="flex gap-0 rounded-2xl border border-border overflow-hidden" style={{ minHeight: 420 }}>
 
@@ -803,6 +857,7 @@ export default function LearningPathPage() {
               </div>
             </div>
           </div>
+          )
         )}
 
         {/* ══ 庆祝弹窗 ══ */}
