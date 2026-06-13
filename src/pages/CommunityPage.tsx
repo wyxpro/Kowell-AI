@@ -37,13 +37,13 @@ interface Reply {
 
 // 话题圈子定义
 const CIRCLES = [
-  { id: 'all', name: '全部', icon: Globe, color: 'text-primary', bg: 'bg-primary/10', members: '8.2k', hot: true },
-  { id: 'cs', name: '计算机圈', icon: Code2, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20', members: '3.1k', hot: true },
-  { id: 'ai', name: 'AI学习圈', icon: Brain, color: 'text-violet-500', bg: 'bg-violet-50 dark:bg-violet-900/20', members: '2.4k', hot: true },
-  { id: 'math', name: '数学圈', icon: Calculator, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', members: '1.8k', hot: false },
-  { id: 'exam', name: '考研备考圈', icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20', members: '2.9k', hot: true },
-  { id: 'science', name: '理工科圈', icon: Microscope, color: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-900/20', members: '1.5k', hot: false },
-  { id: 'arts', name: '文艺圈', icon: Music, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', members: '900', hot: false },
+  { id: 'all', name: '全部', icon: Globe, color: 'text-primary', bg: 'bg-primary/10', members: '8.2k', hot: true, desc: '所有话题帖子汇总' },
+  { id: 'cs', name: '计算机圈', icon: Code2, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20', members: '3.1k', hot: true, desc: '计算机学习交流与资源共享' },
+  { id: 'ai', name: 'AI学习圈', icon: Brain, color: 'text-violet-500', bg: 'bg-violet-50 dark:bg-violet-900/20', members: '2.4k', hot: true, desc: 'AI学习与技术前沿讨论' },
+  { id: 'math', name: '数学圈', icon: Calculator, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', members: '1.8k', hot: false, desc: '数学问题解答与思维拓展' },
+  { id: 'exam', name: '考研备考圈', icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20', members: '2.9k', hot: true, desc: '考研备考经验与资料分享' },
+  { id: 'science', name: '理工科圈', icon: Microscope, color: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-900/20', members: '1.5k', hot: false, desc: '理工科知识交流与实验分享' },
+  { id: 'arts', name: '文艺圈', icon: Music, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', members: '900', hot: false, desc: '文艺创作与灵感交流' },
 ];
 
 const typeOptions = [
@@ -199,7 +199,18 @@ export default function CommunityPage() {
         {/* 圈子视图 */}
         {view === 'circles' && (
           <div className="space-y-5">
-            {/* ── 顶部数据统计 ── */}
+            {/* ── 顶部 Banner ── */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/80 via-emerald-500 to-teal-500 p-5 text-white shadow-lg">
+              <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
+              <div className="absolute right-8 bottom-0 w-20 h-20 rounded-full bg-white/5 pointer-events-none" />
+              <div className="relative">
+                <p className="text-xs text-white/70 mb-1 font-medium">🎯 探索话题圈子</p>
+                <h2 className="text-lg font-bold text-balance">找到志同道合的学习伙伴</h2>
+                <p className="text-white/80 text-sm mt-1">加入圈子，分享学习心得与讨论</p>
+              </div>
+            </div>
+
+            {/* ── 数据统计 ── */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { label: '社群成员', value: '8.2k+', icon: Users, color: 'text-primary', bg: 'bg-primary/10', trend: '+12%' },
@@ -224,59 +235,47 @@ export default function CommunityPage() {
               ))}
             </div>
 
-            {/* ── 顶部 Banner ── */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/80 via-emerald-500 to-teal-500 p-5 text-white shadow-lg">
-              <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
-              <div className="absolute right-8 bottom-0 w-20 h-20 rounded-full bg-white/5 pointer-events-none" />
-              <div className="relative">
-                <p className="text-xs text-white/70 mb-1 font-medium">🎯 探索话题圈子</p>
-                <h2 className="text-lg font-bold text-balance">找到志同道合的学习伙伴</h2>
-                <p className="text-white/80 text-sm mt-1">加入圈子，分享学习心得与讨论</p>
+            {/* ── 推荐圈子（横向） ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1 h-4 rounded-full bg-pink-500" />
+                <p className="text-sm font-semibold">推荐</p>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+                {CIRCLES.filter(c => c.id !== 'all' && c.hot).map(circle => {
+                  const isJoined = joinedCircles.includes(circle.id);
+                  return (
+                    <div key={circle.id} className="shrink-0 flex flex-col items-center text-center w-28">
+                      <div className={`w-12 h-12 rounded-full ${circle.bg} flex items-center justify-center border-2 border-white dark:border-white/10 shadow-md`}>
+                        <circle.icon className={`w-6 h-6 ${circle.color}`} />
+                      </div>
+                      <p className="text-xs font-medium mt-2 truncate w-full">{circle.name}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{circle.members}热度</p>
+                      <Button
+                        size="sm"
+                        className="mt-1.5 h-7 text-xs bg-gradient-to-r from-pink-400 to-rose-400 text-white border-0 hover:from-pink-500 hover:to-rose-500"
+                        onClick={() => toggleJoinCircle(circle.id)}
+                      >
+                        {isJoined ? '已关注' : '关注'}
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* ── 我的圈子 ── */}
-            {joinedCircles.filter(c => c !== 'all').length > 0 && (
-              <div>
-                <p className="text-sm font-semibold text-muted-foreground mb-2.5 flex items-center gap-1.5">
-                  <Hash className="w-3.5 h-3.5" />我的圈子
-                </p>
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                  {joinedCircles.filter(c => c !== 'all').map(cid => {
-                    const circle = CIRCLES.find(c => c.id === cid);
-                    if (!circle) return null;
-                    return (
-                      <button
-                        key={cid}
-                        type="button"
-                        onClick={() => enterCircle(cid)}
-                        className="flex items-center gap-2 shrink-0 bg-card border border-border rounded-xl px-3 py-2 hover:border-primary/40 hover:bg-primary/5 transition-all"
-                      >
-                        <div className={`w-8 h-8 rounded-lg ${circle.bg} flex items-center justify-center`}>
-                          <circle.icon className={`w-4 h-4 ${circle.color}`} />
-                        </div>
-                        <div className="text-left">
-                          <p className="text-xs font-medium">{circle.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{circle.members} 成员</p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* ── 发现圈子 ── */}
+            {/* ── 热门圈子（网格） ── */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5">
-                  <TrendingUp className="w-3.5 h-3.5" />发现圈子
-                </p>
-                <span className="text-xs text-muted-foreground">{CIRCLES.filter(c => c.id !== 'all').length} 个圈子</span>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1 h-4 rounded-full bg-pink-500" />
+                <p className="text-sm font-semibold">热门圈子</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {CIRCLES.filter(c => c.id !== 'all').map((circle, idx) => {
                   const isJoined = joinedCircles.includes(circle.id);
+                  const todayCount = circle.id.length * 7 + 3;
+                  const postCount = circle.id.length * 120 + 80;
+                  const likeCount = circle.id.length * 45 + 20;
                   return (
                     <motion.div
                       key={circle.id}
@@ -284,80 +283,34 @@ export default function CommunityPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.04 }}
                     >
-                      <Card className="hover:shadow-md transition-all duration-200 hover:border-primary/30 h-full">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className={`w-12 h-12 rounded-2xl ${circle.bg} flex items-center justify-center shrink-0 shadow-sm`}>
-                              <circle.icon className={`w-6 h-6 ${circle.color}`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <h3 className="text-sm font-semibold">{circle.name}</h3>
-                                {circle.hot && (
-                                  <Badge className="text-[9px] px-1.5 py-0 bg-red-500/10 text-red-500 border-0 h-4">
-                                    <Flame className="w-2.5 h-2.5 mr-0.5" />热门
-                                  </Badge>
-                                )}
-                                {isJoined && (
-                                  <Badge className="text-[9px] px-1.5 py-0 bg-emerald-500/10 text-emerald-600 border-0 h-4">已加入</Badge>
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-0.5">{circle.members} 名成员</p>
-                            </div>
+                      <div
+                        className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
+                        onClick={() => enterCircle(circle.id)}
+                      >
+                        <div className={`w-12 h-12 rounded-full ${circle.bg} flex items-center justify-center shrink-0`}>
+                          <circle.icon className={`w-6 h-6 ${circle.color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-sm font-semibold">{circle.name}</h3>
+                            <span className="text-[10px] flex items-center gap-0.5 text-muted-foreground">
+                              <MessageSquare className="w-3 h-3" /> 今日: {todayCount}
+                            </span>
+                            {circle.hot && <Flame className="w-4 h-4 text-red-500 shrink-0" />}
                           </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant={isJoined ? 'outline' : 'default'}
-                              className="flex-1 h-8 text-xs gap-1"
-                              onClick={() => enterCircle(circle.id)}
-                            >
-                              进入讨论
-                              <ChevronRight className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className={`h-8 text-xs shrink-0 px-3 transition-colors ${isJoined ? 'border-emerald-300 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : ''}`}
-                              onClick={() => toggleJoinCircle(circle.id)}
-                            >
-                              {isJoined ? '已加入' : '+ 加入'}
-                            </Button>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed text-pretty">{circle.desc}</p>
+                          <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
+                            <span className="flex items-center gap-0.5"><MessageSquare className="w-3 h-3" /> {postCount}</span>
+                            <span className="flex items-center gap-0.5"><Flame className="w-3 h-3" /> {circle.members}</span>
+                            <span className="flex items-center gap-0.5"><Heart className="w-3 h-3" /> {likeCount}</span>
                           </div>
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </div>
                     </motion.div>
                   );
                 })}
               </div>
             </div>
-
-            {/* ── 广场·全部 入口 ── */}
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={() => { setActiveCircle('all'); setView('feed'); }}
-              className="w-full flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-muted/80 to-muted/40 border border-border hover:border-primary/30 hover:shadow-md transition-all"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-emerald-400/20 flex items-center justify-center border border-primary/20">
-                  <Globe className="w-6 h-6 text-primary" />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-bold">广场 · 全部</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">浏览所有话题和帖子</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] text-emerald-500 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full">{posts.length} 篇帖子</span>
-                    <span className="text-[10px] text-sky-500 font-medium bg-sky-50 dark:bg-sky-900/30 px-1.5 py-0.5 rounded-full">实时更新</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <span className="text-xs hidden sm:inline">进入广场</span>
-                <ChevronRight className="w-4 h-4" />
-              </div>
-            </motion.button>
           </div>
         )}
 

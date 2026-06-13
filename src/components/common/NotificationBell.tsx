@@ -87,7 +87,9 @@ export default function NotificationBell() {
           {notifications.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">暂无通知</div>
           ) : (
-            notifications.map(n => (
+            [...notifications]
+              .sort((a, b) => Number(a.is_read) - Number(b.is_read))
+              .map(n => (
               <button
                 key={n.id}
                 type="button"

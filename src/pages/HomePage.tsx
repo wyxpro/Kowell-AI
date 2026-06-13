@@ -258,7 +258,32 @@ export default function HomePage() {
           </Card>
         </div>
 
-        {/* 打卡 + 数据报告 — 位于快捷操作上方 */}
+        {/* 快捷操作 */}
+        <div>
+          <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+            <PlayCircle className="w-4 h-4 text-primary" />
+            快捷操作
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            {quickActions.map((action, i) => (
+              <motion.div key={action.href} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}>
+                <Link to={action.href}>
+                  <Card className="h-full hover:shadow-hover transition-all duration-200 hover:-translate-y-0.5 cursor-pointer">
+                    <CardContent className="p-3 flex flex-col gap-2">
+                      <div className={`rounded-lg p-2 w-fit ${action.color}`}><action.icon className="w-4 h-4" /></div>
+                      <div>
+                        <p className="font-medium text-xs">{action.label}</p>
+                        <p className="text-[10px] text-muted-foreground text-pretty leading-tight mt-0.5">{action.desc}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* 打卡 + 数据报告 */}
         {user && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <CheckInWidget />
@@ -292,32 +317,6 @@ export default function HomePage() {
             </CardContent>
           </Card>
         )}
-
-        {/* 快捷操作 */}
-        <div>
-          <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
-            <PlayCircle className="w-4 h-4 text-primary" />
-            快捷操作
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-            {quickActions.map((action, i) => (
-              <motion.div key={action.href} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}>
-                <Link to={action.href}>
-                  <Card className="h-full hover:shadow-hover transition-all duration-200 hover:-translate-y-0.5 cursor-pointer">
-                    <CardContent className="p-3 flex flex-col gap-2">
-                      <div className={`rounded-lg p-2 w-fit ${action.color}`}><action.icon className="w-4 h-4" /></div>
-                      <div>
-                        <p className="font-medium text-xs">{action.label}</p>
-                        <p className="text-[10px] text-muted-foreground text-pretty leading-tight mt-0.5">{action.desc}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
       </div>
     </AppLayout>
   );

@@ -609,7 +609,7 @@ function FloatingCard({ children, delay = 0, className = '' }: { children: React
 /* ─────────────────────── 主组件 ─────────────────────── */
 export default function LandingPage() {
   const { scrollYProgress } = useScroll();
-  const headerBg = useTransform(scrollYProgress, [0, 0.05], ['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)']);
+  const headerBg = useTransform(scrollYProgress, [0, 0.05], ['rgba(0,0,0,0)', 'rgba(0,0,0,0.2)']);
   const [activeCompetitor, setActiveCompetitor] = useState<string | null>(null);
   const competitorNames = ['智学伴', 'Khan', '学而思', 'Duolingo'];
   const competitorColors = ['hsl(162,63%,45%)', 'hsl(220,70%,55%)', 'hsl(36,80%,52%)', 'hsl(0,70%,55%)'];
@@ -1177,8 +1177,6 @@ export default function LandingPage() {
                   { label: '智能答疑', href: '/tutoring' },
                   { label: '学习路径', href: '/learning-path' },
                   { label: '数据报告', href: '/report' },
-                  { label: '学习社群', href: '/community' },
-                  { label: '练习评测', href: '/evaluation' },
                 ].map(link => (
                   <li key={link.label}>
                     <Link
