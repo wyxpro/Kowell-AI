@@ -1,0 +1,118 @@
+/* stylelint-disable */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 智学伴 - 清新教育风格设计系统 */
+
+@layer base {
+  :root {
+    --radius: 0.625rem;
+    --background: 150 20% 98%;
+    --foreground: 160 30% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 160 30% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 30% 8%;
+    --primary: 162 63% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 36 80% 52%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 150 15% 93%;
+    --muted-foreground: 160 10% 45%;
+    --accent: 150 20% 93%;
+    --accent-foreground: 160 30% 12%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 150 15% 88%;
+    --input: 150 15% 88%;
+    --ring: 162 63% 38%;
+    --chart-1: 162 63% 38%;
+    --chart-2: 36 80% 52%;
+    --chart-3: 200 65% 50%;
+    --chart-4: 280 55% 55%;
+    --chart-5: 340 65% 55%;
+    --success: 142 60% 42%;
+    --warning: 36 80% 52%;
+    --info: 200 65% 50%;
+    --education-blue: 200 65% 50%;
+    --education-green: 162 63% 38%;
+    --sidebar-background: 160 25% 12%;
+    --sidebar-foreground: 150 15% 90%;
+    --sidebar-primary: 162 63% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 160 20% 18%;
+    --sidebar-accent-foreground: 150 15% 92%;
+    --sidebar-border: 160 15% 22%;
+    --sidebar-ring: 162 63% 45%;
+    --gradient-primary: linear-gradient(135deg, hsl(162, 63%, 38%), hsl(180, 55%, 42%));
+    --gradient-card: linear-gradient(135deg, hsl(0, 0%, 100%), hsl(150, 20%, 97%));
+    --gradient-background: linear-gradient(180deg, hsl(150, 20%, 98%), hsl(150, 15%, 95%));
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-hover: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  }
+
+  .dark {
+    --background: 160 25% 6%;
+    --foreground: 150 15% 92%;
+    --card: 160 20% 10%;
+    --card-foreground: 150 15% 92%;
+    --popover: 160 20% 10%;
+    --popover-foreground: 150 15% 92%;
+    --primary: 162 55% 45%;
+    --primary-foreground: 160 30% 6%;
+    --secondary: 36 70% 48%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 160 15% 16%;
+    --muted-foreground: 150 10% 55%;
+    --accent: 160 15% 14%;
+    --accent-foreground: 150 15% 90%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 160 15% 18%;
+    --input: 160 15% 18%;
+    --ring: 162 55% 45%;
+    --chart-1: 162 55% 45%;
+    --chart-2: 36 70% 48%;
+    --chart-3: 200 55% 55%;
+    --chart-4: 280 50% 55%;
+    --chart-5: 340 60% 55%;
+    --success: 142 50% 38%;
+    --warning: 36 70% 48%;
+    --info: 200 55% 55%;
+    --education-blue: 200 55% 55%;
+    --education-green: 162 55% 45%;
+    --sidebar-background: 160 25% 6%;
+    --sidebar-foreground: 150 15% 85%;
+    --sidebar-primary: 162 55% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 160 15% 12%;
+    --sidebar-accent-foreground: 150 15% 88%;
+    --sidebar-border: 160 15% 14%;
+    --sidebar-ring: 162 55% 45%;
+    --gradient-primary: linear-gradient(135deg, hsl(162, 55%, 45%), hsl(180, 45%, 40%));
+    --gradient-card: linear-gradient(135deg, hsl(160, 20%, 10%), hsl(160, 18%, 12%));
+    --gradient-background: linear-gradient(180deg, hsl(160, 25%, 6%), hsl(160, 20%, 8%));
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.15);
+    --shadow-hover: 0 10px 25px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.2);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
