@@ -1,1547 +1,4 @@
-">
-   169                 <p className="text-xs text-muted-foreground text-pretty mb-3 leading-relaxed">{stage.description}</p>
-   170                 {stage.resources.length > 0 && (
-   171                   <div className="space-y-1.5 mb-3">
-   172                     <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">配套资源</p>
-   173                     <div className="flex flex-wrap gap-1.5">
-   174                       {stage.resources.map(rId => {
-   175                         const r = RESOURCE_TYPES.find(rt => rt.id === rId);
-   176                         if (!r) return null;
-   177                         return (
-   178                           <div key={rId} className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${r.bg} ${r.color} ${r.border}`}>
-   179                             <r.icon className="w-2.5 h-2.5" />
-   180                             {r.label}
-
-
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "renderMarkdown\|markdown\|ReactMarkdown\|dangerouslySet\|prose" /workspace/app-bu7wnuu44l4x/src/pages/ResourceGeneratePage.tsx | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[580, 684], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx:
-   580                         </circle>
-   581                       )}
-   582                     </g>
-   583                   );
-   584                 })}
-   585               </svg>
-   586 
-   587               {/* 节点行 */}
-   588               <div className="flex items-start gap-8 relative z-10">
-   589                 {path.stages.map((stage, index) => {
-   590                   const isCurrent = index === path.current_stage && !stage.completed;
-   591                   return (
-   592                     <StageNode
-   593                       key={stage.id}
-   594                       stage={stage}
-   595                       index={index}
-   596                       isCurrent={isCurrent}
-   597                       isCompleted={stage.completed}
-   598                       isLocked={!stage.completed && !isCurrent}
-   599                       onComplete={() => completeStage(stage.id)}
-   600                       completing={completingId === stage.id}
-   601                       onDelete={() => deleteStage(stage.id)}
-   602                       onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragIndex(index); }}
-   603                       onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
-   604                       onDrop={e => { e.preventDefault(); handleDrop(index); }}
-   605                     />
-   606                   );
-   607                 })}
-   608 
-   609                 {/* ── 新增节点按钮/表单 ── */}
-   610                 <div className="shrink-0" style={{ width: 256 }}>
-   611                   <AnimatePresence mode="wait">
-   612                     {addingNode ? (
-   613                       <motion.div key="form" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-   614                         exit={{ opacity: 0, scale: 0.95 }}
-   615                         className="bg-card rounded-2xl border-2 border-dashed border-primary/40 p-4 space-y-3 shadow-sm"
-   616                         style={{ marginTop: 6 }}
-   617                       >
-   618                         <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
-   619                           <Plus className="w-3.5 h-3.5" />新增学习节点
-   620                         </p>
-   621                         <input
-   622                           ref={addInputRef}
-   623                           value={newNodeTitle}
-   624                           onChange={e => setNewNodeTitle(e.target.value)}
-   625                           placeholder="节点名称（必填）"
-   626                           className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary placeholder:text-muted-foreground/50"
-   627                         />
-   628                         <textarea
-   629                           value={newNodeDesc}
-   630                           onChange={e => setNewNodeDesc(e.target.value)}
-   631                           placeholder="描述（可选）"
-   632                           rows={2}
-   633                           className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary resize-none placeholder:text-muted-foreground/50"
-   634                         />
-   635                         <div className="flex gap-2">
-   636                           <Button size="sm" className="flex-1 h-7 text-xs" onClick={addStage} disabled={!newNodeTitle.trim()}>确认</Button>
-   637                           <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setAddingNode(false); setNewNodeTitle(''); setNewNodeDesc(''); }}>取消</Button>
-   638                         </div>
-   639                       </motion.div>
-   640                     ) : (
-   641                       <motion.button key="btn" type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-   642                         onClick={() => setAddingNode(true)}
-   643                         className="w-full h-28 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-2 group"
-   644                         style={{ marginTop: 6 }}
-   645                       >
-   646                         <Plus className="w-6 h-6 text-muted-foreground/40 group-hover:text-primary transition-colors" />
-   647                         <span className="text-xs text-muted-foreground/60 group-hover:text-primary transition-colors">新增节点</span>
-   648                       </motion.button>
-   649                     )}
-   650                   </AnimatePresence>
-   651                 </div>
-   652               </div>
-   653 
-   654               {/* 图例 */}
-   655               <div className="absolute bottom-3 right-4 flex items-center gap-4 text-[10px] text-muted-foreground/70">
-   656                 <div className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary rounded-full" />已完成</div>
-   657                 <div className="flex items-center gap-1.5"><span className="w-3 h-px border-t-2 border-dashed border-border" />待完成</div>
-   658               </div>
-   659             </div>
-   660           </div>
-   661         )}
-   662 
-   663         {/* ══ 庆祝弹窗 ══ */}
-   664         <AnimatePresence>
-   665           {showCelebration && (
-   666             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-   667               className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm">
-   668               <motion.div initial={{ scale: 0.7, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.7, opacity: 0 }}
-   669                 className="bg-background rounded-3xl p-10 shadow-2xl text-center max-w-sm mx-4">
-   670                 <motion.div animate={{ rotate: [0, 10, -10, 10, 0] }} transition={{ repeat: 2, duration: 0.4 }}>
-   671                   <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-   672                 </motion.div>
-   673                 <h2 className="text-2xl font-bold text-balance mb-2">🎉 全部完成！</h2>
-   674                 <p className="text-muted-foreground text-pretty">你已成功完成所有学习阶段，太棒了！</p>
-   675                 <Button className="mt-6 w-full" onClick={() => setShowCelebration(false)}>继续探索</Button>
-   676               </motion.div>
-   677             </motion.div>
-   678           )}
-   679         </AnimatePresence>
-   680 
-   681       </div>
-   682     </AppLayout>
-   683   );
-   684 }
-
-
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "content\|setContent\|streamText\|fetchStream\|aiReply\|setMessages\|renderMessage\|dangerouslySet" /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-46:  const [messages, setMessages] = useState<ChatMsg[]>([]);
-64:          ? data.map(m => ({ id: m.id, role: m.role as 'user' | 'assistant', content: m.content }))
-65:          : [{ id: 'welcome', role: 'assistant' as const, content: welcomeMsg }];
-67:        setMessages(msgs);
-74:    setMessages(prev => {
-79:    if (msg.role === 'assistant') setLastAIMsg(msg.content);
-82:        user_id: user.id, session_type: 'tutoring', role: msg.role, content: msg.content,
-92:      return `${role}\n\n${m.content}`;
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "role.*assistant\|bubble\|prose\|whitespace-pre\|renderContent\|dangerouslySet\|message.*content" /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-64:          ? data.map(m => ({ id: m.id, role: m.role as 'user' | 'assistant', content: m.content }))
-65:          : [{ id: 'welcome', role: 'assistant' as const, content: welcomeMsg }];
-79:    if (msg.role === 'assistant') setLastAIMsg(msg.content);
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "role.*assistant\|bubble\|prose\|whitespace-pre\|renderContent\|dangerouslySet\|message.*content\|\.content" /workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-42:          const msgs = data.map(m => ({ id: m.id, role: m.role as 'user' | 'assistant', content: m.content }));
-50:            role: 'assistant',
-62:        user_id: user.id, session_type: 'portrait', role: msg.role, content: msg.content,
-73:            major_direction: { value: data?.[0]?.content || '' },
-74:            knowledge_base: { value: data?.[1]?.content || '' },
-75:            cognitive_style: { value: data?.[2]?.content || '' },
-76:            error_patterns: { value: data?.[3]?.content || '' },
-77:            learning_rhythm: { value: data?.[4]?.content || '' },
-78:            learning_goals: { value: data?.[5]?.content || '' },
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "ChatBubble\|ChatMessage\|msg\.content\|m\.content\|{message\|{msg\b\|whitespace\|prose\|pre-wrap\|renderMsg" /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx | head -30
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-64:          ? data.map(m => ({ id: m.id, role: m.role as 'user' | 'assistant', content: m.content }))
-79:    if (msg.role === 'assistant') setLastAIMsg(msg.content);
-82:        user_id: user.id, session_type: 'tutoring', role: msg.role, content: msg.content,
-92:      return `${role}\n\n${m.content}`;
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -rn "ChatBubble\|ChatMessage\|ChatInput\|renderMarkdown\|MarkdownContent" /workspace/app-bu7wnuu44l4x/src/components/ | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[140, 260], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx:
-   140             <Card className="h-[calc(100vh-280px)] min-h-[480px] overflow-hidden">
-   141               <CardContent className="p-3 h-full">
-   142                 <DigitalTeacher
-   143                   lastAIMessage={lastAIMsg}
-   144                   loading={loading}
-   145                   collapsed={teacherCollapsed}
-   146                   onToggle={() => setTeacherCollapsed(v => !v)}
-   147                 />
-   148               </CardContent>
-   149             </Card>
-   150           </div>
-   151 
-   152           {/* 中间：对话区域 */}
-   153           <div className={teacherCollapsed ? 'lg:col-span-3' : 'lg:col-span-2'}>
-   154             <Card className="h-[calc(100vh-280px)] min-h-[480px] flex flex-col">
-   155               <CardHeader className="pb-3 shrink-0">
-   156                 <CardTitle className="text-base flex items-center gap-2">
-   157                   {socraticMode
-   158                     ? <Brain className="w-4 h-4 text-amber-500" />
-   159                     : <Bot className="w-4 h-4 text-primary" />
-   160                   }
-   161                   {socraticMode ? '苏格拉底式引导助手' : '智能答疑助手'}
-   162                   {socraticMode && (
-   163                     <span className="ml-1 text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-full font-normal">
-   164                       引导思考模式
-   165                     </span>
-   166                   )}
-   167                   <span className="ml-auto text-xs text-muted-foreground font-normal">支持多模态输入</span>
-   168                 </CardTitle>
-   169               </CardHeader>
-   170               <CardContent className="flex-1 flex flex-col min-h-0">
-   171                 {loading ? (
-   172                   <div className="flex items-center justify-center h-full">
-   173                     <div className="flex flex-col items-center gap-3">
-   174                       <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-   175                       <p className="text-sm text-muted-foreground">加载历史消息...</p>
-   176                     </div>
-   177                   </div>
-   178                 ) : (
-   179                   <AIChatPanel
-   180                     sessionType="tutoring"
-   181                     initialMessages={initialMessages}
-   182                     onMessageSent={handleSaveMessage}
-   183                     onReplyReceived={handleSaveMessage}
-   184                     suggestedQuestions={suggestedQuestions}
-   185                     placeholder={socraticMode ? '提出你的问题，AI 将引导你自己思考...' : '输入你的学习问题，AI将实时流式回答...'}
-   186                     systemPrompt={socraticMode ? SOCRATIC_SYSTEM_PROMPT : DIRECT_SYSTEM_PROMPT}
-   187                   />
-   188                 )}
-   189               </CardContent>
-   190             </Card>
-   191           </div>
-   192 
-   193           {/* 右侧：使用提示 + 推荐问题（折叠时占1列，否则占1列） */}
-   194           <div className="space-y-4 lg:col-span-1">
-   195             {/* 苏格拉底模式说明 */}
-   196             {socraticMode && (
-   197               <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10">
-   198                 <CardHeader className="pb-2">
-   199                   <CardTitle className="text-sm flex items-center gap-2 text-amber-700 dark:text-amber-300">
-   200                     <Brain className="w-4 h-4" />苏格拉底教学法
-   201                   </CardTitle>
-   202                 </CardHeader>
-   203                 <CardContent className="space-y-2">
-   204                   {[
-   205                     '🤔 AI不直接给答案，引导你思考',
-   206                     '💭 通过提问发现问题本质',
-   207                     '✨ 让理解更深刻、记忆更持久',
-   208                     '🎯 培养独立思考和解题能力',
-   209                   ].map(t => (
-   210                     <p key={t} className="text-xs text-amber-600 dark:text-amber-400">{t}</p>
-   211                   ))}
-   212                 </CardContent>
-   213               </Card>
-   214             )}
-   215             <Card>
-   216               <CardHeader className="pb-3">
-   217                 <CardTitle className="text-base flex items-center gap-2">
-   218                   <Sparkles className="w-4 h-4 text-secondary" />使用提示
-   219                 </CardTitle>
-   220               </CardHeader>
-   221               <CardContent className="space-y-3">
-   222                 {tips.map((tip, i) => (
-   223                   <div key={i} className="flex items-start gap-2.5">
-   224                     <tip.icon className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-   225                     <p className="text-xs text-muted-foreground text-pretty">{tip.text}</p>
-   226                   </div>
-   227                 ))}
-   228               </CardContent>
-   229             </Card>
-   230             <Card>
-   231               <CardHeader className="pb-3">
-   232                 <CardTitle className="text-base flex items-center gap-2">
-   233                   <Lightbulb className="w-4 h-4 text-primary" />推荐问题
-   234                 </CardTitle>
-   235               </CardHeader>
-   236               <CardContent className="space-y-2">
-   237                 {suggestedQuestions.map((q, i) => (
-   238                   <button key={i} type="button" className="w-full text-left p-2.5 rounded-lg bg-muted/50 hover:bg-muted text-xs transition-colors text-pretty">
-   239                     {q}
-   240                   </button>
-   241                 ))}
-   242               </CardContent>
-   243             </Card>
-   244           </div>
-   245         </div>
-   246       </div>
-   247     </AppLayout>
-   248   );
-   249 }
-   250 
-   251 
-
-
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -rn "AIChatPanel\|aiChat\|chatPanel" /workspace/app-bu7wnuu44l4x/src/pages/ResourceGeneratePage.tsx | head -10
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "prose\|whitespace-pre\|renderContent\|message\.content\|msg\.content" /workspace/app-bu7wnuu44l4x/src/pages/ResourceGeneratePage.tsx | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "AIChatPanel\|content\|message\|streamText\|generatedContent\|displayContent" /workspace/app-bu7wnuu44l4x/src/pages/ResourceGeneratePage.tsx | head -30
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-137:      const results: { type: string; content: string }[] = [];
-152:        results.push({ type: rType, content: data.content });
-159:          content: data.content,
-174:      setResult(results[0]?.content || null);
-178:      toast.error('生成失败：' + (err as Error).message);
-179:      setLogs(prev => [...prev, `生成失败：${(err as Error).message}`]);
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "result\b\|setResult\|\.content\|pre-wrap\|whitespace\|prose\|dangerously" /workspace/app-bu7wnuu44l4x/src/pages/ResourceGeneratePage.tsx | head -30
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-77:  const [result, setResult] = useState<string | null>(null);
-125:    setResult(null);
-152:        results.push({ type: rType, content: data.content });
-159:          content: data.content,
-174:      setResult(results[0]?.content || null);
-395:                {!generating && !result && !logs.length && (
-408:                {(generating || logs.length > 0) && !result && (
-459:                {result && (
-480:                      {result.split('\n\n').filter(Boolean).map((para, i) => {
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-AgentThinkAction(thought='Let me analyze all the tasks needed:\n\n1. **学习路径界面** - 卡片默认全部展开（不用点击）；支持新增模块（已有功能但需确认）；自由拖动（已有）\n2. **Markdown渲染** - AI资源生成、对话式画像构建、智能答疑界面的AI回复内容，去掉**符号，改为真正的Markdown渲染（需要安装react-markdown或自写渲染器）\n3. **"学习报告"→"数据报告"** - 多处替换\n4. **官网首页Hero动态背景重新设计** - 重新设计Three.js背景，更好看\n5. **"适合人群"区块用户卡片重新设计** - 删除现有6张卡片，重新设计\n6. **"开启你的智能学习之旅"区块** - 删除卡片背景，和上面保持一致\n7. **底部Footer** - 模仿上传图设计，三列：品牌+描述 | 快速链接 | 联系我们\n\nKey files:\n- /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx - expand by default, add module\n- /workspace/app-bu7wnuu44l4x/src/components/ai/AIChatPanel.tsx - markdown rendering for tutoring & portrait\n- /workspace/app-bu7wnuu44l4x/src/pages/ResourceGeneratePage.tsx - markdown rendering for resource gen\n- /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx - Hero bg, 适合人群, CTA section, Footer\n- Multiple files for "学习报告" → "数据报告"\n\nFor Markdown rendering: I\'ll write a custom `renderMarkdown` util function that parses **bold**, ##headings, -lists, numbered lists, etc. without needing react-markdown library. This avoids adding new dependencies.\n\nLet me read the relevant file sections in parallel.', action=<ActionType.THINK: 'think'>)
-</action>
-<observation>
-AgentThinkObservation(content='Your thought has been logged.', observation=<ObservationType.THINK: 'think'>)
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/ResourceGeneratePage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[455, 520], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/ResourceGeneratePage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/ResourceGeneratePage.tsx:
-   455                     </div>
-   456                   </motion.div>
-   457                 )}
-   458 
-   459                 {result && (
-   460                   <motion.div
-   461                     initial={{ opacity: 0, y: 10 }}
-   462                     animate={{ opacity: 1, y: 0 }}
-   463                     className="flex-1 flex flex-col min-h-0"
-   464                   >
-   465                     <div className="flex items-center justify-between mb-3">
-   466                       <Badge className="bg-primary/10 text-primary border-0">
-   467                         <CheckCircle className="w-3 h-3 mr-1" />生成完成
-   468                       </Badge>
-   469                       <Button
-   470                         variant="outline"
-   471                         size="sm"
-   472                         onClick={() => navigate('/resources')}
-   473                       >
-   474                         <ArrowRight className="w-3 h-3 mr-1" />
-   475                         查看资源
-   476                       </Button>
-   477                     </div>
-   478                     <div className="flex-1 min-h-0 overflow-y-auto rounded-lg space-y-3 p-1">
-   479                       {/* 结构化分段展示，按行解析段落 */}
-   480                       {result.split('\n\n').filter(Boolean).map((para, i) => {
-   481                         const isHeading = /^[一二三四五六七八九十\d]+[、.．:：]/.test(para.trimStart()) || /^【.+】/.test(para.trimStart());
-   482                         return (
-   483                           <div key={i} className={`rounded-lg border px-4 py-3 ${isHeading ? 'bg-primary/5 border-primary/20' : 'bg-card border-border'}`}>
-   484                             {isHeading ? (
-   485                               <p className="text-sm font-semibold text-primary text-pretty">{para.trim()}</p>
-   486                             ) : (
-   487                               <div className="space-y-1">
-   488                                 {para.split('\n').filter(Boolean).map((line, j) => (
-   489                                   <p key={j} className={`text-sm text-pretty leading-relaxed ${line.startsWith('•') ? 'pl-3 text-muted-foreground' : ''}`}>{line}</p>
-   490                                 ))}
-   491                               </div>
-   492                             )}
-   493                           </div>
-   494                         );
-   495                       })}
-   496                     </div>
-   497                   </motion.div>
-   498                 )}
-   499               </AnimatePresence>
-   500             </CardContent>
-   501           </Card>
-   502         </div>
-   503       </div>
-   504     </AppLayout>
-   505   );
-   506 }
-
-
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[1, 30], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:
-     1 import { useState, useEffect, useRef } from 'react';
-     2 import type * as THREE from 'three';
-     3 import { Link } from 'react-router-dom';
-     4 import { motion, useScroll, useTransform } from 'motion/react';
-     5 import { Button } from '@/components/ui/button';
-     6 import { Badge } from '@/components/ui/badge';
-     7 import { Card, CardContent } from '@/components/ui/card';
-     8 import {
-     9   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip,
-    10 } from 'recharts';
-    11 import {
-    12   GraduationCap, Brain, Target, Zap, Star, Users, ArrowRight, CheckCircle2,
-    13   Sparkles, BookOpen, Trophy, Code2, Network,
-    14   MessageCircle, BarChart3, Shield, Infinity as InfinityIcon, Crown, Flame, Globe,
-    15   Quote, GraduationCap as GradCap,
-    16 } from 'lucide-react';
-    17 
-    18 /* ─────────────────────── 数据 ─────────────────────── */
-    19 const features = [
-    20   {
-    21     icon: Brain,
-    22     title: '苏格拉底式AI辅导',
-    23     desc: '引导思考而非直接给答案，深化理解与记忆，培养独立思维能力',
-    24     color: 'from-violet-500/20 to-purple-500/20',
-    25     iconColor: 'text-violet-500',
-    26     badge: '核心特色',
-    27   },
-    28   {
-    29     icon: Network,
-    30     title: '知识图谱可视化',
-
-
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[148, 230], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:
-   148     period: '/月/10人',
-   149     desc: '适合班级与团队协作',
-   150     icon: Globe,
-   151     color: 'from-violet-500 to-purple-600',
-   152     features: ['包含专业版全部功能', '团队学习看板', '教师管理后台', '自定义知识图谱', '专属客户成功', '数据导出与分析'],
-   153     cta: '联系我们',
-   154     highlight: false,
-   155   },
-   156 ];
-   157 
-   158 const userProfiles = [
-   159   {
-   160     icon: GradCap,
-   161     color: 'from-violet-500 to-purple-600',
-   162     glow: 'shadow-violet-500/25',
-   163     title: '备考学生',
-   164     desc: '高考/考研冲刺精准补弱，AI量身制定突破计划',
-   165     tags: ['高考冲刺', '考研备战', '弱项强化'],
-   166   },
-   167   {
-   168     icon: Code2,
-   169     color: 'from-sky-500 to-cyan-600',
-   170     glow: 'shadow-sky-500/25',
-   171     title: '编程新手',
-   172     desc: '从零到精通，代码实验室边学边练，即时反馈',
-   173     tags: ['代码实验室', 'AI审阅', '8种语言'],
-   174   },
-   175   {
-   176     icon: Brain,
-   177     color: 'from-emerald-500 to-teal-600',
-   178     glow: 'shadow-emerald-500/25',
-   179     title: '知识系统化',
-   180     desc: '知识图谱可视化，构建完整学科体系与认知框架',
-   181     tags: ['知识图谱', '体系构建', '关联分析'],
-   182   },
-   183   {
-   184     icon: Trophy,
-   185     color: 'from-amber-500 to-orange-600',
-   186     glow: 'shadow-amber-500/25',
-   187     title: '竞赛选手',
-   188     desc: '深度专项强化训练，目标精准突破竞赛瓶颈',
-   189     tags: ['深度强化', '专项训练', '极限突破'],
-   190   },
-   191   {
-   192     icon: Users,
-   193     color: 'from-rose-500 to-pink-600',
-   194     glow: 'shadow-rose-500/25',
-   195     title: '团队协作',
-   196     desc: '班级学习看板 + 教师管理后台，协同高效进步',
-   197     tags: ['团队看板', '教师管理', '协作共进'],
-   198   },
-   199   {
-   200     icon: BarChart3,
-   201     color: 'from-indigo-500 to-blue-600',
-   202     glow: 'shadow-indigo-500/25',
-   203     title: '效率提升者',
-   204     desc: '用数据驱动学习决策，每周深度报告精准洞察',
-   205     tags: ['学习报告', '数据洞察', '效率最大化'],
-   206   },
-   207 ];
-   208 
-   209 const stats = [
-   210   { value: '50,000+', label: '活跃学习者' },
-   211   { value: '98%', label: '用户满意度' },
-   212   { value: '2.5x', label: '平均学习效率提升' },
-   213   { value: '8', label: '支持编程语言' },
-   214 ];
-   215 
-   216 /* ─────────────────────── Three.js 3D Hero 背景 ─────────────────────── */
-   217 function HeroBackground() {
-   218   const mountRef = useRef<HTMLDivElement>(null);
-   219 
-   220   useEffect(() => {
-   221     const mount = mountRef.current;
-   222     if (!mount) return;
-   223     let cleanup: (() => void) | undefined;
-   224 
-   225     import('three').then((THREE) => {
-   226       if (!mountRef.current) return;
-   227 
-   228       // ── 场景、相机、渲染器 ──
-   229       const scene = new THREE.Scene();
-   230       const camera = new THREE.PerspectiveCamera(60, mount.clientWidth / mount.clientHeight, 0.1, 200);
-
-
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[480, 580], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:
-   480             <span className="text-[11px] text-muted-foreground">{review.role}</span>
-   481           </div>
-   482           <div className="flex mt-0.5 gap-0.5">
-   483             {[...Array(review.rating)].map((_, i) => (
-   484               <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
-   485             ))}
-   486           </div>
-   487         </div>
-   488         <Quote className="w-5 h-5 text-primary/30 shrink-0" />
-   489       </div>
-   490       <p className="text-xs text-muted-foreground leading-relaxed text-pretty mb-3">
-   491         {review.text}
-   492       </p>
-   493       <Badge variant="secondary" className="text-[10px] px-2 py-0.5">{review.tag}</Badge>
-   494     </div>
-   495   );
-   496 }
-   497 
-   498 /* 无限滚动行 */
-   499 function MarqueeRow({ items, direction = 'left', speed = 28 }: {
-   500   items: typeof reviews;
-   501   direction?: 'left' | 'right';
-   502   speed?: number;
-   503 }) {
-   504   const doubled = [...items, ...items];
-   505   const pausedRef = useRef(false);
-   506   const posRef = useRef(0);
-   507   const rafRef = useRef(0);
-   508   const rowRef = useRef<HTMLDivElement>(null);
-   509   const CARD_W = 304; // 288px card + 2*8px mx
-   510 
-   511   useEffect(() => {
-   512     const totalW = items.length * CARD_W;
-   513     const step = direction === 'left' ? -speed / 60 : speed / 60;
-   514     const animate = () => {
-   515       if (!pausedRef.current) {
-   516         posRef.current += step;
-   517         if (posRef.current <= -totalW) posRef.current += totalW;
-   518         if (posRef.current >= 0) posRef.current -= totalW;
-   519         if (rowRef.current) rowRef.current.style.transform = `translateX(${posRef.current}px)`;
-   520       }
-   521       rafRef.current = requestAnimationFrame(animate);
-   522     };
-   523     rafRef.current = requestAnimationFrame(animate);
-   524     return () => cancelAnimationFrame(rafRef.current);
-   525   }, [direction, speed, items.length]);
-   526 
-   527   return (
-   528     <div
-   529       className="overflow-hidden"
-   530       onMouseEnter={() => { pausedRef.current = true; }}
-   531       onMouseLeave={() => { pausedRef.current = false; }}
-   532     >
-   533       <div ref={rowRef} className="flex" style={{ willChange: 'transform' }}>
-   534         {doubled.map((r, i) => <ReviewCard key={i} review={r} />)}
-   535       </div>
-   536     </div>
-   537   );
-   538 }
-   539 
-   540 function ReviewCarousel() {
-   541   const row1 = reviews.slice(0, Math.ceil(reviews.length / 2));
-   542   const row2 = reviews.slice(Math.ceil(reviews.length / 2));
-   543   // 补足偶数以视觉均衡
-   544   const fill = reviews[0];
-   545   const r2 = row2.length < 3 ? [...row2, fill, fill] : row2;
-   546   return (
-   547     <div className="space-y-4 overflow-hidden">
-   548       <MarqueeRow items={row1} direction="left" speed={26} />
-   549       <MarqueeRow items={r2} direction="right" speed={22} />
-   550     </div>
-   551   );
-   552 }
-   553 
-   554 /* ─────────────────────── 浮动卡片 3D ─────────────────────── */
-   555 function FloatingCard({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
-   556   return (
-   557     <motion.div
-   558       initial={{ opacity: 0, y: 30 }}
-   559       whileInView={{ opacity: 1, y: 0 }}
-   560       viewport={{ once: true }}
-   561       transition={{ duration: 0.6, delay }}
-   562       whileHover={{ y: -6, rotateX: 2, rotateY: -1 }}
-   563       style={{ transformStyle: 'preserve-3d' }}
-   564       className={className}
-   565     >
-   566       {children}
-   567     </motion.div>
-   568   );
-   569 }
-   570 
-   571 /* ─────────────────────── 主组件 ─────────────────────── */
-   572 export default function LandingPage() {
-   573   const { scrollYProgress } = useScroll();
-   574   const headerBg = useTransform(scrollYProgress, [0, 0.05], ['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)']);
-   575   const [activeCompetitor, setActiveCompetitor] = useState<string | null>(null);
-   576   const competitorNames = ['智学伴', 'Khan', '学而思', 'Duolingo'];
-   577   const competitorColors = ['hsl(162,63%,45%)', 'hsl(220,70%,55%)', 'hsl(36,80%,52%)', 'hsl(0,70%,55%)'];
-   578 
-   579   const radarData = competitorData.map(d => {
-   580     const obj: Record<string, string | number> = { subject: d.subject };
-
-
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/components/ai/AIChatPanel.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[1, 50], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/components/ai/AIChatPanel.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/components/ai/AIChatPanel.tsx:
-     1 import { useState, useRef, useEffect, useCallback } from 'react';
-     2 import { Button } from '@/components/ui/button';
-     3 import { ScrollArea } from '@/components/ui/scroll-area';
-     4 import { Separator } from '@/components/ui/separator';
-     5 import { Badge } from '@/components/ui/badge';
-     6 import { streamChat } from '@/lib/ai';
-     7 import {
-     8   Send, Bot, User, Loader2, Square, ImageIcon, Mic, MicOff, Film, X,
-     9   Paperclip, GraduationCap,
-    10 } from 'lucide-react';
-    11 import { toast } from 'sonner';
-    12 
-    13 export interface ChatMsg {
-    14   id: string;
-    15   role: 'user' | 'assistant';
-    16   content: string;
-    17 }
-    18 
-    19 interface AttachedMedia {
-    20   type: 'image' | 'video' | 'audio';
-    21   url: string;
-    22   name: string;
-    23   dataUrl?: string;
-    24 }
-    25 
-    26 interface AIChatPanelProps {
-    27   sessionType: 'tutoring' | 'portrait';
-    28   initialMessages?: ChatMsg[];
-    29   onMessageSent?: (msg: ChatMsg) => void;
-    30   onReplyReceived?: (msg: ChatMsg) => void;
-    31   suggestedQuestions?: string[];
-    32   placeholder?: string;
-    33   disabled?: boolean;
-    34   pendingImage?: { url: string; name: string };
-    35   onImageSent?: () => void;
-    36   systemPrompt?: string;
-    37 }
-    38 
-    39 export default function AIChatPanel({
-    40   sessionType,
-    41   initialMessages = [],
-    42   onMessageSent,
-    43   onReplyReceived,
-    44   suggestedQuestions,
-    45   placeholder = '输入你的问题...',
-    46   disabled = false,
-    47   pendingImage,
-    48   onImageSent,
-    49   systemPrompt,
-    50 }: AIChatPanelProps) {
-
-
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[750, 870], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:
-   750                   {/* 图标 */}
-   751                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${p.color} ${p.glow} shadow-lg flex items-center justify-center shrink-0`}>
-   752                     <p.icon className="w-6 h-6 text-white" />
-   753                   </div>
-   754 
-   755                   {/* 内容 */}
-   756                   <div className="flex-1">
-   757                     <h3 className="font-bold text-base mb-1.5">{p.title}</h3>
-   758                     <p className="text-sm text-muted-foreground leading-relaxed text-pretty mb-3">{p.desc}</p>
-   759                     <div className="flex flex-wrap gap-1.5">
-   760                       {p.tags.map(tag => (
-   761                         <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/50">
-   762                           {tag}
-   763                         </span>
-   764                       ))}
-   765                     </div>
-   766                   </div>
-   767                 </div>
-   768               </motion.div>
-   769             ))}
-   770           </div>
-   771         </div>
-   772       </section>
-   773 
-   774       {/* ─── 特色功能 ─── */}
-   775       <section id="特色功能" className="py-24 px-4">
-   776         <div className="max-w-6xl mx-auto">
-   777           <motion.div
-   778             initial={{ opacity: 0, y: 20 }}
-   779             whileInView={{ opacity: 1, y: 0 }}
-   780             viewport={{ once: true }}
-   781             className="text-center mb-16"
-   782           >
-   783             <Badge className="mb-3 bg-primary/15 text-primary border-primary/30">差异化优势</Badge>
-   784             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">六大核心特色功能</h2>
-   785             <p className="text-muted-foreground max-w-xl mx-auto text-pretty">
-   786               每个功能都针对学习中的核心痛点精心设计，助你突破瓶颈
-   787             </p>
-   788           </motion.div>
-   789 
-   790           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-   791             {features.map((f, i) => (
-   792               <FloatingCard key={i} delay={i * 0.08}>
-   793                 <motion.div
-   794                   whileHover={{ scale: 1.02 }}
-   795                   className={`h-full p-6 rounded-2xl bg-gradient-to-br ${f.color} border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col`}
-   796                 >
-   797                   <div className="flex items-start justify-between mb-4">
-   798                     <div className={`p-3 rounded-xl bg-background/70 shadow-sm`}>
-   799                       <f.icon className={`w-6 h-6 ${f.iconColor}`} />
-   800                     </div>
-   801                     <Badge variant="secondary" className="text-xs shrink-0">{f.badge}</Badge>
-   802                   </div>
-   803                   <h3 className="font-bold text-lg mb-2">{f.title}</h3>
-   804                   <p className="text-sm text-muted-foreground leading-relaxed text-pretty flex-1">{f.desc}</p>
-   805                   <div className="mt-4 flex items-center text-xs font-medium text-primary gap-1">
-   806                     <span>了解详情</span><ArrowRight className="w-3 h-3" />
-   807                   </div>
-   808                 </motion.div>
-   809               </FloatingCard>
-   810             ))}
-   811           </div>
-   812         </div>
-   813       </section>
-   814 
-   815       {/* ─── 竞品分析（雷达图） ─── */}
-   816       <section id="竞品分析" className="py-24 px-4 bg-muted/30">
-   817         <div className="max-w-6xl mx-auto">
-   818           <motion.div
-   819             initial={{ opacity: 0, y: 20 }}
-   820             whileInView={{ opacity: 1, y: 0 }}
-   821             viewport={{ once: true }}
-   822             className="text-center mb-12"
-   823           >
-   824             <Badge className="mb-3 bg-violet-500/15 text-violet-500 border-violet-500/30">对标分析</Badge>
-   825             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">领先同类竞品</h2>
-   826             <p className="text-muted-foreground max-w-xl mx-auto text-pretty">
-   827               在多个核心维度全面超越市场主流学习平台
-   828             </p>
-   829           </motion.div>
-   830 
-   831           <div className="grid md:grid-cols-2 gap-8 items-center">
-   832             <FloatingCard>
-   833               <div className="bg-card rounded-2xl p-6 shadow-lg border border-border">
-   834                 <div className="flex flex-wrap gap-2 mb-4 justify-center">
-   835                   {competitorNames.map((name, i) => (
-   836                     <button
-   837                       key={name}
-   838                       type="button"
-   839                       onClick={() => setActiveCompetitor(activeCompetitor === name ? null : name)}
-   840                       className={`px-3 py-1 rounded-full text-sm border transition-all ${activeCompetitor === name || !activeCompetitor
-   841                         ? 'opacity-100 scale-105'
-   842                         : 'opacity-40'
-   843                         }`}
-   844                       style={{ borderColor: competitorColors[i], color: competitorColors[i] }}
-   845                     >
-   846                       {name}
-   847                     </button>
-   848                   ))}
-   849                 </div>
-   850                 <ResponsiveContainer width="100%" height={320}>
-   851                   <RadarChart data={radarData}>
-   852                     <PolarGrid stroke="hsl(var(--border))" />
-   853                     <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-   854                     <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
-   855                     {competitorNames.map((name, i) => (
-   856                       radarData[0][name] !== undefined && (
-   857                         <Radar
-   858                           key={name}
-   859                           name={name}
-   860                           dataKey={name}
-   861                           stroke={competitorColors[i]}
-   862                           fill={competitorColors[i]}
-   863                           fillOpacity={name === '智学伴' ? 0.25 : 0.08}
-   864                           strokeWidth={name === '智学伴' ? 2.5 : 1.5}
-   865                         />
-   866                       )
-   867                     ))}
-   868                   </RadarChart>
-   869                 </ResponsiveContainer>
-   870               </div>
-
-
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[870, 1000], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:
-   870               </div>
-   871             </FloatingCard>
-   872 
-   873             <div className="space-y-4">
-   874               {[
-   875                 { title: '苏格拉底式AI辅导', desc: '引导思考的独特对话模式，而非简单答案推送', icon: Brain, score: 92 },
-   876                 { title: '代码实验室集成', desc: '8种语言在线运行+AI审阅，学练一体无缝切换', icon: Code2, score: 90 },
-   877                 { title: '弱项自动识别', desc: '基于错误模式深度分析，精准定位知识盲点', icon: Target, score: 93 },
-   878                 { title: '知识图谱编辑', desc: '可交互的个人知识体系构建与可视化展示', icon: Network, score: 95 },
-   879               ].map((item, i) => (
-   880                 <FloatingCard key={i} delay={i * 0.1}>
-   881                   <div className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border shadow-sm">
-   882                     <div className="p-2.5 rounded-xl bg-primary/10 shrink-0">
-   883                       <item.icon className="w-5 h-5 text-primary" />
-   884                     </div>
-   885                     <div className="flex-1 min-w-0">
-   886                       <div className="flex items-center justify-between mb-1">
-   887                         <h4 className="text-sm font-semibold">{item.title}</h4>
-   888                         <span className="text-sm font-bold text-primary">{item.score}</span>
-   889                       </div>
-   890                       <p className="text-xs text-muted-foreground text-pretty">{item.desc}</p>
-   891                       <div className="h-1.5 bg-muted rounded-full mt-2 overflow-hidden">
-   892                         <motion.div
-   893                           initial={{ width: 0 }}
-   894                           whileInView={{ width: `${item.score}%` }}
-   895                           viewport={{ once: true }}
-   896                           transition={{ duration: 1, delay: i * 0.15 }}
-   897                           className="h-full bg-primary rounded-full"
-   898                         />
-   899                       </div>
-   900                     </div>
-   901                   </div>
-   902                 </FloatingCard>
-   903               ))}
-   904             </div>
-   905           </div>
-   906         </div>
-   907       </section>
-   908 
-   909       {/* ─── 用户评价（双行错位无限轮播） ─── */}
-   910       <section id="用户评价" className="py-24 overflow-hidden">
-   911         <div className="max-w-6xl mx-auto px-4">
-   912           <motion.div
-   913             initial={{ opacity: 0, y: 20 }}
-   914             whileInView={{ opacity: 1, y: 0 }}
-   915             viewport={{ once: true }}
-   916             className="text-center mb-12"
-   917           >
-   918             <Badge className="mb-3 bg-amber-500/15 text-amber-500 border-amber-500/30">口碑见证</Badge>
-   919             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">学习者的真实故事</h2>
-   920             <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
-   921               {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
-   922               <span className="ml-2 font-medium text-foreground">5.0</span>
-   923               <span className="ml-1 text-muted-foreground">/ 5.0 · 来自 50,000+ 用户</span>
-   924             </div>
-   925           </motion.div>
-   926         </div>
-   927         {/* 全宽双行轮播，使用负边距突破 max-w 限制 */}
-   928         <div className="-mx-4 md:-mx-8">
-   929           <ReviewCarousel />
-   930         </div>
-   931       </section>
-   932 
-   933       {/* ─── 会员计划 ─── */}
-   934       <section id="会员计划" className="py-24 px-4 bg-muted/30">
-   935         <div className="max-w-6xl mx-auto">
-   936           <motion.div
-   937             initial={{ opacity: 0, y: 20 }}
-   938             whileInView={{ opacity: 1, y: 0 }}
-   939             viewport={{ once: true }}
-   940             className="text-center mb-14"
-   941           >
-   942             <Badge className="mb-3 bg-emerald-500/15 text-emerald-500 border-emerald-500/30">价格方案</Badge>
-   943             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">选择适合你的计划</h2>
-   944             <p className="text-muted-foreground text-pretty">灵活的付费方案，从个人学习到团队协作一站满足</p>
-   945           </motion.div>
-   946 
-   947           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-   948             {plans.map((plan, i) => (
-   949               <motion.div
-   950                 key={i}
-   951                 initial={{ opacity: 0, y: 24 }}
-   952                 whileInView={{ opacity: 1, y: 0 }}
-   953                 viewport={{ once: true }}
-   954                 transition={{ delay: i * 0.1, duration: 0.5 }}
-   955                 whileHover={{ y: -6 }}
-   956                 className="h-full"
-   957               >
-   958                 <div className={`relative h-full rounded-2xl flex flex-col overflow-hidden transition-all duration-300 ${
-   959                   plan.highlight
-   960                     ? 'border-2 border-primary shadow-2xl ring-4 ring-primary/10'
-   961                     : 'border border-border/60 shadow-lg hover:shadow-xl'
-   962                 }`}>
-   963                   {/* 顶部彩色渐变头 */}
-   964                   <div className={`p-7 bg-gradient-to-br ${plan.color} text-white relative overflow-hidden`}>
-   965                     {/* 装饰光晕 */}
-   966                     <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
-   967                     <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/10 to-transparent" />
-   968                     <div className="relative">
-   969                       <div className="flex items-center gap-3 mb-5">
-   970                         <div className="p-2.5 rounded-xl bg-white/20 shadow-inner backdrop-blur-sm">
-   971                           <plan.icon className="w-5 h-5" />
-   972                         </div>
-   973                         <span className="font-bold text-lg">{plan.name}</span>
-   974                       </div>
-   975                       <div className="flex items-baseline gap-1.5 mb-1">
-   976                         <span className="text-5xl font-extrabold tracking-tight">{plan.price}</span>
-   977                         <span className="text-white/70 text-sm">{plan.period}</span>
-   978                       </div>
-   979                       <p className="text-white/75 text-sm">{plan.desc}</p>
-   980                     </div>
-   981                   </div>
-   982 
-   983                   {/* 功能列表 */}
-   984                   <div className="p-6 bg-card flex-1 flex flex-col">
-   985                     <ul className="space-y-3 flex-1 mb-6">
-   986                       {plan.features.map((feat, j) => (
-   987                         <li key={j} className="flex items-start gap-2.5">
-   988                           <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-   989                             plan.highlight ? 'bg-primary/10' : 'bg-muted'
-   990                           }`}>
-   991                             <CheckCircle2 className={`w-3 h-3 ${plan.highlight ? 'text-primary' : 'text-muted-foreground'}`} />
-   992                           </div>
-   993                           <span className="text-sm text-foreground/80 leading-relaxed">{feat}</span>
-   994                         </li>
-   995                       ))}
-   996                     </ul>
-   997                     <Button
-   998                       className={`w-full h-11 text-sm font-semibold ${plan.highlight ? 'shadow-lg shadow-primary/20' : ''}`}
-   999                       variant={plan.highlight ? 'default' : 'outline'}
-  1000                       asChild
-
-
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[1000, 1077], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:
-  1000                       asChild
-  1001                     >
-  1002                       <Link to="/login">
-  1003                         {plan.cta}<ArrowRight className="w-4 h-4 ml-1.5" />
-  1004                       </Link>
-  1005                     </Button>
-  1006                   </div>
-  1007                 </div>
-  1008               </motion.div>
-  1009             ))}
-  1010           </div>
-  1011         </div>
-  1012       </section>
-  1013 
-  1014       {/* ─── CTA 底部 ─── */}
-  1015       <section className="relative py-28 px-4 overflow-hidden">
-  1016         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-secondary/10" />
-  1017         <motion.div
-  1018           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-10"
-  1019           style={{ background: 'radial-gradient(circle, hsl(162,63%,45%), transparent)' }}
-  1020           animate={{ scale: [1, 1.1, 1] }}
-  1021           transition={{ repeat: Number.POSITIVE_INFINITY, duration: 5 }}
-  1022         />
-  1023         <div className="relative z-10 text-center max-w-2xl mx-auto">
-  1024           <motion.div
-  1025             initial={{ opacity: 0, y: 20 }}
-  1026             whileInView={{ opacity: 1, y: 0 }}
-  1027             viewport={{ once: true }}
-  1028           >
-  1029             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-6 shadow-xl">
-  1030               <GraduationCap className="w-8 h-8 text-primary-foreground" />
-  1031             </div>
-  1032             <h2 className="text-3xl md:text-4xl font-bold mb-5 text-balance">
-  1033               开启你的智能学习之旅
-  1034             </h2>
-  1035             <p className="text-muted-foreground mb-8 text-pretty text-lg">
-  1036               加入50,000+学习者，今天就改变你的学习方式
-  1037             </p>
-  1038             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-  1039               <Button size="lg" asChild className="h-12 text-base shadow-xl min-w-40">
-  1040                 <Link to="/login">
-  1041                   <Zap className="w-5 h-5 mr-2" />免费开始
-  1042                 </Link>
-  1043               </Button>
-  1044               <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center">
-  1045                 <Shield className="w-4 h-4 text-primary" />
-  1046                 <span>无需信用卡 · 永久免费基础版</span>
-  1047               </div>
-  1048             </div>
-  1049           </motion.div>
-  1050         </div>
-  1051       </section>
-  1052 
-  1053       {/* ─── Footer ─── */}
-  1054       <footer className="bg-card border-t border-border py-10 px-4">
-  1055         <div className="max-w-6xl mx-auto">
-  1056           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-  1057             <div className="flex items-center gap-2.5">
-  1058               <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
-  1059                 <GraduationCap className="w-4 h-4 text-primary-foreground" />
-  1060               </div>
-  1061               <span className="font-bold">智学伴</span>
-  1062             </div>
-  1063             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground justify-center">
-  1064               <span>© 2026 智学伴. 保留所有权利。</span>
-  1065               <a href="#" className="hover:text-foreground transition-colors">用户协议</a>
-  1066               <a href="#" className="hover:text-foreground transition-colors">隐私政策</a>
-  1067               <div className="flex items-center gap-1">
-  1068                 <InfinityIcon className="w-3.5 h-3.5 text-primary" />
-  1069                 <span>AI驱动 · 持续进化</span>
-  1070               </div>
-  1071             </div>
-  1072           </div>
-  1073         </div>
-  1074       </footer>
-  1075     </div>
-  1076   );
-  1077 }
-
-
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-sed -i 's/label: .学习报告./label: '"'"'数据报告'"'"'/g' /workspace/app-bu7wnuu44l4x/src/pages/ToolsPage.tsx /workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx && echo done
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-done
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-**CmdRunAction (source=EventSource.AGENT, is_input=False)**
-COMMAND:
-grep -n "学习报告" /workspace/app-bu7wnuu44l4x/src/pages/HomePage.tsx /workspace/app-bu7wnuu44l4x/src/pages/ReportPage.tsx /workspace/app-bu7wnuu44l4x/src/pages/ProfilePage.tsx 2>/dev/null | head -20
-</action>
-<observation>
-**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
-  "exit_code": 0,
-  "pid": -1,
-  "username": null,
-  "hostname": null,
-  "working_dir": "/workspace",
-  "py_interpreter_path": null,
-  "prefix": "",
-  "suffix": "\n[The command completed with exit code 0.]"
-})**
---BEGIN AGENT OBSERVATION--
-/workspace/app-bu7wnuu44l4x/src/pages/HomePage.tsx:45:  { label: '学习报告', desc: '周期学习统计', icon: BarChart3, href: '/report', color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' },
-/workspace/app-bu7wnuu44l4x/src/pages/HomePage.tsx:261:        {/* 打卡 + 学习报告 — 位于快捷操作上方 */}
-/workspace/app-bu7wnuu44l4x/src/pages/HomePage.tsx:271:                  <p className="text-sm font-medium">学习报告</p>
-/workspace/app-bu7wnuu44l4x/src/pages/ReportPage.tsx:149:              <BarChart3 className="w-5 h-5 text-primary" />学习报告
-/workspace/app-bu7wnuu44l4x/src/pages/ProfilePage.tsx:308:                      <BarChart3 className="w-4 h-4 mr-1.5" />学习报告
-[The command completed with exit code 0.]
-[Current working directory: /workspace]
---END AGENT OBSERVATION--
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/components/ai/AIChatPanel.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[200, 260], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/components/ai/AIChatPanel.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/components/ai/AIChatPanel.tsx:
-   200       sessionType,
-   201       abortRef.current.signal,
-   202       systemPrompt
-   203     );
-   204   };
-   205 
-   206   const handleKeyDown = (e: React.KeyboardEvent) => {
-   207     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-   208   };
-   209 
-   210   const displayMessages = [...messages];
-   211   if (streamingText) displayMessages.push({ id: 'streaming', role: 'assistant', content: streamingText });
-   212 
-   213   return (
-   214     <div className="flex flex-col h-full min-h-0">
-   215       <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
-   216         <div className="space-y-4 pb-4">
-   217           {displayMessages.map((msg) => (
-   218             <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-   219               <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-   220                 msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-sky-100 dark:bg-sky-900/40'
-   221               }`}>
-   222                 {msg.role === 'user'
-   223                   ? <User className="w-4 h-4" />
-   224                   : sessionType === 'portrait'
-   225                     ? <GraduationCap className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-   226                     : <Bot className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-   227                 }
-   228               </div>
-   229               <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
-   230                 msg.role === 'user'
-   231                   ? 'bg-primary text-primary-foreground rounded-tr-sm'
-   232                   : 'bg-muted rounded-tl-sm'
-   233               }`}>
-   234                 {/* 渲染图片附件 */}
-   235                 {msg.content.includes('![图片](') && (
-   236                   <div className="mb-2 space-y-1">
-   237                     {msg.content.match(/!\[图片\]\(([^)]+)\)/g)?.map((match, i) => {
-   238                       const url = match.match(/!\[图片\]\(([^)]+)\)/)?.[1];
-   239                       return url ? <img key={i} src={url} alt="附图" className="max-w-[200px] rounded-lg" /> : null;
-   240                     })}
-   241                   </div>
-   242                 )}
-   243                 <div className="whitespace-pre-wrap text-pretty prose prose-sm dark:prose-invert max-w-none">
-   244                   {msg.content.replace(/!\[图片\]\([^)]+\)\n?/g, '').replace(/🎬 \[视频: [^\]]+\]\n?/g, '').replace(/🎙️ \[语音消息\]\n?/g, '')}
-   245                 </div>
-   246                 {msg.content.includes('🎬') && (
-   247                   <div className="mt-1 flex items-center gap-1 text-xs opacity-70">
-   248                     <Film className="w-3 h-3" />视频已附加
-   249                   </div>
-   250                 )}
-   251                 {msg.content.includes('🎙️') && (
-   252                   <div className="mt-1 flex items-center gap-1 text-xs opacity-70">
-   253                     <Mic className="w-3 h-3" />语音已发送
-   254                   </div>
-   255                 )}
-   256               </div>
-   257             </div>
-   258           ))}
-   259           {loading && !streamingText && (
-   260             <div className="flex gap-3">
-
-
-</observation>
-<action>
-FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[217, 490], user_hidden=False)
-</action>
-<observation>
-[Read from /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx is successful.]
-Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LandingPage.tsx:
-   217 function HeroBackground() {
-   218   const mountRef = useRef<HTMLDivElement>(null);
-   219 
-   220   useEffect(() => {
-   221     const mount = mountRef.current;
-   222     if (!mount) return;
-   223     let cleanup: (() => void) | undefined;
-   224 
-   225     import('three').then((THREE) => {
-   226       if (!mountRef.current) return;
-   227 
-   228       // ── 场景、相机、渲染器 ──
-   229       const scene = new THREE.Scene();
-   230       const camera = new THREE.PerspectiveCamera(60, mount.clientWidth / mount.clientHeight, 0.1, 200);
-   231       camera.position.set(0, 0, 28);
-   232 
-   233       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-   234       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-   235       renderer.setSize(mount.clientWidth, mount.clientHeight);
-   236       renderer.outputColorSpace = THREE.SRGBColorSpace;
-   237       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-   238       renderer.toneMappingExposure = 1.2;
-   239       mount.appendChild(renderer.domElement);
-   240 
-   241       // ── 主题色 ──
-   242       const isDark = document.documentElement.classList.contains('dark');
-   243       const PRIMARY_H = 162;
-   244       const primaryColor = new THREE.Color(`hsl(${PRIMARY_H}, 63%, 45%)`);
-   245       const accentColor = new THREE.Color(`hsl(${PRIMARY_H + 40}, 70%, 55%)`);
-   246       const deepColor = new THREE.Color(`hsl(220, 70%, 55%)`);
-   247 
-   248       // ── 雾气 & 背景 ──
-   249       scene.fog = new THREE.FogExp2(isDark ? 0x040b10 : 0xeef7f4, 0.018);
-   250       scene.background = new THREE.Color(isDark ? 0x040b10 : 0xeef7f4);
-   251 
-   252       // ── 光照 ──
-   253       scene.add(new THREE.AmbientLight(primaryColor, isDark ? 0.4 : 0.7));
-   254       const dirLight1 = new THREE.DirectionalLight(primaryColor, isDark ? 1.8 : 1.2);
-   255       dirLight1.position.set(10, 15, 10);
-   256       scene.add(dirLight1);
-   257       const dirLight2 = new THREE.DirectionalLight(deepColor, isDark ? 1.0 : 0.6);
-   258       dirLight2.position.set(-10, -8, 5);
-   259       scene.add(dirLight2);
-   260       const pointLight = new THREE.PointLight(accentColor, isDark ? 2.5 : 1.5, 40);
-   261       pointLight.position.set(0, 0, 15);
-   262       scene.add(pointLight);
-   263 
-   264       // ── 粒子群 ──
-   265       const particleCount = 1800;
-   266       const particleGeo = new THREE.BufferGeometry();
-   267       const positions = new Float32Array(particleCount * 3);
-   268       const pColors = new Float32Array(particleCount * 3);
-   269       const sizes = new Float32Array(particleCount);
-   270       const colorOptions = [primaryColor, accentColor, deepColor,
-   271         new THREE.Color(`hsl(${PRIMARY_H + 20}, 80%, 65%)`),
-   272         new THREE.Color('hsl(200, 80%, 60%)'),
-   273       ];
-   274       for (let i = 0; i < particleCount; i++) {
-   275         const r = 18 + Math.random() * 20;
-   276         const theta = Math.random() * Math.PI * 2;
-   277         const phi = Math.acos(2 * Math.random() - 1);
-   278         positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
-   279         positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-   280         positions[i * 3 + 2] = r * Math.cos(phi);
-   281         const c = colorOptions[Math.floor(Math.random() * colorOptions.length)];
-   282         pColors[i * 3]     = c.r;
-   283         pColors[i * 3 + 1] = c.g;
-   284         pColors[i * 3 + 2] = c.b;
-   285         sizes[i] = Math.random() * 2.5 + 0.5;
-   286       }
-   287       particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-   288       particleGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
-   289       particleGeo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-   290 
-   291       const particleMat = new THREE.ShaderMaterial({
-   292         vertexShader: `
-   293           attribute float size;
-   294           attribute vec3 color;
-   295           varying vec3 vColor;
-   296           varying float vAlpha;
-   297           void main() {
-   298             vColor = color;
-   299             vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-   300             float depth = (-mvPos.z - 10.0) / 50.0;
-   301             vAlpha = clamp(1.0 - depth, 0.15, 0.9);
-   302             gl_PointSize = size * (300.0 / -mvPos.z);
-   303             gl_Position = projectionMatrix * mvPos;
-   304           }
-   305         `,
-   306         fragmentShader: `
-   307           varying vec3 vColor;
-   308           varying float vAlpha;
-   309           void main() {
-   310             float d = length(gl_PointCoord - vec2(0.5));
-   311             if (d > 0.5) discard;
-   312             float alpha = smoothstep(0.5, 0.0, d) * vAlpha;
-   313             gl_FragColor = vec4(vColor, alpha);
-   314           }
-   315         `,
-   316         transparent: true,
-   317         depthWrite: false,
-   318         blending: THREE.AdditiveBlending,
-   319         vertexColors: true,
-   320       });
-   321       const particles = new THREE.Points(particleGeo, particleMat);
-   322       scene.add(particles);
-   323 
-   324       // ── 中心能量球 ──
-   325       const coreGeo = new THREE.IcosahedronGeometry(3.5, 4);
-   326       const coreMat = new THREE.MeshPhysicalMaterial({
-   327         color: primaryColor,
-   328         metalness: 0.3,
-   329         roughness: 0.1,
-   330         transmission: 0.6,
-   331         thickness: 1.5,
-   332         envMapIntensity: 2.0,
-   333         emissive: primaryColor,
-   334         emissiveIntensity: isDark ? 0.3 : 0.15,
-   335       });
-   336       const core = new THREE.Mesh(coreGeo, coreMat);
-   337       scene.add(core);
-   338 
-   339       // ── 外层线框球 ──
-   340       const wireGeo = new THREE.IcosahedronGeometry(4.6, 2);
-   341       const wireMat = new THREE.MeshBasicMaterial({
-   342         color: primaryColor, wireframe: true,
-   343         transparent: true, opacity: isDark ? 0.12 : 0.08,
-   344       });
-   345       const wireSphere = new THREE.Mesh(wireGeo, wireMat);
-   346       scene.add(wireSphere);
-   347 
-   348       // ── 轨道环 ──
-   349       const rings: THREE.Mesh[] = [];
-   350       const ringConfigs = [
-   351         { r: 7.5,  tube: 0.03,  color: primaryColor, opacity: isDark ? 0.5 : 0.35,  rotX: Math.PI / 3, rotY: 0 },
-   352         { r: 10,   tube: 0.025, color: accentColor,   opacity: isDark ? 0.35 : 0.25, rotX: Math.PI / 5, rotY: Math.PI / 4 },
-   353         { r: 13,   tube: 0.02,  color: deepColor,     opacity: isDark ? 0.25 : 0.18, rotX: -Math.PI / 4, rotY: Math.PI / 6 },
-   354       ];
-   355       ringConfigs.forEach(cfg => {
-   356         const geo = new THREE.TorusGeometry(cfg.r, cfg.tube, 16, 120);
-   357         const mat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: cfg.opacity });
-   358         const mesh = new THREE.Mesh(geo, mat);
-   359         mesh.rotation.x = cfg.rotX;
-   360         mesh.rotation.y = cfg.rotY;
-   361         rings.push(mesh);
-   362         scene.add(mesh);
-   363       });
-   364 
-   365       // ── 轨道节点 ──
-   366       const orbitNodes: Array<{ mesh: THREE.Mesh; ring: number; angle: number; speed: number }> = [];
-   367       ringConfigs.forEach((cfg, ri) => {
-   368         const count = 4 + ri * 2;
-   369         for (let i = 0; i < count; i++) {
-   370           const geo = new THREE.SphereGeometry(0.18 + Math.random() * 0.12, 8, 8);
-   371           const mat = new THREE.MeshPhongMaterial({ color: cfg.color, emissive: cfg.color, emissiveIntensity: isDark ? 0.8 : 0.5 });
-   372           const mesh = new THREE.Mesh(geo, mat);
-   373           orbitNodes.push({ mesh, ring: ri, angle: (i / count) * Math.PI * 2, speed: 0.004 + Math.random() * 0.003 });
-   374           scene.add(mesh);
-   375         }
-   376       });
-   377 
-   378       // ── 鼠标交互 ──
-   379       let mouseX = 0, mouseY = 0, targetRotX = 0, targetRotY = 0;
-   380       const onMouseMove = (e: MouseEvent) => {
-   381         mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-   382         mouseY = -(e.clientY / window.innerHeight - 0.5) * 2;
-   383       };
-   384       const onTouchMove = (e: TouchEvent) => {
-   385         mouseX = (e.touches[0].clientX / window.innerWidth - 0.5) * 2;
-   386         mouseY = -(e.touches[0].clientY / window.innerHeight - 0.5) * 2;
-   387       };
-   388       window.addEventListener('mousemove', onMouseMove);
-   389       window.addEventListener('touchmove', onTouchMove, { passive: true });
-   390 
-   391       const onResize = () => {
-   392         camera.aspect = mount.clientWidth / mount.clientHeight;
-   393         camera.updateProjectionMatrix();
-   394         renderer.setSize(mount.clientWidth, mount.clientHeight);
-   395       };
-   396       window.addEventListener('resize', onResize);
-   397 
-   398       // ── 渲染循环 ──
-   399       const clock = new THREE.Clock();
-   400       let animId = 0;
-   401       const animate = () => {
-   402         animId = requestAnimationFrame(animate);
-   403         const t = clock.getElapsedTime();
-   404         targetRotX += (mouseY * 0.4 - targetRotX) * 0.05;
-   405         targetRotY += (mouseX * 0.4 - targetRotY) * 0.05;
-   406 
-   407         core.rotation.x = t * 0.12 + targetRotX;
-   408         core.rotation.y = t * 0.18 + targetRotY;
+tation.y = t * 0.18 + targetRotY;
    409         core.rotation.z = t * 0.08;
    410         wireSphere.rotation.x = -t * 0.06 + targetRotX * 0.5;
    411         wireSphere.rotation.y = -t * 0.09 + targetRotY * 0.5;
@@ -6009,3 +4466,1568 @@ export default function LearningPathPage() {
 The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
 
 </observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: Now I'll add activeTool + nodePositions state, update addStage/path-load logic, and replace the whole canvas JSX — all in one response:
+Command: str_replace
+Old String: ```
+// ─── 主页面 ──────────────────────────────────────────────────────
+export default function LearningPathPage() {
+  const { user, profile } = useAuth();
+  const [path, setPath] = useState<LearningPath | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [recommendation, setRecommendation] = useState<AIRecommendation | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [selectedResource, setSelectedResource] = useState<ResourceId>('document');
+  const [generating, setGenerating] = useState(false);
+  // 新增节点输入
+  const [addingNode, setAddingNode] = useState(false);
+  const [newNodeTitle, setNewNodeTitle] = useState('');
+  const [newNodeDesc, setNewNodeDesc] = useState('');
+  const addInputRef = useRef<HTMLInputElement>(null);
+
+```
+New String: ```
+// ─── 工具类型 ─────────────────────────────────────────────────────
+type CanvasTool = 'select' | 'add' | 'connect' | 'text' | 'color' | 'delete';
+
+const CANVAS_TOOLS: { id: CanvasTool; icon: React.ElementType; label: string; color: string }[] = [
+  { id: 'select',  icon: MousePointer2, label: '选择',   color: 'text-sky-500'     },
+  { id: 'add',     icon: Plus,          label: '新增节点',color: 'text-primary'     },
+  { id: 'connect', icon: GitBranch,     label: '连线',   color: 'text-violet-500'  },
+  { id: 'text',    icon: Type,          label: '标注文字',color: 'text-amber-500'   },
+  { id: 'color',   icon: Palette,       label: '颜色',   color: 'text-rose-500'    },
+  { id: 'delete',  icon: Trash2,        label: '删除',   color: 'text-destructive' },
+];
+
+// ─── 主页面 ──────────────────────────────────────────────────────
+export default function LearningPathPage() {
+  const { user, profile } = useAuth();
+  const [path, setPath] = useState<LearningPath | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [recommendation, setRecommendation] = useState<AIRecommendation | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [selectedResource, setSelectedResource] = useState<ResourceId>('document');
+  const [generating, setGenerating] = useState(false);
+  const [addingNode, setAddingNode] = useState(false);
+  const [newNodeTitle, setNewNodeTitle] = useState('');
+  const [newNodeDesc, setNewNodeDesc] = useState('');
+  const addInputRef = useRef<HTMLInputElement>(null);
+
+  // ── 画板工具 & 自由拖拽 ──
+  const [activeTool, setActiveTool] = useState<CanvasTool>('select');
+  const [nodePositions, setNodePositions] = useState<Record<string, { x: number; y: number }>>({});
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const dragStartRef = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  // 初始化节点位置（横向排列）
+  const initPositions = useCallback((stages: PathStage[]) => {
+    setNodePositions(prev => {
+      const next = { ...prev };
+      stages.forEach((s, i) => {
+        if (!next[s.id]) next[s.id] = { x: 48 + i * 290, y: 40 };
+      });
+      return next;
+    });
+  }, []);
+
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: Now update `useEffect` to call initPositions, and update `generateByResource` + `addStage`:
+Command: str_replace
+Old String: ```
+  useEffect(() => {
+    if (!user) { setLoading(false); return; }
+    supabase.from('learning_paths').select('*').eq('user_id', user.id)
+      .order('created_at', { ascending: false }).limit(1)
+      .then(({ data }) => {
+        if (Array.isArray(data) && data.length > 0) setPath(data[0]);
+        setLoading(false);
+      });
+  }, [user]);
+```
+New String: ```
+  useEffect(() => {
+    if (!user) { setLoading(false); return; }
+    supabase.from('learning_paths').select('*').eq('user_id', user.id)
+      .order('created_at', { ascending: false }).limit(1)
+      .then(({ data }) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setPath(data[0]);
+          initPositions(data[0].stages);
+        }
+        setLoading(false);
+      });
+  }, [user, initPositions]);
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+  const generateByResource = async (rid: ResourceId) => {
+    if (!user) return;
+    setGenerating(true);
+    const rt = RESOURCE_TYPES.find(r => r.id === rid)!;
+    const stages = buildStagesForResource(rid);
+    // 如有旧路径先删除
+    if (path) await supabase.from('learning_paths').delete().eq('id', path.id);
+    const { data } = await supabase.from('learning_paths').insert({
+      user_id: user.id,
+      title: `${rt.label}学习路径`,
+      stages, current_stage: 0, progress_percent: 0,
+    }).select().maybeSingle();
+    if (data) { setPath(data); toast.success(`已生成「${rt.label}」个性化学习路径！`); }
+    setGenerating(false);
+  };
+```
+New String: ```
+  const generateByResource = async (rid: ResourceId) => {
+    if (!user) return;
+    setGenerating(true);
+    const rt = RESOURCE_TYPES.find(r => r.id === rid)!;
+    const stages = buildStagesForResource(rid);
+    if (path) await supabase.from('learning_paths').delete().eq('id', path.id);
+    const { data } = await supabase.from('learning_paths').insert({
+      user_id: user.id,
+      title: `${rt.label}学习路径`,
+      stages, current_stage: 0, progress_percent: 0,
+    }).select().maybeSingle();
+    if (data) {
+      setPath(data);
+      setNodePositions({});
+      initPositions(stages);
+      toast.success(`已生成「${rt.label}」个性化学习路径！`);
+    }
+    setGenerating(false);
+  };
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: Now update `addStage` + `applyRecommendation` to init positions, then replace the canvas JSX — all in parallel:
+Command: str_replace
+Old String: ```
+  const addStage = async () => {
+    if (!path || !newNodeTitle.trim()) return;
+    const newStage: PathStage = {
+      id: `custom-${Date.now()}`,
+      title: newNodeTitle.trim(),
+      description: newNodeDesc.trim() || '自定义学习阶段',
+      order: path.stages.length + 1,
+      resources: [selectedResource],
+      completed: false,
+    };
+    const updatedStages = [...path.stages, newStage];
+    const { data } = await supabase.from('learning_paths').update({
+      stages: updatedStages,
+    }).eq('id', path.id).select().maybeSingle();
+    if (data) {
+      setPath(data);
+      setNewNodeTitle(''); setNewNodeDesc(''); setAddingNode(false);
+      toast.success('节点已添加');
+    }
+  };
+
+  const applyRecommendation = async () => {
+    if (!user || !recommendation) return;
+    const { data } = await supabase.from('learning_paths').insert({
+      user_id: user.id, title: recommendation.title,
+      stages: recommendation.stages, current_stage: 0, progress_percent: 0,
+    }).select().maybeSingle();
+    if (data) { setPath(data); setRecommendation(null); toast.success('AI 推荐路径已应用！'); }
+  };
+
+```
+New String: ```
+  const addStage = async () => {
+    if (!path || !newNodeTitle.trim()) return;
+    const newStage: PathStage = {
+      id: `custom-${Date.now()}`,
+      title: newNodeTitle.trim(),
+      description: newNodeDesc.trim() || '自定义学习阶段',
+      order: path.stages.length + 1,
+      resources: [selectedResource],
+      completed: false,
+    };
+    const updatedStages = [...path.stages, newStage];
+    const { data } = await supabase.from('learning_paths').update({
+      stages: updatedStages,
+    }).eq('id', path.id).select().maybeSingle();
+    if (data) {
+      setPath(data);
+      // 新节点位置：放在最后一个节点右侧或空白处
+      const existing = Object.values(nodePositions);
+      const maxX = existing.length ? Math.max(...existing.map(p => p.x)) : 0;
+      setNodePositions(prev => ({ ...prev, [newStage.id]: { x: maxX + 290, y: 40 } }));
+      setNewNodeTitle(''); setNewNodeDesc(''); setAddingNode(false);
+      toast.success('节点已添加');
+    }
+  };
+
+  const applyRecommendation = async () => {
+    if (!user || !recommendation) return;
+    const { data } = await supabase.from('learning_paths').insert({
+      user_id: user.id, title: recommendation.title,
+      stages: recommendation.stages, current_stage: 0, progress_percent: 0,
+    }).select().maybeSingle();
+    if (data) {
+      setPath(data);
+      setNodePositions({});
+      initPositions(recommendation.stages);
+      setRecommendation(null);
+      toast.success('AI 推荐路径已应用！');
+    }
+  };
+
+```
+
+</action>
+<observation>
+ERROR: search text not found in file
+
+</observation>
+<action>
+**CmdRunAction (source=EventSource.AGENT, is_input=False)**
+COMMAND:
+grep -n "addStage\|applyRecommendation" /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx
+</action>
+<observation>
+**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
+  "exit_code": 0,
+  "pid": -1,
+  "username": null,
+  "hostname": null,
+  "working_dir": "/workspace",
+  "py_interpreter_path": null,
+  "prefix": "",
+  "suffix": "\n[The command completed with exit code 0.]"
+})**
+--BEGIN AGENT OBSERVATION--
+311:  const applyRecommendation = async () => {
+355:  const addStage = async () => {
+531:                  <Button size="sm" onClick={applyRecommendation} className="flex-1 gap-1.5">
+673:                          <Button size="sm" className="flex-1 h-7 text-xs" onClick={addStage} disabled={!newNodeTitle.trim()}>确认</Button>
+[The command completed with exit code 0.]
+[Current working directory: /workspace]
+--END AGENT OBSERVATION--
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[311, 395], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx:
+   311   const applyRecommendation = async () => {
+   312     if (!user || !recommendation) return;
+   313     const { data } = await supabase.from('learning_paths').insert({
+   314       user_id: user.id, title: recommendation.title,
+   315       stages: recommendation.stages, current_stage: 0, progress_percent: 0,
+   316     }).select().maybeSingle();
+   317     if (data) { setPath(data); setRecommendation(null); toast.success('AI 推荐路径已应用！'); }
+   318   };
+   319 
+   320   // ── 完成阶段 ──
+   321   const completeStage = async (stageId: string) => {
+   322     if (!path) return;
+   323     setCompletingId(stageId);
+   324     const updatedStages = path.stages.map(s => s.id === stageId ? { ...s, completed: true } : s);
+   325     const completedCount = updatedStages.filter(s => s.completed).length;
+   326     const progressPercent = Math.round((completedCount / updatedStages.length) * 100);
+   327     const currentStage = updatedStages.findIndex(s => !s.completed);
+   328     const { data } = await supabase.from('learning_paths').update({
+   329       stages: updatedStages, progress_percent: progressPercent,
+   330       current_stage: currentStage >= 0 ? currentStage : updatedStages.length - 1,
+   331     }).eq('id', path.id).select().maybeSingle();
+   332     if (data) {
+   333       setPath(data);
+   334       if (progressPercent === 100) { setShowCelebration(true); setTimeout(() => setShowCelebration(false), 3500); }
+   335       toast.success('🎉 阶段完成！继续加油！');
+   336     }
+   337     setCompletingId(null);
+   338   };
+   339 
+   340   // ── 删除节点 ──
+   341   const deleteStage = async (stageId: string) => {
+   342     if (!path) return;
+   343     const updatedStages = path.stages.filter(s => s.id !== stageId).map((s, i) => ({ ...s, order: i + 1 }));
+   344     const completedCount = updatedStages.filter(s => s.completed).length;
+   345     const progressPercent = updatedStages.length ? Math.round((completedCount / updatedStages.length) * 100) : 0;
+   346     const currentStage = updatedStages.findIndex(s => !s.completed);
+   347     const { data } = await supabase.from('learning_paths').update({
+   348       stages: updatedStages, progress_percent: progressPercent,
+   349       current_stage: currentStage >= 0 ? currentStage : Math.max(0, updatedStages.length - 1),
+   350     }).eq('id', path.id).select().maybeSingle();
+   351     if (data) { setPath(data); toast.success('节点已删除'); }
+   352   };
+   353 
+   354   // ── 新增节点 ──
+   355   const addStage = async () => {
+   356     if (!path || !newNodeTitle.trim()) return;
+   357     const newStage: PathStage = {
+   358       id: `custom-${Date.now()}`,
+   359       title: newNodeTitle.trim(),
+   360       description: newNodeDesc.trim() || '自定义学习阶段',
+   361       order: path.stages.length + 1,
+   362       resources: [selectedResource],
+   363       completed: false,
+   364     };
+   365     const updatedStages = [...path.stages, newStage];
+   366     const { data } = await supabase.from('learning_paths').update({
+   367       stages: updatedStages,
+   368     }).eq('id', path.id).select().maybeSingle();
+   369     if (data) {
+   370       setPath(data);
+   371       setNewNodeTitle(''); setNewNodeDesc(''); setAddingNode(false);
+   372       toast.success('节点已添加');
+   373     }
+   374   };
+   375 
+   376   // ── 拖拽重排 ──
+   377   const handleDrop = async (dropIndex: number) => {
+   378     if (dragIndex === null || dragIndex === dropIndex || !path) return;
+   379     const stages = [...path.stages];
+   380     const [moved] = stages.splice(dragIndex, 1);
+   381     stages.splice(dropIndex, 0, moved);
+   382     const reordered = stages.map((s, i) => ({ ...s, order: i + 1 }));
+   383     const currentStage = reordered.findIndex(s => !s.completed);
+   384     const { data } = await supabase.from('learning_paths').update({
+   385       stages: reordered,
+   386       current_stage: currentStage >= 0 ? currentStage : reordered.length - 1,
+   387     }).eq('id', path.id).select().maybeSingle();
+   388     if (data) { setPath(data); toast.success('顺序已更新'); }
+   389     setDragIndex(null);
+   390   };
+   391 
+   392   const completedCount = path?.stages.filter(s => s.completed).length ?? 0;
+   393 
+   394   if (loading) return (
+   395     <AppLayout>
+
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: I can see the full section. Now update all three function bodies + view the canvas JSX in one shot:
+Command: str_replace
+Old String: ```
+  const applyRecommendation = async () => {
+    if (!user || !recommendation) return;
+    const { data } = await supabase.from('learning_paths').insert({
+      user_id: user.id, title: recommendation.title,
+      stages: recommendation.stages, current_stage: 0, progress_percent: 0,
+    }).select().maybeSingle();
+    if (data) { setPath(data); setRecommendation(null); toast.success('AI 推荐路径已应用！'); }
+  };
+
+  // ── 完成阶段 ──
+  const completeStage = async (stageId: string) => {
+    if (!path) return;
+    setCompletingId(stageId);
+    const updatedStages = path.stages.map(s => s.id === stageId ? { ...s, completed: true } : s);
+    const completedCount = updatedStages.filter(s => s.completed).length;
+    const progressPercent = Math.round((completedCount / updatedStages.length) * 100);
+    const currentStage = updatedStages.findIndex(s => !s.completed);
+    const { data } = await supabase.from('learning_paths').update({
+      stages: updatedStages, progress_percent: progressPercent,
+      current_stage: currentStage >= 0 ? currentStage : updatedStages.length - 1,
+    }).eq('id', path.id).select().maybeSingle();
+    if (data) {
+      setPath(data);
+      if (progressPercent === 100) { setShowCelebration(true); setTimeout(() => setShowCelebration(false), 3500); }
+      toast.success('🎉 阶段完成！继续加油！');
+    }
+    setCompletingId(null);
+  };
+
+  // ── 删除节点 ──
+  const deleteStage = async (stageId: string) => {
+    if (!path) return;
+    const updatedStages = path.stages.filter(s => s.id !== stageId).map((s, i) => ({ ...s, order: i + 1 }));
+    const completedCount = updatedStages.filter(s => s.completed).length;
+    const progressPercent = updatedStages.length ? Math.round((completedCount / updatedStages.length) * 100) : 0;
+    const currentStage = updatedStages.findIndex(s => !s.completed);
+    const { data } = await supabase.from('learning_paths').update({
+      stages: updatedStages, progress_percent: progressPercent,
+      current_stage: currentStage >= 0 ? currentStage : Math.max(0, updatedStages.length - 1),
+    }).eq('id', path.id).select().maybeSingle();
+    if (data) { setPath(data); toast.success('节点已删除'); }
+  };
+
+  // ── 新增节点 ──
+  const addStage = async () => {
+    if (!path || !newNodeTitle.trim()) return;
+    const newStage: PathStage = {
+      id: `custom-${Date.now()}`,
+      title: newNodeTitle.trim(),
+      description: newNodeDesc.trim() || '自定义学习阶段',
+      order: path.stages.length + 1,
+      resources: [selectedResource],
+      completed: false,
+    };
+    const updatedStages = [...path.stages, newStage];
+    const { data } = await supabase.from('learning_paths').update({
+      stages: updatedStages,
+    }).eq('id', path.id).select().maybeSingle();
+    if (data) {
+      setPath(data);
+      setNewNodeTitle(''); setNewNodeDesc(''); setAddingNode(false);
+      toast.success('节点已添加');
+    }
+  };
+
+  // ── 拖拽重排 ──
+  const handleDrop = async (dropIndex: number) => {
+    if (dragIndex === null || dragIndex === dropIndex || !path) return;
+    const stages = [...path.stages];
+    const [moved] = stages.splice(dragIndex, 1);
+    stages.splice(dropIndex, 0, moved);
+    const reordered = stages.map((s, i) => ({ ...s, order: i + 1 }));
+    const currentStage = reordered.findIndex(s => !s.completed);
+    const { data } = await supabase.from('learning_paths').update({
+      stages: reordered,
+      current_stage: currentStage >= 0 ? currentStage : reordered.length - 1,
+    }).eq('id', path.id).select().maybeSingle();
+    if (data) { setPath(data); toast.success('顺序已更新'); }
+    setDragIndex(null);
+  };
+
+  const completedCount = path?.stages.filter(s => s.completed).length ?? 0;
+```
+New String: ```
+  const applyRecommendation = async () => {
+    if (!user || !recommendation) return;
+    const { data } = await supabase.from('learning_paths').insert({
+      user_id: user.id, title: recommendation.title,
+      stages: recommendation.stages, current_stage: 0, progress_percent: 0,
+    }).select().maybeSingle();
+    if (data) {
+      setPath(data);
+      setNodePositions({});
+      initPositions(recommendation.stages);
+      setRecommendation(null);
+      toast.success('AI 推荐路径已应用！');
+    }
+  };
+
+  // ── 完成阶段 ──
+  const completeStage = async (stageId: string) => {
+    if (!path) return;
+    setCompletingId(stageId);
+    const updatedStages = path.stages.map(s => s.id === stageId ? { ...s, completed: true } : s);
+    const completedCount = updatedStages.filter(s => s.completed).length;
+    const progressPercent = Math.round((completedCount / updatedStages.length) * 100);
+    const currentStage = updatedStages.findIndex(s => !s.completed);
+    const { data } = await supabase.from('learning_paths').update({
+      stages: updatedStages, progress_percent: progressPercent,
+      current_stage: currentStage >= 0 ? currentStage : updatedStages.length - 1,
+    }).eq('id', path.id).select().maybeSingle();
+    if (data) {
+      setPath(data);
+      if (progressPercent === 100) { setShowCelebration(true); setTimeout(() => setShowCelebration(false), 3500); }
+      toast.success('🎉 阶段完成！继续加油！');
+    }
+    setCompletingId(null);
+  };
+
+  // ── 删除节点 ──
+  const deleteStage = async (stageId: string) => {
+    if (!path) return;
+    const updatedStages = path.stages.filter(s => s.id !== stageId).map((s, i) => ({ ...s, order: i + 1 }));
+    const completedCount = updatedStages.filter(s => s.completed).length;
+    const progressPercent = updatedStages.length ? Math.round((completedCount / updatedStages.length) * 100) : 0;
+    const currentStage = updatedStages.findIndex(s => !s.completed);
+    const { data } = await supabase.from('learning_paths').update({
+      stages: updatedStages, progress_percent: progressPercent,
+      current_stage: currentStage >= 0 ? currentStage : Math.max(0, updatedStages.length - 1),
+    }).eq('id', path.id).select().maybeSingle();
+    if (data) {
+      setPath(data);
+      // 清除已删除节点位置
+      setNodePositions(prev => { const next = { ...prev }; delete next[stageId]; return next; });
+      toast.success('节点已删除');
+    }
+  };
+
+  // ── 新增节点 ──
+  const addStage = async () => {
+    if (!path || !newNodeTitle.trim()) return;
+    const newStage: PathStage = {
+      id: `custom-${Date.now()}`,
+      title: newNodeTitle.trim(),
+      description: newNodeDesc.trim() || '自定义学习阶段',
+      order: path.stages.length + 1,
+      resources: [selectedResource],
+      completed: false,
+    };
+    const updatedStages = [...path.stages, newStage];
+    const { data } = await supabase.from('learning_paths').update({ stages: updatedStages })
+      .eq('id', path.id).select().maybeSingle();
+    if (data) {
+      setPath(data);
+      const existing = Object.values(nodePositions);
+      const maxX = existing.length ? Math.max(...existing.map(p => p.x)) : 0;
+      setNodePositions(prev => ({ ...prev, [newStage.id]: { x: maxX + 290, y: 40 } }));
+      setNewNodeTitle(''); setNewNodeDesc(''); setAddingNode(false);
+      toast.success('节点已添加');
+    }
+  };
+
+  // ── 拖拽重排（兼容旧列表模式，画板模式用鼠标拖拽）──
+  const handleDrop = async (dropIndex: number) => {
+    if (dragIndex === null || dragIndex === dropIndex || !path) return;
+    const stages = [...path.stages];
+    const [moved] = stages.splice(dragIndex, 1);
+    stages.splice(dropIndex, 0, moved);
+    const reordered = stages.map((s, i) => ({ ...s, order: i + 1 }));
+    const currentStage = reordered.findIndex(s => !s.completed);
+    const { data } = await supabase.from('learning_paths').update({
+      stages: reordered,
+      current_stage: currentStage >= 0 ? currentStage : reordered.length - 1,
+    }).eq('id', path.id).select().maybeSingle();
+    if (data) { setPath(data); toast.success('顺序已更新'); }
+    setDragIndex(null);
+  };
+
+  // ── 画板鼠标拖拽（仅 select 工具时生效）──
+  const handleNodeMouseDown = useCallback((e: React.MouseEvent, stageId: string) => {
+    if (activeTool === 'delete') { deleteStage(stageId); return; }
+    if (activeTool !== 'select') return;
+    e.preventDefault();
+    const pos = nodePositions[stageId] ?? { x: 0, y: 0 };
+    dragStartRef.current = { mx: e.clientX, my: e.clientY, ox: pos.x, oy: pos.y };
+    setDraggingId(stageId);
+  }, [activeTool, nodePositions]);
+
+  useEffect(() => {
+    if (!draggingId) return;
+    const onMove = (e: MouseEvent) => {
+      if (!dragStartRef.current) return;
+      const dx = e.clientX - dragStartRef.current.mx;
+      const dy = e.clientY - dragStartRef.current.my;
+      setNodePositions(prev => ({
+        ...prev,
+        [draggingId]: { x: Math.max(0, dragStartRef.current!.ox + dx), y: Math.max(0, dragStartRef.current!.oy + dy) },
+      }));
+    };
+    const onUp = () => { setDraggingId(null); dragStartRef.current = null; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [draggingId]);
+
+  const completedCount = path?.stages.filter(s => s.completed).length ?? 0;
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
+
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx', start=0, end=-1, thought='Now view the full canvas JSX section to replace it:', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[590, 760], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx:
+   590               <GripVertical className="w-3 h-3" />可拖拽节点调整顺序 · 悬停节点查看删除 · 底部可新增节点
+   591             </p>
+   592           </div>
+   593         )}
+   594 
+   595         {/* ══ 主画板 ══ */}
+   596         {!path ? (
+   597           <div className="flex-1 flex items-center justify-center rounded-2xl border border-dashed border-border">
+   598             <div className="text-center p-10">
+   599               <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-5">
+   600                 <Route className="w-10 h-10 text-muted-foreground/30" />
+   601               </div>
+   602               <h3 className="text-lg font-semibold mb-2">选择上方资源类型，一键生成学习路径</h3>
+   603               <p className="text-sm text-muted-foreground max-w-sm text-pretty">
+   604                 系统将结合你的学习画像与所选资源类型，为你规划科学的个性化学习步骤
+   605               </p>
+   606             </div>
+   607           </div>
+   608         ) : (
+   609           <div
+   610             className="flex-1 min-h-0 rounded-2xl border border-border overflow-auto"
+   611             style={{
+   612               background: 'radial-gradient(hsl(var(--border) / 0.6) 1px, transparent 1px)',
+   613               backgroundSize: '24px 24px',
+   614               minHeight: '360px',
+   615             }}
+   616           >
+   617             <div
+   618               className="relative p-8"
+   619               style={{
+   620                 transform: `scale(${zoom})`,
+   621                 transformOrigin: 'top left',
+   622                 minWidth: `${path.stages.length * 288 + 128}px`,
+   623                 minHeight: '340px',
+   624               }}
+   625             >
+   626               {/* SVG 连线层 */}
+   627               <svg
+   628                 className="absolute inset-0 pointer-events-none"
+   629                 style={{ width: `${path.stages.length * 288 + 128}px`, height: '340px' }}
+   630               >
+   631                 <defs>
+   632                   <marker id="arrowDone" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+   633                     <path d="M0,0 L0,6 L8,3 z" fill="hsl(var(--primary))" />
+   634                   </marker>
+   635                   <marker id="arrowTodo" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+   636                     <path d="M0,0 L0,6 L8,3 z" fill="hsl(var(--border))" />
+   637                   </marker>
+   638                 </defs>
+   639                 {path.stages.map((stage, i) => {
+   640                   if (i >= path.stages.length - 1) return null;
+   641                   const x1 = i * 288 + 256 + 16;
+   642                   const x2 = (i + 1) * 288 + 16;
+   643                   const y = 108;
+   644                   return (
+   645                     <g key={`edge-${stage.id}`}>
+   646                       <line x1={x1} y1={y} x2={x2} y2={y}
+   647                         stroke={stage.completed ? 'hsl(var(--primary))' : 'hsl(var(--border))'}
+   648                         strokeWidth="2.5"
+   649                         strokeDasharray={stage.completed ? '0' : '7 5'}
+   650                         strokeLinecap="round"
+   651                         markerEnd={stage.completed ? 'url(#arrowDone)' : 'url(#arrowTodo)'}
+   652                       />
+   653                       {stage.completed && (
+   654                         <circle r="4" fill="hsl(var(--primary))" opacity="0.9">
+   655                           <animateMotion dur="1.6s" repeatCount="indefinite"
+   656                             path={`M${x1},${y} L${x2},${y}`} />
+   657                         </circle>
+   658                       )}
+   659                     </g>
+   660                   );
+   661                 })}
+   662               </svg>
+   663 
+   664               {/* 节点行 */}
+   665               <div className="flex items-start gap-8 relative z-10">
+   666                 {path.stages.map((stage, index) => {
+   667                   const isCurrent = index === path.current_stage && !stage.completed;
+   668                   return (
+   669                     <StageNode
+   670                       key={stage.id}
+   671                       stage={stage}
+   672                       index={index}
+   673                       isCurrent={isCurrent}
+   674                       isCompleted={stage.completed}
+   675                       isLocked={!stage.completed && !isCurrent}
+   676                       onComplete={() => completeStage(stage.id)}
+   677                       completing={completingId === stage.id}
+   678                       onDelete={() => deleteStage(stage.id)}
+   679                       onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragIndex(index); }}
+   680                       onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+   681                       onDrop={e => { e.preventDefault(); handleDrop(index); }}
+   682                     />
+   683                   );
+   684                 })}
+   685 
+   686                 {/* ── 新增节点按钮/表单 ── */}
+   687                 <div className="shrink-0" style={{ width: 256 }}>
+   688                   <AnimatePresence mode="wait">
+   689                     {addingNode ? (
+   690                       <motion.div key="form" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+   691                         exit={{ opacity: 0, scale: 0.95 }}
+   692                         className="bg-card rounded-2xl border-2 border-dashed border-primary/40 p-4 space-y-3 shadow-sm"
+   693                         style={{ marginTop: 6 }}
+   694                       >
+   695                         <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+   696                           <Plus className="w-3.5 h-3.5" />新增学习节点
+   697                         </p>
+   698                         <input
+   699                           ref={addInputRef}
+   700                           value={newNodeTitle}
+   701                           onChange={e => setNewNodeTitle(e.target.value)}
+   702                           placeholder="节点名称（必填）"
+   703                           className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary placeholder:text-muted-foreground/50"
+   704                         />
+   705                         <textarea
+   706                           value={newNodeDesc}
+   707                           onChange={e => setNewNodeDesc(e.target.value)}
+   708                           placeholder="描述（可选）"
+   709                           rows={2}
+   710                           className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary resize-none placeholder:text-muted-foreground/50"
+   711                         />
+   712                         <div className="flex gap-2">
+   713                           <Button size="sm" className="flex-1 h-7 text-xs" onClick={addStage} disabled={!newNodeTitle.trim()}>确认</Button>
+   714                           <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setAddingNode(false); setNewNodeTitle(''); setNewNodeDesc(''); }}>取消</Button>
+   715                         </div>
+   716                       </motion.div>
+   717                     ) : (
+   718                       <motion.button key="btn" type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+   719                         onClick={() => setAddingNode(true)}
+   720                         className="w-full h-28 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-2 group"
+   721                         style={{ marginTop: 6 }}
+   722                       >
+   723                         <Plus className="w-6 h-6 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+   724                         <span className="text-xs text-muted-foreground/60 group-hover:text-primary transition-colors">新增节点</span>
+   725                       </motion.button>
+   726                     )}
+   727                   </AnimatePresence>
+   728                 </div>
+   729               </div>
+   730 
+   731               {/* 图例 */}
+   732               <div className="absolute bottom-3 right-4 flex items-center gap-4 text-[10px] text-muted-foreground/70">
+   733                 <div className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary rounded-full" />已完成</div>
+   734                 <div className="flex items-center gap-1.5"><span className="w-3 h-px border-t-2 border-dashed border-border" />待完成</div>
+   735               </div>
+   736             </div>
+   737           </div>
+   738         )}
+   739 
+   740         {/* ══ 庆祝弹窗 ══ */}
+   741         <AnimatePresence>
+   742           {showCelebration && (
+   743             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+   744               className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm">
+   745               <motion.div initial={{ scale: 0.7, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.7, opacity: 0 }}
+   746                 className="bg-background rounded-3xl p-10 shadow-2xl text-center max-w-sm mx-4">
+   747                 <motion.div animate={{ rotate: [0, 10, -10, 10, 0] }} transition={{ repeat: 2, duration: 0.4 }}>
+   748                   <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+   749                 </motion.div>
+   750                 <h2 className="text-2xl font-bold text-balance mb-2">🎉 全部完成！</h2>
+   751                 <p className="text-muted-foreground text-pretty">你已成功完成所有学习阶段，太棒了！</p>
+   752                 <Button className="mt-6 w-full" onClick={() => setShowCelebration(false)}>继续探索</Button>
+   753               </motion.div>
+   754             </motion.div>
+   755           )}
+   756         </AnimatePresence>
+   757 
+   758       </div>
+   759     </AppLayout>
+   760   );
+
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: Now replace the entire canvas JSX block with the new left-toolbar + free-drag canvas:
+Command: str_replace
+Old String: ```
+        {/* ══ 主画板 ══ */}
+        {!path ? (
+          <div className="flex-1 flex items-center justify-center rounded-2xl border border-dashed border-border">
+            <div className="text-center p-10">
+              <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-5">
+                <Route className="w-10 h-10 text-muted-foreground/30" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">选择上方资源类型，一键生成学习路径</h3>
+              <p className="text-sm text-muted-foreground max-w-sm text-pretty">
+                系统将结合你的学习画像与所选资源类型，为你规划科学的个性化学习步骤
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div
+            className="flex-1 min-h-0 rounded-2xl border border-border overflow-auto"
+            style={{
+              background: 'radial-gradient(hsl(var(--border) / 0.6) 1px, transparent 1px)',
+              backgroundSize: '24px 24px',
+              minHeight: '360px',
+            }}
+          >
+            <div
+              className="relative p-8"
+              style={{
+                transform: `scale(${zoom})`,
+                transformOrigin: 'top left',
+                minWidth: `${path.stages.length * 288 + 128}px`,
+                minHeight: '340px',
+              }}
+            >
+              {/* SVG 连线层 */}
+              <svg
+                className="absolute inset-0 pointer-events-none"
+                style={{ width: `${path.stages.length * 288 + 128}px`, height: '340px' }}
+              >
+                <defs>
+                  <marker id="arrowDone" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L8,3 z" fill="hsl(var(--primary))" />
+                  </marker>
+                  <marker id="arrowTodo" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L8,3 z" fill="hsl(var(--border))" />
+                  </marker>
+                </defs>
+                {path.stages.map((stage, i) => {
+                  if (i >= path.stages.length - 1) return null;
+                  const x1 = i * 288 + 256 + 16;
+                  const x2 = (i + 1) * 288 + 16;
+                  const y = 108;
+                  return (
+                    <g key={`edge-${stage.id}`}>
+                      <line x1={x1} y1={y} x2={x2} y2={y}
+                        stroke={stage.completed ? 'hsl(var(--primary))' : 'hsl(var(--border))'}
+                        strokeWidth="2.5"
+                        strokeDasharray={stage.completed ? '0' : '7 5'}
+                        strokeLinecap="round"
+                        markerEnd={stage.completed ? 'url(#arrowDone)' : 'url(#arrowTodo)'}
+                      />
+                      {stage.completed && (
+                        <circle r="4" fill="hsl(var(--primary))" opacity="0.9">
+                          <animateMotion dur="1.6s" repeatCount="indefinite"
+                            path={`M${x1},${y} L${x2},${y}`} />
+                        </circle>
+                      )}
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {/* 节点行 */}
+              <div className="flex items-start gap-8 relative z-10">
+                {path.stages.map((stage, index) => {
+                  const isCurrent = index === path.current_stage && !stage.completed;
+                  return (
+                    <StageNode
+                      key={stage.id}
+                      stage={stage}
+                      index={index}
+                      isCurrent={isCurrent}
+                      isCompleted={stage.completed}
+                      isLocked={!stage.completed && !isCurrent}
+                      onComplete={() => completeStage(stage.id)}
+                      completing={completingId === stage.id}
+                      onDelete={() => deleteStage(stage.id)}
+                      onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragIndex(index); }}
+                      onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                      onDrop={e => { e.preventDefault(); handleDrop(index); }}
+                    />
+                  );
+                })}
+
+                {/* ── 新增节点按钮/表单 ── */}
+                <div className="shrink-0" style={{ width: 256 }}>
+                  <AnimatePresence mode="wait">
+                    {addingNode ? (
+                      <motion.div key="form" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-card rounded-2xl border-2 border-dashed border-primary/40 p-4 space-y-3 shadow-sm"
+                        style={{ marginTop: 6 }}
+                      >
+                        <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                          <Plus className="w-3.5 h-3.5" />新增学习节点
+                        </p>
+                        <input
+                          ref={addInputRef}
+                          value={newNodeTitle}
+                          onChange={e => setNewNodeTitle(e.target.value)}
+                          placeholder="节点名称（必填）"
+                          className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary placeholder:text-muted-foreground/50"
+                        />
+                        <textarea
+                          value={newNodeDesc}
+                          onChange={e => setNewNodeDesc(e.target.value)}
+                          placeholder="描述（可选）"
+                          rows={2}
+                          className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary resize-none placeholder:text-muted-foreground/50"
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" className="flex-1 h-7 text-xs" onClick={addStage} disabled={!newNodeTitle.trim()}>确认</Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setAddingNode(false); setNewNodeTitle(''); setNewNodeDesc(''); }}>取消</Button>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.button key="btn" type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        onClick={() => setAddingNode(true)}
+                        className="w-full h-28 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-2 group"
+                        style={{ marginTop: 6 }}
+                      >
+                        <Plus className="w-6 h-6 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                        <span className="text-xs text-muted-foreground/60 group-hover:text-primary transition-colors">新增节点</span>
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* 图例 */}
+              <div className="absolute bottom-3 right-4 flex items-center gap-4 text-[10px] text-muted-foreground/70">
+                <div className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary rounded-full" />已完成</div>
+                <div className="flex items-center gap-1.5"><span className="w-3 h-px border-t-2 border-dashed border-border" />待完成</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ 庆祝弹窗 ══ */}
+        <AnimatePresence>
+          {showCelebration && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm">
+              <motion.div initial={{ scale: 0.7, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.7, opacity: 0 }}
+                className="bg-background rounded-3xl p-10 shadow-2xl text-center max-w-sm mx-4">
+                <motion.div animate={{ rotate: [0, 10, -10, 10, 0] }} transition={{ repeat: 2, duration: 0.4 }}>
+                  <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+                </motion.div>
+                <h2 className="text-2xl font-bold text-balance mb-2">🎉 全部完成！</h2>
+                <p className="text-muted-foreground text-pretty">你已成功完成所有学习阶段，太棒了！</p>
+                <Button className="mt-6 w-full" onClick={() => setShowCelebration(false)}>继续探索</Button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+      </div>
+    </AppLayout>
+  );
+```
+New String: ```
+        {/* ══ 主画板 ══ */}
+        {!path ? (
+          <div className="flex-1 flex items-center justify-center rounded-2xl border border-dashed border-border">
+            <div className="text-center p-10">
+              <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-5">
+                <Route className="w-10 h-10 text-muted-foreground/30" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">选择上方资源类型，一键生成学习路径</h3>
+              <p className="text-sm text-muted-foreground max-w-sm text-pretty">
+                系统将结合你的学习画像与所选资源类型，为你规划科学的个性化学习步骤
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* 画板区域：左工具栏 + 主画布 */
+          <div className="flex gap-0 rounded-2xl border border-border overflow-hidden" style={{ minHeight: 640 }}>
+
+            {/* ── 左侧工具面板 ── */}
+            <div className="w-14 shrink-0 flex flex-col items-center gap-1 py-3 px-1 bg-card border-r border-border">
+              {CANVAS_TOOLS.map((tool, idx) => (
+                <div key={tool.id} className="w-full flex flex-col items-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (tool.id === 'add') { setActiveTool('select'); setAddingNode(true); }
+                      else setActiveTool(tool.id);
+                    }}
+                    title={tool.label}
+                    className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all ${
+                      activeTool === tool.id
+                        ? 'bg-primary/10 ring-1 ring-primary/40'
+                        : 'hover:bg-muted'
+                    }`}
+                  >
+                    <tool.icon className={`w-4 h-4 ${activeTool === tool.id ? tool.color : 'text-muted-foreground'}`} />
+                    <span className={`text-[9px] leading-none font-medium ${activeTool === tool.id ? tool.color : 'text-muted-foreground/70'}`}>
+                      {tool.label.slice(0, 2)}
+                    </span>
+                  </button>
+                  {/* 分隔线：select 工具后放一条分隔线 */}
+                  {idx === 0 && <div className="w-8 h-px bg-border my-1" />}
+                </div>
+              ))}
+
+              {/* 分隔 */}
+              <div className="flex-1" />
+
+              {/* 缩放控制放在左侧底部 */}
+              <div className="flex flex-col items-center gap-1 mb-1">
+                <button type="button" onClick={() => setZoom(z => Math.min(1.5, +(z + 0.1).toFixed(1)))}
+                  title="放大" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
+                  <ZoomIn className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <span className="text-[10px] text-muted-foreground font-mono">{Math.round(zoom * 100)}%</span>
+                <button type="button" onClick={() => setZoom(z => Math.max(0.5, +(z - 0.1).toFixed(1)))}
+                  title="缩小" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
+                  <ZoomOut className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <button type="button" onClick={() => setZoom(1)}
+                  title="重置缩放" className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
+                  <Maximize2 className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+
+            {/* ── 主画布（自由拖拽，绝对定位节点）── */}
+            <div
+              ref={canvasRef}
+              className="flex-1 min-w-0 relative overflow-auto"
+              style={{
+                background: 'radial-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px)',
+                backgroundSize: '24px 24px',
+                cursor: activeTool === 'delete' ? 'crosshair' : activeTool === 'connect' ? 'cell' : 'default',
+              }}
+            >
+              {/* 工具提示条 */}
+              <div className="sticky top-0 left-0 z-20 flex items-center gap-2 px-3 py-1.5 bg-background/70 backdrop-blur-sm border-b border-border/50">
+                <Move className="w-3 h-3 text-muted-foreground/60" />
+                <span className="text-[11px] text-muted-foreground/70">
+                  {activeTool === 'select'  && '选择工具：拖拽节点自由移动位置'}
+                  {activeTool === 'add'     && '新增节点工具：点击左侧面板中「新增节点」已激活'}
+                  {activeTool === 'connect' && '连线工具：从节点出发点击另一节点创建连接'}
+                  {activeTool === 'text'    && '标注工具：点击画布空白处添加文字标注'}
+                  {activeTool === 'color'   && '颜色工具：点击节点更改主题色'}
+                  {activeTool === 'delete'  && '删除工具：点击节点将其删除'}
+                </span>
+                <div className="ml-auto flex items-center gap-2 text-[10px] text-muted-foreground/60">
+                  <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-primary rounded-full inline-block" />已完成</span>
+                  <span className="flex items-center gap-1"><span className="inline-block w-3 border-t-2 border-dashed border-muted-foreground/40" />待完成</span>
+                </div>
+              </div>
+
+              {/* 缩放容器 */}
+              <div
+                style={{
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'top left',
+                  width: `${Math.max(path.stages.length * 300 + 200, 1000)}px`,
+                  minHeight: '580px',
+                  position: 'relative',
+                }}
+              >
+                {/* SVG 连线层（跟随节点位置） */}
+                <svg className="absolute inset-0 pointer-events-none"
+                  style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                  <defs>
+                    <marker id="arrowDone" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L8,3 z" fill="hsl(var(--primary))" />
+                    </marker>
+                    <marker id="arrowTodo" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L8,3 z" fill="hsl(var(--border))" />
+                    </marker>
+                  </defs>
+                  {path.stages.map((stage, i) => {
+                    if (i >= path.stages.length - 1) return null;
+                    const p1 = nodePositions[stage.id] ?? { x: 48 + i * 290, y: 40 };
+                    const p2 = nodePositions[path.stages[i + 1].id] ?? { x: 48 + (i + 1) * 290, y: 40 };
+                    const x1 = p1.x + 256;
+                    const x2 = p2.x;
+                    const y1 = p1.y + 68;
+                    const y2 = p2.y + 68;
+                    return (
+                      <g key={`edge-${stage.id}`}>
+                        <line x1={x1} y1={y1} x2={x2} y2={y2}
+                          stroke={stage.completed ? 'hsl(var(--primary))' : 'hsl(var(--border))'}
+                          strokeWidth="2.5" strokeDasharray={stage.completed ? '0' : '7 5'}
+                          strokeLinecap="round"
+                          markerEnd={stage.completed ? 'url(#arrowDone)' : 'url(#arrowTodo)'} />
+                        {stage.completed && (
+                          <circle r="4" fill="hsl(var(--primary))" opacity="0.9">
+                            <animateMotion dur="1.6s" repeatCount="indefinite"
+                              path={`M${x1},${y1} L${x2},${y2}`} />
+                          </circle>
+                        )}
+                      </g>
+                    );
+                  })}
+                </svg>
+
+                {/* 绝对定位节点 */}
+                {path.stages.map((stage, index) => {
+                  const isCurrent = index === path.current_stage && !stage.completed;
+                  const pos = nodePositions[stage.id] ?? { x: 48 + index * 290, y: 40 };
+                  return (
+                    <div
+                      key={stage.id}
+                      style={{ position: 'absolute', left: pos.x, top: pos.y, width: 260 }}
+                      onMouseDown={e => handleNodeMouseDown(e, stage.id)}
+                    >
+                      <StageNode
+                        stage={stage}
+                        index={index}
+                        isCurrent={isCurrent}
+                        isCompleted={stage.completed}
+                        isLocked={!stage.completed && !isCurrent}
+                        onComplete={() => completeStage(stage.id)}
+                        completing={completingId === stage.id}
+                        onDelete={() => deleteStage(stage.id)}
+                        onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDragIndex(index); }}
+                        onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+                        onDrop={e => { e.preventDefault(); handleDrop(index); }}
+                        isDragging={draggingId === stage.id}
+                        activeTool={activeTool}
+                      />
+                    </div>
+                  );
+                })}
+
+                {/* 新增节点表单（浮动在画布左上空白处） */}
+                <AnimatePresence>
+                  {addingNode && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.92 }}
+                      className="absolute z-30 bg-card rounded-2xl border-2 border-dashed border-primary/50 p-4 space-y-3 shadow-xl"
+                      style={{ left: 48, top: 320, width: 260 }}
+                    >
+                      <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                        <Plus className="w-3.5 h-3.5" />新增学习节点
+                      </p>
+                      <input
+                        ref={addInputRef}
+                        value={newNodeTitle}
+                        onChange={e => setNewNodeTitle(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') addStage(); if (e.key === 'Escape') { setAddingNode(false); setNewNodeTitle(''); setNewNodeDesc(''); } }}
+                        placeholder="节点名称（必填）"
+                        className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary placeholder:text-muted-foreground/50"
+                      />
+                      <textarea
+                        value={newNodeDesc}
+                        onChange={e => setNewNodeDesc(e.target.value)}
+                        placeholder="描述（可选）"
+                        rows={2}
+                        className="w-full text-xs rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-primary resize-none placeholder:text-muted-foreground/50"
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1 h-7 text-xs" onClick={addStage} disabled={!newNodeTitle.trim()}>确认</Button>
+                        <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => { setAddingNode(false); setNewNodeTitle(''); setNewNodeDesc(''); }}>
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ 庆祝弹窗 ══ */}
+        <AnimatePresence>
+          {showCelebration && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm">
+              <motion.div initial={{ scale: 0.7, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.7, opacity: 0 }}
+                className="bg-background rounded-3xl p-10 shadow-2xl text-center max-w-sm mx-4">
+                <motion.div animate={{ rotate: [0, 10, -10, 10, 0] }} transition={{ repeat: 2, duration: 0.4 }}>
+                  <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+                </motion.div>
+                <h2 className="text-2xl font-bold text-balance mb-2">🎉 全部完成！</h2>
+                <p className="text-muted-foreground text-pretty">你已成功完成所有学习阶段，太棒了！</p>
+                <Button className="mt-6 w-full" onClick={() => setShowCelebration(false)}>继续探索</Button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+      </div>
+    </AppLayout>
+  );
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: Now update the StageNode component signature + fix the PortraitPage voiceCall state, and run lint — all in parallel:
+Command: str_replace
+Old String: ```
+function StageNode({
+  stage, index, isCurrent, isCompleted, isLocked,
+  onComplete, completing, onDelete,
+  onDragStart, onDragOver, onDrop,
+}: {
+  stage: PathStage; index: number; isCurrent: boolean; isCompleted: boolean; isLocked: boolean;
+  onComplete: () => void; completing: boolean; onDelete: () => void;
+  onDragStart: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+}) {
+```
+New String: ```
+function StageNode({
+  stage, index, isCurrent, isCompleted, isLocked,
+  onComplete, completing, onDelete,
+  onDragStart, onDragOver, onDrop,
+  isDragging, activeTool,
+}: {
+  stage: PathStage; index: number; isCurrent: boolean; isCompleted: boolean; isLocked: boolean;
+  onComplete: () => void; completing: boolean; onDelete: () => void;
+  onDragStart: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+  isDragging?: boolean;
+  activeTool?: string;
+}) {
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      className="shrink-0"
+      style={{ width: 256 }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.06, type: 'spring', stiffness: 260, damping: 22 }}
+        className={`relative bg-card rounded-2xl border-2 shadow-lg transition-all duration-300 select-none group
+          ${isCompleted ? 'border-primary/30 opacity-80' : isCurrent ? `border-transparent ring-2 ${theme.ring} ${theme.glow} shadow-xl` : 'border-border opacity-70'}
+          ${isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing hover:shadow-xl hover:-translate-y-0.5'}
+        `}
+      >
+```
+New String: ```
+    <div
+      draggable={activeTool === 'select' || !activeTool}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      className="shrink-0"
+      style={{ width: 256 }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.06, type: 'spring', stiffness: 260, damping: 22 }}
+        className={`relative bg-card rounded-2xl border-2 shadow-lg transition-all duration-200 select-none group
+          ${isCompleted ? 'border-primary/30 opacity-80' : isCurrent ? `border-transparent ring-2 ${theme.ring} ${theme.glow} shadow-xl` : 'border-border opacity-70'}
+          ${isLocked ? 'cursor-not-allowed' : activeTool === 'delete' ? 'cursor-pointer hover:border-destructive/60 hover:shadow-destructive/20' : 'cursor-grab active:cursor-grabbing hover:shadow-xl hover:-translate-y-0.5'}
+          ${isDragging ? 'opacity-70 scale-105 z-50 shadow-2xl' : ''}
+        `}
+      >
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
+
+</observation>
+<action>
+**CmdRunAction (source=EventSource.AGENT, is_input=False)**
+COMMAND:
+grep -n "voiceCallOpen\|setVoiceCallOpen\|VoiceCallModal\|Phone" /workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx | head -20
+</action>
+<observation>
+**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
+  "exit_code": 0,
+  "pid": -1,
+  "username": null,
+  "hostname": null,
+  "working_dir": "/workspace",
+  "py_interpreter_path": null,
+  "prefix": "",
+  "suffix": "\n[The command completed with exit code 0.]"
+})**
+--BEGIN AGENT OBSERVATION--
+11:import VoiceCallModal from '@/components/voice/VoiceCallModal';
+14:import { Brain, Sparkles, CheckCircle, Target, BookOpen, Clock, AlertCircle, TrendingUp, ArrowRight, Phone } from 'lucide-react';
+31:  const [voiceCallOpen, setVoiceCallOpen] = useState(false);
+225:      <VoiceCallModal open={false} onClose={() => {}} />
+[The command completed with exit code 0.]
+[Current working directory: /workspace]
+--END AGENT OBSERVATION--
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx]
+Thought: Clean up unused PortraitPage imports/state while running lint:
+Command: str_replace
+Old String: ```
+import { Brain, Sparkles, CheckCircle, Target, BookOpen, Clock, AlertCircle, TrendingUp, ArrowRight, Phone } from 'lucide-react';
+```
+New String: ```
+import { Brain, Sparkles, CheckCircle, Target, BookOpen, Clock, AlertCircle, TrendingUp, ArrowRight } from 'lucide-react';
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx has been edited.
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+  const [voiceCallOpen, setVoiceCallOpen] = useState(false);
+```
+New String: ```
+  const [voiceCallOpen] = useState(false);
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/PortraitPage.tsx has been edited.
+
+</observation>
+<action>
+**CmdRunAction (source=EventSource.AGENT, is_input=False)**
+COMMAND:
+grep -n "Bot\b" /workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx | head -10
+</action>
+<observation>
+**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
+  "exit_code": 0,
+  "pid": -1,
+  "username": null,
+  "hostname": null,
+  "working_dir": "/workspace",
+  "py_interpreter_path": null,
+  "prefix": "",
+  "suffix": "\n[The command completed with exit code 0.]"
+})**
+--BEGIN AGENT OBSERVATION--
+12:  Home, BookOpen, Route, MessageCircle, BarChart3, Users, Bot, User, LogOut, Menu,
+[The command completed with exit code 0.]
+[Current working directory: /workspace]
+--END AGENT OBSERVATION--
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+  Home, BookOpen, Route, MessageCircle, BarChart3, Users, Bot, User, LogOut, Menu,
+```
+New String: ```
+  Home, BookOpen, Route, MessageCircle, BarChart3, Users, User, LogOut, Menu,
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/components/layouts/AppLayout.tsx has been edited.
+
+</observation>
+<action>
+**CmdRunAction (source=EventSource.AGENT, is_input=False)**
+COMMAND:
+grep -n "^import.*Link\|from 'react-router" /workspace/app-bu7wnuu44l4x/src/pages/TutoringPage.tsx | head -5
+</action>
+<observation>
+**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
+  "exit_code": 0,
+  "pid": -1,
+  "username": null,
+  "hostname": null,
+  "working_dir": "/workspace",
+  "py_interpreter_path": null,
+  "prefix": "",
+  "suffix": "\n[The command completed with exit code 0.]"
+})**
+--BEGIN AGENT OBSERVATION--
+
+[The command completed with exit code 0.]
+[Current working directory: /workspace]
+--END AGENT OBSERVATION--
+</observation>
+<action>
+**CmdRunAction (source=EventSource.AGENT, is_input=False)**
+COMMAND:
+cd /workspace/app-bu7wnuu44l4x && npm run lint 2>&1 | tail -40
+</action>
+<observation>
+**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
+  "exit_code": 0,
+  "pid": -1,
+  "username": null,
+  "hostname": null,
+  "working_dir": "/workspace/app-bu7wnuu44l4x",
+  "py_interpreter_path": null,
+  "prefix": "",
+  "suffix": "\n[The command completed with exit code 0.]"
+})**
+--BEGIN AGENT OBSERVATION--
+src/pages/LearningPathPage.tsx(143,14): error TS2304: Cannot find name 'GripVertical'.
+src/pages/LearningPathPage.tsx(594,16): error TS2304: Cannot find name 'GripVertical'.
+src/pages/StrategyPage.tsx(542,55): error TS2304: Cannot find name 'Bot'.
+Checked 110 files in 131ms. No fixes applied.
+[The command completed with exit code 0.]
+[Current working directory: /workspace/app-bu7wnuu44l4x]
+--END AGENT OBSERVATION--
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx]
+Thought: Fix all three errors in parallel:
+Command: str_replace
+Old String: ```
+  Route, CheckCircle, Target, Sparkles, Plus, Loader2, Trophy,
+  Wand2, RotateCcw, FileText, Brain, PenLine, BookOpen, Code2,
+  Presentation, Video, Lock, ZoomIn, ZoomOut,
+  Maximize2, Info, Trash2, X, MousePointer2, GitBranch,
+  Type, Palette, Move,
+} from 'lucide-react';
+```
+New String: ```
+  Route, CheckCircle, Target, Sparkles, Plus, Loader2, Trophy,
+  Wand2, RotateCcw, FileText, Brain, PenLine, BookOpen, Code2,
+  Presentation, Video, Lock, ZoomIn, ZoomOut,
+  Maximize2, Info, Trash2, X, MousePointer2, GitBranch,
+  Type, Palette, Move, GripVertical,
+} from 'lucide-react';
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/LearningPathPage.tsx has been edited.
+
+</observation>
+<action>
+**CmdRunAction (source=EventSource.AGENT, is_input=False)**
+COMMAND:
+grep -n "^import.*Bot\|Bot," /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx | head -5
+</action>
+<observation>
+**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
+  "exit_code": 0,
+  "pid": -1,
+  "username": null,
+  "hostname": null,
+  "working_dir": "/workspace/app-bu7wnuu44l4x",
+  "py_interpreter_path": null,
+  "prefix": "",
+  "suffix": "\n[The command completed with exit code 0.]"
+})**
+--BEGIN AGENT OBSERVATION--
+
+[The command completed with exit code 0.]
+[Current working directory: /workspace/app-bu7wnuu44l4x]
+--END AGENT OBSERVATION--
+</observation>
+<action>
+FileReadAction(path='/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx', start=0, end=-1, thought='', action=<ActionType.READ: 'read'>, security_risk=None, impl_source='oh_aci', view_range=[1, 20], user_hidden=False)
+</action>
+<observation>
+[Read from /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx is successful.]
+Here's the result of running `cat -n` on the file: /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx:
+     1 import { useState, useEffect, useRef } from 'react';
+     2 import AppLayout from '@/components/layouts/AppLayout';
+     3 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+     4 import { Badge } from '@/components/ui/badge';
+     5 import { Progress } from '@/components/ui/progress';
+     6 import { Separator } from '@/components/ui/separator';
+     7 import { Button } from '@/components/ui/button';
+     8 import { motion, AnimatePresence } from 'motion/react';
+     9 import {
+    10   TrendingUp, Target, Compass, Zap, Shield, Star, Globe, ArrowRight,
+    11   CheckCircle2, AlertCircle, Clock, Rocket, Trophy, Users, Code2, Network, Brain,
+    12   ChevronRight, BarChart3, Sparkles, GitBranch, Circle, Cpu, MessageSquare,
+    13   BookOpen, Route, FileText, Loader2, CheckCircle,
+    14 } from 'lucide-react';
+    15 import {
+    16   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer,
+    17   Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+    18 } from 'recharts';
+    19 
+    20 // ── 多智能体协作可视化面板 ─────────────────────────────────────────
+
+
+</observation>
+<action>
+**FileEditAction**
+Path: [/workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx]
+Thought: 
+Command: str_replace
+Old String: ```
+import {
+  TrendingUp, Target, Compass, Zap, Shield, Star, Globe, ArrowRight,
+  CheckCircle2, AlertCircle, Clock, Rocket, Trophy, Users, Code2, Network, Brain,
+  ChevronRight, BarChart3, Sparkles, GitBranch, Circle, Cpu, MessageSquare,
+  BookOpen, Route, FileText, Loader2, CheckCircle,
+} from 'lucide-react';
+```
+New String: ```
+import {
+  TrendingUp, Target, Compass, Zap, Shield, Star, Globe, ArrowRight,
+  CheckCircle2, AlertCircle, Clock, Rocket, Trophy, Users, Code2, Network, Brain,
+  ChevronRight, BarChart3, Sparkles, GitBranch, Circle, Cpu, MessageSquare,
+  BookOpen, Route, FileText, Loader2, CheckCircle, Bot,
+} from 'lucide-react';
+```
+
+</action>
+<observation>
+The file /workspace/app-bu7wnuu44l4x/src/pages/StrategyPage.tsx has been edited.
+
+</observation>
+<action>
+**CmdRunAction (source=EventSource.AGENT, is_input=False)**
+COMMAND:
+cd /workspace/app-bu7wnuu44l4x && npm run lint 2>&1 | tail -30
+</action>
+<observation>
+**CmdOutputObservation (source=EventSource.AGENT, exit code=0, metadata={
+  "exit_code": 0,
+  "pid": -1,
+  "username": null,
+  "hostname": null,
+  "working_dir": "/workspace/app-bu7wnuu44l4x",
+  "py_interpreter_path": null,
+  "prefix": "",
+  "suffix": "\n[The command completed with exit code 0.]"
+})**
+--BEGIN AGENT OBSERVATION--
+Checked 110 files in 146ms. No fixes applied.
+[The command completed with exit code 0.]
+[Current working directory: /workspace/app-bu7wnuu44l4x]
+--END AGENT OBSERVATION--
+</observation>
+<action>
+TodoAction(todos=[TodoItem(id='1', status='completed', priority=None, content='LandingPage Hero删除Three.js背景', details='', group=None, agent_name=None), TodoItem(id='2', status='completed', priority=None, content='AppLayout顶栏：删除智能体可视化，改竞争战略→产品可视化，恢复错题本', details='', group=None, agent_name=None), TodoItem(id='3', status='completed', priority=None, content='StrategyPage标签栏新增多智能体可视化Tab + 移除底部MultiAgentSection', details='', group=None, agent_name=None), TodoItem(id='4', status='completed', priority=None, content='routes.tsx 竞争战略→产品可视化', details='', group=None, agent_name=None), TodoItem(id='5', status='completed', priority=None, content='LearningPathPage：左侧工具栏+新增节点按钮位移+自由拖动+画板扩高', details='', group=None, agent_name=None), TodoItem(id='6', status='completed', priority=None, content='PortraitPage删除语音通话按钮，TutoringPage添加语音通话按钮', details='', group=None, agent_name=None), TodoItem(id='7', status='completed', priority=None, content='Lint验证', details='', group=None, agent_name=None)], command='update', thought='Zero errors. Mark all todos complete and submit:', action=<ActionType.TODO: 'todo'>, content='')
+</action>
+<observation>
+TodoObservation(content='<system-reminder>\nYour todo list has changed. Here are the latest contents of your todo list:\n\n1. LandingPage Hero删除Three.js背景 [completed]\n2. AppLayout顶栏：删除智能体可视化，改竞争战略→产品可视化，恢复错题本 [completed]\n3. StrategyPage标签栏新增多智能体可视化Tab + 移除底部MultiAgentSection [completed]\n4. routes.tsx 竞争战略→产品可视化 [completed]\n5. LearningPathPage：左侧工具栏+新增节点按钮位移+自由拖动+画板扩高 [completed]\n6. PortraitPage删除语音通话按钮，TutoringPage添加语音通话按钮 [completed]\n7. Lint验证 [completed]\n</system-reminder>', state=TodoState(items=[TodoItem(id='1', status='completed', priority=None, content='LandingPage Hero删除Three.js背景', details='', group=None, agent_name=None), TodoItem(id='2', status='completed', priority=None, content='AppLayout顶栏：删除智能体可视化，改竞争战略→产品可视化，恢复错题本', details='', group=None, agent_name=None), TodoItem(id='3', status='completed', priority=None, content='StrategyPage标签栏新增多智能体可视化Tab + 移除底部MultiAgentSection', details='', group=None, agent_name=None), TodoItem(id='4', status='completed', priority=None, content='routes.tsx 竞争战略→产品可视化', details='', group=None, agent_name=None), TodoItem(id='5', status='completed', priority=None, content='LearningPathPage：左侧工具栏+新增节点按钮位移+自由拖动+画板扩高', details='', group=None, agent_name=None), TodoItem(id='6', status='completed', priority=None, content='PortraitPage删除语音通话按钮，TutoringPage添加语音通话按钮', details='', group=None, agent_name=None), TodoItem(id='7', status='completed', priority=None, content='Lint验证', details='', group=None, agent_name=None)], updated_at='2026-06-13T02:52:52.077405+00:00'), system_reminder='', observation=<ObservationType.TODO: 'todo'>)
+</observation>
+<observation>
+Command `bash /workspace/.miaoda/commit.sh app-bu7wnuu44l4x SVNTVUU6ICMgSXNzdWUK5a6M5oiQ5a6Y572RSGVyb+WOu+iDjOaZr+OAgeWkmuaZuuiDveS9k+WPr+inhuWMlui/geenu+OAgeWtpuS5oOi3r+W+hOeUu+adv+mHjeaehOetiTfpobnnlYzpnaLkvJjljJYK` executed with exit code 0.
+</observation>
+<action>
+**MCPAction**
+NAME: get_app_detail
+ARGUMENTS: {'appId': 'app-bu7wnuu44l4x', 'userId': 'user-805l89jeg3k2'}
+</action>
+<observation>
+**MCPObservation**
+NAME: get_app_detail
+RESULTS: {"appCreateWay":"SOURCECODE","appDesc":"智学伴：打造个性化学业路径，智能辅导与评估助你精准提升。","appFocus":"RELEASED","appId":"app-bu7wnuu44l4x","name":"个性化学习系统","pluginConfigs":[{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"822bc679-0277-46ac-b8aa-b91f49a3605b","pluginName":"多模态理解大模型"},{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"b4e50937-a645-487a-bbf0-0a70156a8271","pluginName":"文本生成大模型"},{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"be049c59-00cf-420d-b21a-1486dc4c6812","pluginName":"百度AI搜索"},{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"dba02e0f-e6b0-4a2e-b636-ea23c803744a","pluginName":"前端设计指南"},{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"ef7acc98-4b5c-53e1-9bd1-ec81d2af1821","pluginName":"PDF"},{"authFieldKeys":[],"isConfig":false,"isSupport":false,"pluginKey":"f2042434-718f-4596-af3f-32767c95fd28","pluginName":"three.js 3D创作"},{"authFieldKeys":["WECHAT_MINIPROGRAM_LOGIN_APP_ID","WECHAT_MINIPROGRAM_LOGIN_APP_SECRET"],"isConfig":false,"isSupport":false,"pluginKey":"plugin-wechat-miniprogram-login","pluginName":"登录"}],"type":"WEB","versionDesc":"完成官网Hero去背景、多智能体可视化迁移、学习路径画板重构等7项界面优化","versionId":"app_version-caw23ar4grnk","versionLabel":"v35"}
+</observation>
+<action>
+AgentFinishAction(final_thought='# Summary\n完成了7项界面优化：官网Hero删除Three.js动态背景、顶栏删除"智能体可视化"按钮并将"竞争战略"改为"产品可视化"、产品可视化页面新增"多智能体可视化"标签页（原始多智能体协作内容迁移至此）、工具箱菜单恢复"错题本"为第一项、语音通话按钮从学习画像移至智能答疑页标题旁、学习路径画板全面重构（左侧专业工具面板、节点自由拖拽定位、画板高度扩大至640px）。', commit_message='# Issue\n完成官网Hero去背景、多智能体可视化迁移、学习路径画板重构等7项界面优化', task_completed='true', outputs={'status': 'success', 'behavior': 'code_tool', 'suggested_questions': [{'title': '连线功能', 'query': '实现学习路径画板中连线工具的连接节点功能'}, {'title': '节点颜色', 'query': '实现学习路径画板颜色工具，点击节点更改其主题色'}, {'title': '路径导出', 'query': '添加学习路径画板一键导出为PNG图片的功能'}], 'type': 'standard_script', 'finish_type': 'end_code', 'button_actions': [{'type': 'button', 'event': {'args': {'versionId': 'app_version-caw23ar4grnk', 'versionDesc': '完成官网Hero去背景、多智能体可视化迁移、学习路径画板重构等7项界面优化', 'versionLabel': 'v35'}, 'name': 'rollback'}, 'label': '恢复', 'value': '恢复'}], 'app_id': 'app-bu7wnuu44l4x', 'version_id': 'app_version-caw23ar4grnk', 'user_id': 'user-805l89jeg3k2'}, thought='', action=<ActionType.FINISH: 'finish'>)
+</action>

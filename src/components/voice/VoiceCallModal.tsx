@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, MicOff, PhoneOff, Video, VideoOff, PhoneCall } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Video, VideoOff } from 'lucide-react';
 
 // 老师头像 — 使用真实 Unsplash 教师形象
 const TEACHER_AVATAR = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&auto=format';
