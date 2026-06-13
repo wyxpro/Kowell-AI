@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -59,6 +60,7 @@ const ACTION_LABELS: Record<string, string> = {
 
 export default function InvitePage() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const plansOnly = searchParams.get('tab') === 'plans';
 
@@ -153,11 +155,38 @@ export default function InvitePage() {
     }
   };
 
-  // ─── 升级套餐（演示） ────────────────────────────────────
-  const handleUpgrade = (planId: string) => {
+  // ─── 升级套餐（真实微信支付） ───────────────────────────
+  const handleUpgrade = useCallback(async (planId: string) => {
     if (planId === currentPlanId) return;
-    toast.info(`即将跳转至 ${plans.find(p => p.id === planId)?.name} 支付页面`);
-  };
+    const plan = plans.find(p => p.id === planId);
+    if (!plan) return;
+    if (!user) { toast.error('请先登录'); navigate('/login'); return; }
+    try {
+      toast.loading('正在创建订单...', { id: 'create-order' });
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-payment-order`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            plan_id: planId,
+            billing_cycle: 'month',
+            user_id: user.id,
+          }),
+        }
+      );
+      toast.dismiss('create-order');
+      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error || '创建订单失败'); }
+      const data = await resp.json();
+      navigate(`/order/${data.order_id}`);
+    } catch (e) {
+      toast.dismiss('create-order');
+      toast.error('创建订单失败：' + (e as Error).message);
+    }
+  }, [currentPlanId, plans, user, navigate]);
 
   return (
     <AppLayout>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
@@ -11,7 +11,7 @@ import AIChatPanel, { type ChatMsg } from '@/components/ai/AIChatPanel';
 import VoiceCallModal from '@/components/voice/VoiceCallModal';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
-import { Brain, Sparkles, CheckCircle, Target, BookOpen, Clock, AlertCircle, TrendingUp, ArrowRight } from 'lucide-react';
+import { Brain, Sparkles, CheckCircle, Target, BookOpen, Clock, AlertCircle, TrendingUp, ArrowRight, FileText, Loader2 } from 'lucide-react';
 
 const portraitDimensions = [
   { key: 'major_direction', label: '专业方向', icon: Brain, desc: '专业领域和发展方向', color: 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400' },
@@ -23,12 +23,57 @@ const portraitDimensions = [
 ];
 
 export default function PortraitPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [initialMessages, setInitialMessages] = useState<ChatMsg[]>([]);
   const [completedDims, setCompletedDims] = useState<string[]>([]);
   const [isComplete, setIsComplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [voiceCallOpen] = useState(false);
+  // 画像分析报告
+  const [reportGenerating, setReportGenerating] = useState(false);
+  const [report, setReport] = useState('');
+
+  // ── 生成 AI 个性化分析报告 ──────────────────────────────
+  const handleGenerateReport = useCallback(async () => {
+    setReportGenerating(true);
+    setReport('');
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-generate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            topic: `为以下学习者生成详细的个性化学习画像分析报告：
+专业：${profile?.major || '未填写'}
+学历：${profile?.education || '未填写'}
+对话摘要：${messages.filter(m => m.role === 'user').map(m => m.content).slice(0, 6).join(' | ')}
+
+请从以下六个维度深入分析并给出具体改进建议：
+1. 知识基础与学科优劣势
+2. 学习风格与认知偏好
+3. 目标规划与发展方向
+4. 时间管理与学习习惯
+5. 薄弱环节与突破路径
+6. 个性化资源推荐`,
+            resource_type: 'analysis',
+          }),
+        }
+      );
+      if (!resp.ok) throw new Error(await resp.text());
+      const data = await resp.json();
+      setReport(data.content || '');
+      toast.success('个性化分析报告已生成！');
+    } catch (e) {
+      toast.error('报告生成失败：' + (e as Error).message);
+    } finally {
+      setReportGenerating(false);
+    }
+  }, [profile, messages]);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -57,6 +102,11 @@ export default function PortraitPage() {
 
   const handleSaveMessage = async (msg: ChatMsg) => {
     if (!user) return;
+    // 同步到本地 messages 状态，供生成报告使用
+    setMessages(prev => {
+      const exists = prev.find(m => m.id === msg.id);
+      return exists ? prev.map(m => m.id === msg.id ? msg : m) : [...prev, msg];
+    });
     try {
       await supabase.from('chat_messages').insert({
         user_id: user.id, session_type: 'portrait', role: msg.role, content: msg.content,
@@ -201,6 +251,13 @@ export default function PortraitPage() {
                     系统已生成包含 6 个维度的个性化学习画像。现在可以开始生成学习资源或规划路径了。
                   </p>
                   <div className="flex flex-col gap-1.5">
+                    {/* 生成 AI 分析报告 */}
+                    <Button size="sm" variant="outline" className="w-full gap-1.5"
+                      onClick={handleGenerateReport} disabled={reportGenerating}>
+                      {reportGenerating
+                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />生成报告中...</>
+                        : <><FileText className="w-3.5 h-3.5" />生成 AI 分析报告</>}
+                    </Button>
                     <Button asChild size="sm" className="w-full">
                       <Link to="/resources/generate"><BookOpen className="w-3.5 h-3.5 mr-1.5" />生成学习资源</Link>
                     </Button>
@@ -208,6 +265,15 @@ export default function PortraitPage() {
                       <Link to="/learning-path"><ArrowRight className="w-3.5 h-3.5 mr-1.5" />查看学习路径</Link>
                     </Button>
                   </div>
+                  {/* 报告内容 */}
+                  {report && (
+                    <div className="mt-2 rounded-lg bg-background border border-border p-3 max-h-64 overflow-y-auto">
+                      <p className="text-xs font-semibold text-primary mb-2 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />AI 个性化分析报告
+                      </p>
+                      <div className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">{report}</div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ) : (

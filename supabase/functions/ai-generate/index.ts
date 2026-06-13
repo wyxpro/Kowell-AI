@@ -51,14 +51,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     ];
 
     const upstream = await fetch(
-      "https://app-bu7wnuu44l4x-api-zYkZz8qovQ1L-gateway.appmiaoda.com/v2/chat/completions",
+      "https://app-bu7wnuu44l4x-api-rLobPAn0n7m9-gateway.appmiaoda.com/v1/chat/completions",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-Gateway-Authorization": `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({ messages, enable_thinking: false }),
+        body: JSON.stringify({
+          model: "MiniMax-M3",
+          messages,
+          stream: true,
+          temperature: 0.8,
+          top_p: 0.95,
+          max_completion_tokens: 16384,
+          thinking: { type: "disabled" },
+        }),
       }
     );
 

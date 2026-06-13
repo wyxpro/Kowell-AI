@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -11,7 +11,7 @@ import PhotoSearchModal from '@/components/tutoring/PhotoSearchModal';
 import { toast } from 'sonner';
 import {
   MessageCircle, Bot, Sparkles, BookOpen, Lightbulb, Download,
-  Brain, Zap, FileText, Phone, Camera,
+  Brain, Zap, FileText, Phone, Camera, Volume2, VolumeX, Loader2,
 } from 'lucide-react';
 
 const suggestedQuestions = [
@@ -51,6 +51,51 @@ export default function TutoringPage() {
   const [lastAIMsg, setLastAIMsg] = useState('');
   const [voiceCallOpen, setVoiceCallOpen] = useState(false);
   const [photoSearchOpen, setPhotoSearchOpen] = useState(false);
+  // TTS 状态
+  const [ttsPlaying, setTtsPlaying] = useState(false);
+  const [ttsLoading, setTtsLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // ── TTS：朗读最新 AI 回复 ───────────────────────────────
+  const handleTTS = useCallback(async () => {
+    if (!lastAIMsg) { toast.error('暂无可朗读的内容'); return; }
+    if (ttsPlaying) {
+      audioRef.current?.pause();
+      setTtsPlaying(false);
+      return;
+    }
+    setTtsLoading(true);
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/minimax-tts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            text: lastAIMsg.replace(/[#*`>_~\[\]]/g, '').slice(0, 1000),
+            voice_id: 'male-qn-jingying',
+            speed: 1.0,
+          }),
+        }
+      );
+      if (!resp.ok) throw new Error(await resp.text());
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => { setTtsPlaying(false); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setTtsPlaying(false); toast.error('音频播放失败'); };
+      await audio.play();
+      setTtsPlaying(true);
+    } catch (e) {
+      toast.error('语音合成失败：' + (e as Error).message);
+    } finally {
+      setTtsLoading(false);
+    }
+  }, [lastAIMsg, ttsPlaying]);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -149,6 +194,24 @@ export default function TutoringPage() {
             <Button variant="outline" size="sm" className="gap-1.5" onClick={exportMarkdown}>
               <Download className="w-3.5 h-3.5" />
               导出对话
+            </Button>
+
+            {/* TTS 朗读最新 AI 回复 */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={handleTTS}
+              disabled={ttsLoading || !lastAIMsg}
+            >
+              {ttsLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : ttsPlaying ? (
+                <VolumeX className="w-3.5 h-3.5 text-primary" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5" />
+              )}
+              {ttsPlaying ? '停止朗读' : '朗读回复'}
             </Button>
           </div>
         </div>

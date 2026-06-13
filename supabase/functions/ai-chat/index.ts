@@ -13,16 +13,24 @@ function slidingWindowMessages(messages: Message[], maxRounds = 10): Message[] {
   return [...system, ...kept];
 }
 
-const GATEWAY = "https://app-bu7wnuu44l4x-api-zYkZz8qovQ1L-gateway.appmiaoda.com/v2/chat/completions";
+const MINIMAX_GATEWAY = "https://app-bu7wnuu44l4x-api-rLobPAn0n7m9-gateway.appmiaoda.com/v1/chat/completions";
 
 async function callLLM(messages: Message[], apiKey: string, stream: boolean, model?: string) {
-  return await fetch(GATEWAY, {
+  return await fetch(MINIMAX_GATEWAY, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Gateway-Authorization": `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({ messages, stream, ...(model ? { model } : {}) }),
+    body: JSON.stringify({
+      model: model ?? "MiniMax-M3",
+      messages,
+      stream,
+      temperature: 0.9,
+      top_p: 0.95,
+      max_completion_tokens: 8192,
+      thinking: { type: "adaptive" },
+    }),
   });
 }
 

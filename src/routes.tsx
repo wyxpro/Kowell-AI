@@ -28,6 +28,7 @@ const CodeLabPage = lazy(() => import('./pages/CodeLabPage'));
 const WeaknessTrainingPage = lazy(() => import('./pages/WeaknessTrainingPage'));
 const StrategyPage = lazy(() => import('./pages/StrategyPage'));
 const InvitePage = lazy(() => import('./pages/InvitePage'));
+const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
 
 function PageLoader() {
   return (
@@ -82,5 +83,6 @@ export const routes: RouteConfig[] = [
   { name: '弱项强化', path: '/weakness-training', element: wrap(<WeaknessTrainingPage />) },
   { name: '产品可视化',        path: '/strategy', element: wrap(<StrategyPage />) },
   { name: '邀请有礼积分套餐', path: '/invite',   element: wrap(<InvitePage />) },
+  { name: '订单详情', path: '/order/:orderId', element: wrap(<OrderDetailPage />) },
 ];
 
