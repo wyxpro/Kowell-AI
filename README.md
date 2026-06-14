@@ -24,12 +24,12 @@
 | **TypeScript** | 5.x | 全链路静态类型校验 |
 | **Vite** (Rolldown) | latest | 毫秒级 HMR，高速生产打包 |
 | **React Router** | v7.x | SPA 路由，支持 lazy 按需加载 |
+| **Recharts** | 学习趋势、评估雷达等数据图表 |
+| **Three.js** | 3D 交互场景（知识图谱等） |
+| **docx / pptxgenjs** | 在线导出 Word/PPT 格式资源 |
+| **eventsource-parser** | AI 流式输出 (SSE) 实时解析 |
+| **Biome** | 统一的 Lint 与格式化工具链 |
 | **Zustand** | 5.x | 轻量全局状态管理 + `persist` 持久化 |
-
-### 样式与 UI
-
-| 技术 | 用途 |
-|------|------|
 | **Tailwind CSS 3.x** | 原子化样式，CSS 变量主题系统 |
 | **Radix UI** | 无头可访问性基础组件（50+ 组件封装） |
 | **Shadcn/ui** 风格 | 基于 Radix 的高保真 UI 组件库 |
@@ -44,15 +44,6 @@
 | **Supabase Storage** | 文件/图片上传与访问控制 |
 | **数据库迁移** | 8 个版本化 SQL Migration 脚本 |
 
-### 可视化与工具
-
-| 技术 | 用途 |
-|------|------|
-| **Recharts** | 学习趋势、评估雷达等数据图表 |
-| **Three.js** | 3D 交互场景（知识图谱等） |
-| **docx / pptxgenjs** | 在线导出 Word/PPT 格式资源 |
-| **eventsource-parser** | AI 流式输出 (SSE) 实时解析 |
-| **Biome** | 统一的 Lint 与格式化工具链 |
 
 ---
 
