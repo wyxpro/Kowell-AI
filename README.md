@@ -1,12 +1,9 @@
 # 🎓 Kowell AI — 智学伴·智能教育平台
+[![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/) [![Vite](https://img.shields.io/badge/Vite-5.x-646CFF.svg)](https://vitejs.dev/) [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg)](https://www.typescriptlang.org/) [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-38B2AC.svg)](https://tailwindcss.com/) [![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E.svg)](https://supabase.com/) [![Zustand](https://img.shields.io/badge/Zustand-State-764ABC.svg)](https://github.com/pmndrs/zustand)
 ---
 
 ## 📋 项目简介
-
-[![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/) [![Vite](https://img.shields.io/badge/Vite-5.x-646CFF.svg)](https://vitejs.dev/) [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg)](https://www.typescriptlang.org/) [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-38B2AC.svg)](https://tailwindcss.com/) [![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E.svg)](https://supabase.com/) [![Zustand](https://img.shields.io/badge/Zustand-State-764ABC.svg)](https://github.com/pmndrs/zustand)
-
 **Kowell AI**是一款面向高等教育阶段（本科、研究生、高职）学生的个性化智能学习平台。系统聚焦于计算机、人工智能、电子信息等专业方向，构建了「画像构建-资源生成-路径规划-学习辅导-效果评估」的Agent闭环个性化教学服务。通过高度集成的多智能体协作、数据可视化、三维交互与富文本编辑工具，为学生提供科学且生动的沉浸式学习体验。
-
 
 **项目亮点：**
 - 🤖 深度集成多路 AI 大模型（聊天、评估、生成、推荐）

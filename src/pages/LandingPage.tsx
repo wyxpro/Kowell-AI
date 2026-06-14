@@ -564,11 +564,11 @@ function MarqueeRow({ items, direction = 'left', speed = 28 }: {
 
   return (
     <div
-      className="overflow-hidden"
+      className="overflow-hidden py-4 -my-4"
       onMouseEnter={() => { pausedRef.current = true; }}
       onMouseLeave={() => { pausedRef.current = false; }}
     >
-      <div ref={rowRef} className="flex" style={{ willChange: 'transform' }}>
+      <div ref={rowRef} className="flex py-2" style={{ willChange: 'transform' }}>
         {doubled.map((r, i) => <ReviewCard key={i} review={r} />)}
       </div>
     </div>
@@ -608,8 +608,14 @@ function FloatingCard({ children, delay = 0, className = '' }: { children: React
 
 /* ─────────────────────── 主组件 ─────────────────────── */
 export default function LandingPage() {
-  const { scrollYProgress } = useScroll();
-  const headerBg = useTransform(scrollYProgress, [0, 0.05], ['rgba(0,0,0,0)', 'rgba(0,0,0,0.2)']);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   const [activeCompetitor, setActiveCompetitor] = useState<string | null>(null);
   const competitorNames = ['智学伴', 'Khan', '学而思', 'Duolingo'];
   const competitorColors = ['hsl(162,63%,45%)', 'hsl(220,70%,55%)', 'hsl(36,80%,52%)', 'hsl(0,70%,55%)'];
@@ -627,8 +633,9 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* ─── 顶部导航 ─── */}
       <motion.header
-        style={{ background: headerBg }}
-        className="fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-4 flex items-center justify-between backdrop-blur-md transition-all"
+        className={`fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-4 flex items-center justify-between backdrop-blur-md transition-all duration-300 ${
+          scrolled ? 'bg-background/40 border-b border-border/20 shadow-sm' : 'bg-transparent'
+        }`}
       >
         <Link to="/" className="flex items-center gap-2.5 group">
           <motion.div
@@ -665,7 +672,7 @@ export default function LandingPage() {
 
       {/* ─── Hero Section ─── */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-
+        <HeroBackground />
         {/* 内容 */}
         <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
           <motion.div

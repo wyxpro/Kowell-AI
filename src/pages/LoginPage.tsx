@@ -115,7 +115,7 @@ export default function LoginPage() {
       return;
     }
     toast.success('游客登录成功，欢迎体验！');
-    navigate('/');
+    navigate('/home');
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -126,14 +126,14 @@ export default function LoginPage() {
     setLoading(false);
     if (error) { toast.error(`登录失败：${error.message}`); return; }
     toast.success('登录成功！欢迎回来 🎉');
-    navigate('/');
+    navigate('/home');
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!registerForm.email || !registerForm.password || !registerForm.username) { toast.error('请填写完整信息'); return; }
     if (registerForm.password.length < 6) { toast.error('密码至少6位'); return; }
-    if (!agreed) { toast.error('请先同意用户协议和隐私政策'); return; }
+    if (!agreed) { toast.error('请先同意用户协议 and 隐私政策'); return; }
     setLoading(true);
     const { error } = await signUpWithEmail(registerForm.email, registerForm.password, {
       username: registerForm.username,
@@ -154,7 +154,7 @@ export default function LoginPage() {
     }
     toast.success('注册成功！正在为您登录...');
     const { error: loginErr } = await signInWithEmail(registerForm.email, registerForm.password);
-    if (!loginErr) navigate('/');
+    if (!loginErr) navigate('/home');
   };
 
   return (
@@ -164,7 +164,7 @@ export default function LoginPage() {
         <LoginBackground />
         <div className="relative z-10 px-12 py-16 max-w-xl">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
-            <Link to="/landing" className="flex items-center gap-3 mb-12">
+            <Link to="/" className="flex items-center gap-3 mb-12">
               <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.6 }}
                 className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-xl">
                 <GraduationCap className="w-6 h-6 text-primary-foreground" />
@@ -221,7 +221,7 @@ export default function LoginPage() {
           <div className="absolute inset-0 bg-background/90" />
         </div>
         <div className="relative z-10 w-full max-w-sm mx-auto">
-          <Link to="/landing" className="lg:hidden flex items-center gap-2.5 mb-8">
+          <Link to="/" className="lg:hidden flex items-center gap-2.5 mb-8">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
               <GraduationCap className="w-5 h-5 text-primary-foreground" />
             </div>

@@ -57,8 +57,8 @@ export interface RouteConfig {
 }
 
 export const routes: RouteConfig[] = [
-  { name: '官网', path: '/landing', element: wrap(<LandingPage />), public: true },
-  { name: '首页', path: '/', element: wrap(<HomePage />), public: true },
+  { name: '官网', path: '/', element: wrap(<LandingPage />), public: true },
+  { name: '首页', path: '/home', element: wrap(<HomePage />), public: true },
   { name: '登录', path: '/login', element: wrap(<LoginPage />), public: true },
   { name: '个人中心', path: '/profile', element: wrap(<ProfilePage />) },
   { name: '学习画像', path: '/portrait', element: wrap(<PortraitPage />) },

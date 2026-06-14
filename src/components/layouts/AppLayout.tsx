@@ -27,7 +27,7 @@ const navGroups = [
   {
     label: '学习中心',
     items: [
-      { path: '/',                   label: '首页',     icon: Home          },
+      { path: '/home',               label: '首页',     icon: Home          },
       { path: '/resources/generate', label: '资源中心', icon: BookOpen      },
       { path: '/learning-path',      label: '学习路径', icon: Route         },
       { path: '/portrait',           label: '画像构建', icon: Brain         },
@@ -82,7 +82,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Logo */}
       <div className="p-4 flex items-center gap-3">
-        <Link to="/landing" className="flex items-center gap-3 min-w-0 group" onClick={onNavigate}>
+        <Link to="/" className="flex items-center gap-3 min-w-0 group" onClick={onNavigate}>
           <div className="w-9 h-9 rounded-xl bg-sidebar-primary flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
             <GraduationCap className="w-5 h-5 text-sidebar-primary-foreground" />
           </div>
