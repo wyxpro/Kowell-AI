@@ -215,12 +215,12 @@ export default function LoginPage() {
       </div>
 
       {/* 右侧表单区 */}
-      <div className="w-full lg:w-[480px] shrink-0 flex flex-col justify-center p-8 md:p-12 bg-background relative">
+      <div className="w-full lg:w-[580px] shrink-0 flex flex-col justify-center p-8 md:p-16 bg-background relative">
         <div className="lg:hidden absolute inset-0 overflow-hidden pointer-events-none">
           <LoginBackground />
           <div className="absolute inset-0 bg-background/90" />
         </div>
-        <div className="relative z-10 w-full max-w-sm mx-auto">
+        <div className="relative z-10 w-full max-w-md mx-auto lg:-translate-x-6">
           <Link to="/" className="lg:hidden flex items-center gap-2.5 mb-8">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
               <GraduationCap className="w-5 h-5 text-primary-foreground" />

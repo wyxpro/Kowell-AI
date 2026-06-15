@@ -11,8 +11,8 @@ import {
 import {
   GraduationCap, Brain, Target, Zap, Star, Users, ArrowRight, CheckCircle2,
   Sparkles, BookOpen, Trophy, Code2, Network,
-  MessageCircle, BarChart3, Shield, Infinity as InfinityIcon, Crown, Flame, Globe,
-  Quote, GraduationCap as GradCap,
+  MessageCircle, BarChart3, Shield, Infinity as InfinityIcon, Crown, Flame, Globe, MapPin,
+  Quote, GraduationCap as GradCap, Loader2,
 } from 'lucide-react';
 
 /* ─────────────────────── 数据 ─────────────────────── */
@@ -24,6 +24,9 @@ const features = [
     color: 'from-violet-500/20 to-purple-500/20',
     iconColor: 'text-violet-500',
     badge: '核心特色',
+    borderColor: 'border-violet-500/80',
+    shadowColor: 'shadow-[0_20px_50px_rgba(139,92,246,0.18)] ring-violet-500/20',
+    activeText: 'text-violet-500',
   },
   {
     icon: Network,
@@ -32,6 +35,9 @@ const features = [
     color: 'from-sky-500/20 to-cyan-500/20',
     iconColor: 'text-sky-500',
     badge: '独家技术',
+    borderColor: 'border-sky-500/80',
+    shadowColor: 'shadow-[0_20px_50px_rgba(14,165,233,0.18)] ring-sky-500/20',
+    activeText: 'text-sky-500',
   },
   {
     icon: Target,
@@ -40,6 +46,9 @@ const features = [
     color: 'from-rose-500/20 to-red-500/20',
     iconColor: 'text-rose-500',
     badge: '高效提升',
+    borderColor: 'border-rose-500/80',
+    shadowColor: 'shadow-[0_20px_50px_rgba(244,63,94,0.18)] ring-rose-500/20',
+    activeText: 'text-rose-500',
   },
   {
     icon: Code2,
@@ -48,6 +57,9 @@ const features = [
     color: 'from-emerald-500/20 to-green-500/20',
     iconColor: 'text-emerald-500',
     badge: '编程专属',
+    borderColor: 'border-emerald-500/80',
+    shadowColor: 'shadow-[0_20px_50px_rgba(16,185,129,0.18)] ring-emerald-500/20',
+    activeText: 'text-emerald-500',
   },
   {
     icon: BarChart3,
@@ -56,6 +68,9 @@ const features = [
     color: 'from-amber-500/20 to-yellow-500/20',
     iconColor: 'text-amber-500',
     badge: '数据驱动',
+    borderColor: 'border-amber-500/80',
+    shadowColor: 'shadow-[0_20px_50px_rgba(245,158,11,0.18)] ring-amber-500/20',
+    activeText: 'text-amber-500',
   },
   {
     icon: Users,
@@ -64,6 +79,9 @@ const features = [
     color: 'from-pink-500/20 to-fuchsia-500/20',
     iconColor: 'text-pink-500',
     badge: '社群赋能',
+    borderColor: 'border-pink-500/80',
+    shadowColor: 'shadow-[0_20px_50px_rgba(236,72,153,0.18)] ring-pink-500/20',
+    activeText: 'text-pink-500',
   },
 ];
 
@@ -213,285 +231,67 @@ const stats = [
   { value: '8', label: '支持编程语言' },
 ];
 
-/* ─────────────────────── Three.js 神经网络 Hero 背景 ─────────────────────── */
+/* ─────────────────────── 交互式多智能体玻璃态 Hero 背景 ─────────────────────── */
 function HeroBackground() {
-  const mountRef = useRef<HTMLDivElement>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    const mount = mountRef.current;
-    if (!mount) return;
-    let cleanup: (() => void) | undefined;
-
-    import('three').then((THREE) => {
-      if (!mountRef.current) return;
-
-      const W = mount.clientWidth, H = mount.clientHeight;
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 300);
-      camera.position.set(0, 0, 40);
-
-      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(W, H);
-      renderer.outputColorSpace = THREE.SRGBColorSpace;
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.3;
-      mount.appendChild(renderer.domElement);
-
-      const isDark = document.documentElement.classList.contains('dark');
-
-      // ── 背景色 ──
-      scene.background = new THREE.Color(isDark ? 0x030a0f : 0xf0f8f5);
-      scene.fog = new THREE.Fog(isDark ? 0x030a0f : 0xf0f8f5, 50, 120);
-
-      // ── 颜色系统 ──
-      const C = {
-        primary:  new THREE.Color('hsl(162,63%,45%)'),
-        accent1:  new THREE.Color('hsl(200,75%,55%)'),
-        accent2:  new THREE.Color('hsl(130,60%,50%)'),
-        accent3:  new THREE.Color('hsl(270,65%,60%)'),
-        accent4:  new THREE.Color('hsl(40,80%,55%)'),
-      };
-
-      // ── 神经网络节点 ──
-      const NODE_COUNT = 80;
-      interface NNode { pos: THREE.Vector3; vel: THREE.Vector3; mesh: THREE.Mesh; color: THREE.Color; phase: number }
-      const palette = [C.primary, C.accent1, C.accent2, C.accent3, C.accent4];
-      const nodes: NNode[] = [];
-      const nodeGeo = new THREE.SphereGeometry(0.22, 12, 12);
-      for (let i = 0; i < NODE_COUNT; i++) {
-        const color = palette[i % palette.length];
-        const mat = new THREE.MeshPhongMaterial({
-          color,
-          emissive: color,
-          emissiveIntensity: isDark ? 0.7 : 0.3,
-          shininess: 120,
-        });
-        const mesh = new THREE.Mesh(nodeGeo, mat);
-        const spread = 28;
-        mesh.position.set(
-          (Math.random() - 0.5) * spread,
-          (Math.random() - 0.5) * spread * 0.65,
-          (Math.random() - 0.5) * spread * 0.4,
-        );
-        const speed = 0.012 + Math.random() * 0.018;
-        nodes.push({
-          pos: mesh.position.clone(),
-          vel: new THREE.Vector3(
-            (Math.random() - 0.5) * speed,
-            (Math.random() - 0.5) * speed,
-            (Math.random() - 0.5) * speed * 0.5,
-          ),
-          mesh,
-          color,
-          phase: Math.random() * Math.PI * 2,
-        });
-        scene.add(mesh);
-      }
-
-      // ── 连接线（用 LineSegments 一次性绘制） ──
-      const MAX_DIST = 9.5;
-      const linePositions = new Float32Array(NODE_COUNT * NODE_COUNT * 6);
-      const lineColors = new Float32Array(NODE_COUNT * NODE_COUNT * 6);
-      const lineGeo = new THREE.BufferGeometry();
-      const linePosAttr = new THREE.BufferAttribute(linePositions, 3).setUsage(THREE.DynamicDrawUsage);
-      const lineColAttr = new THREE.BufferAttribute(lineColors, 3).setUsage(THREE.DynamicDrawUsage);
-      lineGeo.setAttribute('position', linePosAttr);
-      lineGeo.setAttribute('color', lineColAttr);
-      const lineMat = new THREE.LineBasicMaterial({
-        vertexColors: true,
-        transparent: true,
-        opacity: isDark ? 0.45 : 0.3,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({
+        x: (e.clientX / window.innerWidth - 0.5) * 2,
+        y: (e.clientY / window.innerHeight - 0.5) * 2,
       });
-      const lineSegments = new THREE.LineSegments(lineGeo, lineMat);
-      scene.add(lineSegments);
-
-      // ── 浮动粒子云 ──
-      const PART = 1400;
-      const pGeo = new THREE.BufferGeometry();
-      const pPos = new Float32Array(PART * 3);
-      const pCol = new Float32Array(PART * 3);
-      for (let i = 0; i < PART; i++) {
-        const r = 22 + Math.random() * 18;
-        const t = Math.random() * Math.PI * 2;
-        const p = Math.acos(2 * Math.random() - 1);
-        pPos[i * 3]     = r * Math.sin(p) * Math.cos(t);
-        pPos[i * 3 + 1] = r * Math.sin(p) * Math.sin(t);
-        pPos[i * 3 + 2] = r * Math.cos(p);
-        const c = palette[i % palette.length];
-        pCol[i * 3] = c.r; pCol[i * 3 + 1] = c.g; pCol[i * 3 + 2] = c.b;
-      }
-      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-      pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
-      const pMat = new THREE.ShaderMaterial({
-        vertexShader: `
-          attribute vec3 color; varying vec3 vColor; varying float vA;
-          void main() {
-            vColor = color;
-            vec4 mvp = modelViewMatrix * vec4(position, 1.0);
-            vA = clamp(1.0 - (-mvp.z - 8.0) / 55.0, 0.05, 0.7);
-            gl_PointSize = 1.8 * (280.0 / -mvp.z);
-            gl_Position = projectionMatrix * mvp;
-          }
-        `,
-        fragmentShader: `
-          varying vec3 vColor; varying float vA;
-          void main() {
-            float d = length(gl_PointCoord - 0.5);
-            if (d > 0.5) discard;
-            gl_FragColor = vec4(vColor, smoothstep(0.5, 0.0, d) * vA);
-          }
-        `,
-        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true,
-      });
-      const particles = new THREE.Points(pGeo, pMat);
-      scene.add(particles);
-
-      // ── DNA 双螺旋 (中心左侧偏移) ──
-      const helixNodes: THREE.Mesh[] = [];
-      const helixLines: THREE.Line[] = [];
-      const HELIX_SEG = 32;
-      const helixGeo = new THREE.SphereGeometry(0.15, 8, 8);
-      for (let i = 0; i < HELIX_SEG; i++) {
-        const t = i / HELIX_SEG;
-        const angle = t * Math.PI * 4;
-        const y = (t - 0.5) * 18;
-        const r = 2.2;
-        const c1 = i % 2 === 0 ? C.primary : C.accent1;
-        const c2 = i % 2 === 0 ? C.accent3 : C.accent2;
-        [c1, c2].forEach((col, si) => {
-          const sign = si === 0 ? 1 : -1;
-          const mat = new THREE.MeshPhongMaterial({ color: col, emissive: col, emissiveIntensity: isDark ? 0.6 : 0.25 });
-          const mesh = new THREE.Mesh(helixGeo, mat);
-          mesh.position.set(sign * r * Math.cos(angle) - 12, y, sign * r * Math.sin(angle) - 5);
-          helixNodes.push(mesh);
-          scene.add(mesh);
-        });
-        // 横向连接杆
-        if (i < HELIX_SEG - 1) {
-          const pts = [
-            new THREE.Vector3(r * Math.cos(angle) - 12, y, r * Math.sin(angle) - 5),
-            new THREE.Vector3(-r * Math.cos(angle) - 12, y, -r * Math.sin(angle) - 5),
-          ];
-          const lGeo = new THREE.BufferGeometry().setFromPoints(pts);
-          const lMat = new THREE.LineBasicMaterial({ color: C.accent1, transparent: true, opacity: isDark ? 0.25 : 0.15 });
-          const line = new THREE.Line(lGeo, lMat);
-          helixLines.push(line);
-          scene.add(line);
-        }
-      }
-
-      // ── 光照 ──
-      scene.add(new THREE.AmbientLight(0xffffff, isDark ? 0.3 : 0.6));
-      const dLight = new THREE.DirectionalLight(C.primary, isDark ? 1.5 : 0.8);
-      dLight.position.set(12, 18, 12); scene.add(dLight);
-      const pLight1 = new THREE.PointLight(C.accent3, isDark ? 2.0 : 1.0, 50);
-      pLight1.position.set(-15, 5, 10); scene.add(pLight1);
-      const pLight2 = new THREE.PointLight(C.accent1, isDark ? 1.8 : 0.9, 45);
-      pLight2.position.set(15, -5, 8); scene.add(pLight2);
-
-      // ── 鼠标 ──
-      let mX = 0, mY = 0, tRX = 0, tRY = 0;
-      const onMM = (e: MouseEvent) => { mX = (e.clientX / window.innerWidth - 0.5) * 2; mY = -(e.clientY / window.innerHeight - 0.5) * 2; };
-      const onTM = (e: TouchEvent) => { mX = (e.touches[0].clientX / window.innerWidth - 0.5) * 2; mY = -(e.touches[0].clientY / window.innerHeight - 0.5) * 2; };
-      window.addEventListener('mousemove', onMM);
-      window.addEventListener('touchmove', onTM, { passive: true });
-      const onResize = () => {
-        camera.aspect = mount.clientWidth / mount.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(mount.clientWidth, mount.clientHeight);
-      };
-      window.addEventListener('resize', onResize);
-
-      const clock = new THREE.Clock();
-      const tmpColor = new THREE.Color();
-      let animId = 0;
-      const animate = () => {
-        animId = requestAnimationFrame(animate);
-        const t = clock.getElapsedTime();
-        tRX += (mY * 0.25 - tRX) * 0.04;
-        tRY += (mX * 0.25 - tRY) * 0.04;
-
-        // 节点移动 & 边界反弹
-        const BOUND = 14;
-        nodes.forEach(n => {
-          n.mesh.position.addScaledVector(n.vel, 1);
-          if (Math.abs(n.mesh.position.x) > BOUND) n.vel.x *= -1;
-          if (Math.abs(n.mesh.position.y) > BOUND * 0.65) n.vel.y *= -1;
-          if (Math.abs(n.mesh.position.z) > BOUND * 0.35) n.vel.z *= -1;
-          const pulse = 0.85 + Math.sin(t * 2.2 + n.phase) * 0.15;
-          n.mesh.scale.setScalar(pulse);
-          (n.mesh.material as THREE.MeshPhongMaterial).emissiveIntensity = (isDark ? 0.5 : 0.2) * pulse;
-        });
-
-        // 更新连接线
-        let li = 0;
-        for (let a = 0; a < NODE_COUNT; a++) {
-          for (let b = a + 1; b < NODE_COUNT; b++) {
-            const dist = nodes[a].mesh.position.distanceTo(nodes[b].mesh.position);
-            if (dist < MAX_DIST) {
-              const alpha = 1 - dist / MAX_DIST;
-              const base = li * 6;
-              linePositions[base]     = nodes[a].mesh.position.x;
-              linePositions[base + 1] = nodes[a].mesh.position.y;
-              linePositions[base + 2] = nodes[a].mesh.position.z;
-              linePositions[base + 3] = nodes[b].mesh.position.x;
-              linePositions[base + 4] = nodes[b].mesh.position.y;
-              linePositions[base + 5] = nodes[b].mesh.position.z;
-              tmpColor.lerpColors(nodes[a].color, nodes[b].color, 0.5);
-              lineColors[base]     = tmpColor.r * alpha;
-              lineColors[base + 1] = tmpColor.g * alpha;
-              lineColors[base + 2] = tmpColor.b * alpha;
-              lineColors[base + 3] = tmpColor.r * alpha;
-              lineColors[base + 4] = tmpColor.g * alpha;
-              lineColors[base + 5] = tmpColor.b * alpha;
-              li++;
-            }
-          }
-        }
-        lineGeo.setDrawRange(0, li * 2);
-        linePosAttr.needsUpdate = true;
-        lineColAttr.needsUpdate = true;
-
-        // 粒子 & DNA 整体微旋
-        particles.rotation.y = t * 0.018 + tRY * 0.12;
-        particles.rotation.x = t * 0.010 + tRX * 0.12;
-        const helixGroup = { x: t * 0.12, y: t * 0.06 };
-        helixNodes.forEach(n => { n.rotation.y = helixGroup.y; });
-        helixLines.forEach(l => { l.rotation.y = helixGroup.y; });
-
-        // 整场景微摆
-        scene.rotation.y = tRY * 0.08;
-        scene.rotation.x = tRX * 0.05;
-
-        // 脉冲灯
-        pLight1.intensity = (isDark ? 2.0 : 1.0) + Math.sin(t * 1.4) * 0.5;
-        pLight2.intensity = (isDark ? 1.8 : 0.9) + Math.cos(t * 1.1) * 0.4;
-
-        renderer.render(scene, camera);
-      };
-      animate();
-
-      cleanup = () => {
-        cancelAnimationFrame(animId);
-        window.removeEventListener('mousemove', onMM);
-        window.removeEventListener('touchmove', onTM);
-        window.removeEventListener('resize', onResize);
-        renderer.dispose();
-        nodeGeo.dispose(); lineGeo.dispose(); lineMat.dispose(); pGeo.dispose(); pMat.dispose(); helixGeo.dispose();
-        nodes.forEach(n => (n.mesh.material as THREE.Material).dispose());
-        helixNodes.forEach(n => (n.material as THREE.Material).dispose());
-        helixLines.forEach(l => { l.geometry.dispose(); (l.material as THREE.Material).dispose(); });
-        if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
-      };
-    });
-
-    return () => { cleanup?.(); };
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  return <div ref={mountRef} className="absolute inset-0 w-full h-full" style={{ zIndex: 0 }} />;
+  return (
+    <div className="absolute inset-0 w-full h-full overflow-hidden bg-gradient-to-b from-background via-background/95 to-background z-0">
+      {/* 1. 科技感网格背景 */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
+
+      {/* 2. 底层发光的霓虹渐变球 */}
+      <motion.div
+        animate={{
+          x: [0, 50, -30, 0],
+          y: [0, -40, 30, 0],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-1/4 left-1/4 w-[380px] h-[380px] rounded-full bg-primary/10 blur-[90px] pointer-events-none"
+      />
+      <motion.div
+        animate={{
+          x: [0, -40, 40, 0],
+          y: [0, 50, -30, 0],
+        }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute bottom-1/4 right-1/4 w-[420px] h-[420px] rounded-full bg-emerald-500/8 blur-[100px] pointer-events-none"
+      />
+      <motion.div
+        animate={{
+          x: [0, 30, -40, 0],
+          y: [0, 40, 40, 0],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute top-1/3 right-1/3 w-[320px] h-[320px] rounded-full bg-purple-500/8 blur-[90px] pointer-events-none"
+      />
+
+
+    </div>
+  );
 }
 
 /* ─────────────────────── 评价轮播 ─────────────────────── */
@@ -539,16 +339,24 @@ function MarqueeRow({ items, direction = 'left', speed = 28 }: {
   direction?: 'left' | 'right';
   speed?: number;
 }) {
-  const doubled = [...items, ...items];
+  const CARD_W = 304; // 288px card + 2*8px mx
+  // 增加复制份数，确保即使在超宽屏幕（如 4K）上也始终填满、无空白区
+  const repeatCount = Math.max(6, Math.ceil(4800 / (items.length * CARD_W)));
+  const repeated = Array(repeatCount).fill(items).flat();
+
   const pausedRef = useRef(false);
   const posRef = useRef(0);
   const rafRef = useRef(0);
   const rowRef = useRef<HTMLDivElement>(null);
-  const CARD_W = 304; // 288px card + 2*8px mx
 
   useEffect(() => {
     const totalW = items.length * CARD_W;
     const step = direction === 'left' ? -speed / 60 : speed / 60;
+    if (direction === 'right') {
+      posRef.current = -totalW;
+    } else {
+      posRef.current = 0;
+    }
     const animate = () => {
       if (!pausedRef.current) {
         posRef.current += step;
@@ -569,7 +377,7 @@ function MarqueeRow({ items, direction = 'left', speed = 28 }: {
       onMouseLeave={() => { pausedRef.current = false; }}
     >
       <div ref={rowRef} className="flex py-2" style={{ willChange: 'transform' }}>
-        {doubled.map((r, i) => <ReviewCard key={i} review={r} />)}
+        {repeated.map((r, i) => <ReviewCard key={i} review={r} />)}
       </div>
     </div>
   );
@@ -606,8 +414,105 @@ function FloatingCard({ children, delay = 0, className = '' }: { children: React
   );
 }
 
-/* ─────────────────────── 主组件 ─────────────────────── */
+const renderMockup = (type: string) => {
+  switch (type) {
+    case '苏格拉底式AI辅导':
+      return (
+        <div className="bg-zinc-950/90 rounded-lg p-2 font-mono text-[9px] border border-border/40 space-y-1.5 min-h-[90px] flex flex-col justify-center">
+          <div className="flex items-center gap-1.5 text-zinc-500 pb-1 border-b border-border/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Socrates AI Tutor</span>
+          </div>
+          <div className="text-violet-400 bg-violet-500/10 p-1.5 rounded">
+            "这个推导步骤可以再想想吗？如果引入拉格朗日乘子..."
+          </div>
+          <div className="text-zinc-300 pl-4">
+            &gt; "哦！乘子可以把约束条件转化为目标项。"
+          </div>
+        </div>
+      );
+    case '知识图谱可视化':
+      return (
+        <div className="bg-zinc-950/90 rounded-lg p-2 border border-border/40 min-h-[90px] relative overflow-hidden flex flex-col justify-center items-center">
+          <svg className="w-full h-12 opacity-60 absolute inset-0" viewBox="0 0 100 50">
+            <line x1="20" y1="25" x2="50" y2="10" stroke="currentColor" strokeWidth="0.8" className="text-sky-500" />
+            <line x1="20" y1="25" x2="50" y2="40" stroke="currentColor" strokeWidth="0.8" className="text-sky-500" />
+            <line x1="50" y1="10" x2="80" y2="25" stroke="currentColor" strokeWidth="0.8" className="text-sky-500" />
+            <circle cx="20" cy="25" r="2.5" className="fill-sky-500 animate-pulse" />
+            <circle cx="50" cy="10" r="3" className="fill-indigo-500" />
+            <circle cx="50" cy="40" r="3" className="fill-emerald-500" />
+            <circle cx="80" cy="25" r="2.5" className="fill-sky-500" />
+          </svg>
+          <span className="text-[9px] text-sky-400 font-semibold bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20 z-10">
+            关联度: 94.2%
+          </span>
+        </div>
+      );
+    case '弱项精准强化':
+      return (
+        <div className="bg-zinc-950/90 rounded-lg p-2.5 border border-border/40 min-h-[90px] flex flex-col justify-center gap-1.5">
+          <div className="flex justify-between items-center text-[10px]">
+            <span className="text-zinc-400">弱项: 动态规划</span>
+            <span className="text-rose-400 font-bold bg-rose-500/10 px-1 py-0.2 rounded">+35% 效率</span>
+          </div>
+          <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+            <div className="bg-gradient-to-r from-rose-500 to-pink-500 h-full rounded-full w-[82%]" />
+          </div>
+          <div className="text-[9px] text-zinc-500">建议练习：0-1 背包问题专项</div>
+        </div>
+      );
+    case '代码实验室':
+      return (
+        <div className="bg-zinc-950/90 rounded-lg p-2 font-mono text-[9px] border border-border/40 min-h-[90px] flex flex-col justify-center">
+          <div className="text-emerald-400">
+            <span className="text-zinc-600">1</span> def evaluate(code):<br />
+            <span className="text-zinc-600">2</span> &nbsp;&nbsp;&nbsp;&nbsp;return "Pass"
+          </div>
+          <div className="mt-1.5 pt-1.5 border-t border-border/20 flex justify-between text-[8px] text-zinc-500">
+            <span>Compiler: Success</span>
+            <span className="text-emerald-500">✓ Pass</span>
+          </div>
+        </div>
+      );
+    case '学习画像分析':
+      return (
+        <div className="bg-zinc-950/90 rounded-lg p-2.5 border border-border/40 min-h-[90px] flex flex-col justify-center gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-zinc-400">画像生成中...</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 text-[9px]">
+            <div className="bg-zinc-900 p-1.5 rounded text-zinc-300">效率: 2.5x</div>
+            <div className="bg-zinc-900 p-1.5 rounded text-zinc-300">满意度: 98%</div>
+          </div>
+        </div>
+      );
+    case '社群协作学习':
+      return (
+        <div className="bg-zinc-950/90 rounded-lg p-2 border border-border/40 min-h-[90px] flex flex-col justify-center gap-1.5">
+          <div className="flex items-center justify-between text-[9px] text-zinc-400">
+            <span>已选 2 个社区</span>
+            <span className="text-pink-400 bg-pink-500/10 px-1 rounded">3.1k 热度</span>
+          </div>
+          <div className="text-[9px] text-zinc-300 truncate">
+            🏫 考研备考圈 | AI 学习圈
+          </div>
+        </div>
+      );
+    default:
+      return null;
+  }
+};
+
 export default function LandingPage() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % 6); // features length is 6
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const handleScroll = () => {
@@ -761,6 +666,99 @@ export default function LandingPage() {
       </section>
 
 
+      {/* ─── 特色功能 ─── */}
+      <section id="特色功能" className="py-24 px-4 overflow-hidden relative">
+        {/* 背景光环，与上传图类似的渐变光斑配合 */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] pointer-events-none z-0" />
+
+        <div className="max-w-6xl mx-auto px-4 mb-16 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center"
+          >
+            <Badge className="mb-3 bg-primary/15 text-primary border-primary/30">差异化优势</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">六大核心特色功能</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto text-pretty">
+              每个功能都针对学习中的核心痛点精心设计，助你突破瓶颈
+            </p>
+          </motion.div>
+        </div>
+
+        {/* 轮播主体结构：三栏焦点式轮播，完全对齐上传图的审美 */}
+        <div className="relative max-w-6xl mx-auto px-4 py-8 flex flex-col items-center justify-center z-10">
+          <div className="relative flex justify-center items-center gap-4 md:gap-8 w-full min-h-[360px] overflow-visible">
+            {[-1, 0, 1].map((offset) => {
+              const cardIndex = (activeIndex + offset + features.length) % features.length;
+              const f = features[cardIndex];
+              const isActive = offset === 0;
+
+              return (
+                <motion.div
+                  key={cardIndex}
+                  layout
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{
+                    opacity: isActive ? 1 : 0.35,
+                    scale: isActive ? 1.05 : 0.9,
+                    zIndex: isActive ? 10 : 1,
+                  }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  className={`w-[290px] sm:w-[340px] md:w-[380px] shrink-0 ${
+                    isActive ? 'block' : 'hidden sm:block'
+                  }`}
+                  onClick={() => !isActive && setActiveIndex(cardIndex)}
+                >
+                  <div className={`h-full p-8 rounded-3xl backdrop-blur-md border transition-all duration-500 flex flex-col justify-between cursor-pointer select-none ${
+                    isActive
+                      ? `${f.borderColor} bg-card/95 ${f.shadowColor} ring-1`
+                      : 'border-border/40 bg-card/30 hover:bg-card/50'
+                  }`}>
+                    {/* 卡片头部 */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${f.color} flex items-center justify-center shadow-md`}>
+                        <f.icon className={`w-6 h-6 ${f.iconColor}`} />
+                      </div>
+                      <span className="text-4xl font-extrabold text-foreground/5 select-none font-mono">
+                        {String(cardIndex + 1).padStart(2, '0')}
+                      </span>
+                    </div>
+
+                    {/* 卡片核心文字 */}
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold mb-3 text-foreground">{f.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed min-h-[60px] text-pretty">{f.desc}</p>
+                    </div>
+
+                    {/* 卡片底部操作区（立即体验链接） */}
+                    <Link to="/login" className={`mt-8 pt-4 border-t border-border/20 flex items-center gap-1.5 text-sm font-semibold transition-colors duration-300 ${
+                      isActive ? f.activeText : 'text-muted-foreground hover:text-foreground'
+                    } group`}>
+                      <span>立即体验</span>
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* 指示器点 */}
+          <div className="flex justify-center items-center gap-2 mt-8">
+            {features.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveIndex(i)}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === activeIndex ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/30'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ─── 适合人群（重新设计） ─── */}
       <section className="py-24 px-4 bg-muted/20 overflow-hidden">
         <div className="max-w-6xl mx-auto">
@@ -809,7 +807,7 @@ export default function LandingPage() {
             </motion.div>
 
             {/* 右侧 2×2 网格 */}
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="lg:col-span-3 grid grid-cols-2 gap-5">
               {[
                 {
                   icon: Code2,
@@ -877,47 +875,6 @@ export default function LandingPage() {
                 </motion.div>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── 特色功能 ─── */}
-      <section id="特色功能" className="py-24 px-4">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <Badge className="mb-3 bg-primary/15 text-primary border-primary/30">差异化优势</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">六大核心特色功能</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-pretty">
-              每个功能都针对学习中的核心痛点精心设计，助你突破瓶颈
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f, i) => (
-              <FloatingCard key={i} delay={i * 0.08}>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  className={`h-full p-6 rounded-2xl bg-gradient-to-br ${f.color} border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col`}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 rounded-xl bg-background/70 shadow-sm`}>
-                      <f.icon className={`w-6 h-6 ${f.iconColor}`} />
-                    </div>
-                    <Badge variant="secondary" className="text-xs shrink-0">{f.badge}</Badge>
-                  </div>
-                  <h3 className="font-bold text-lg mb-2">{f.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed text-pretty flex-1">{f.desc}</p>
-                  <div className="mt-4 flex items-center text-xs font-medium text-primary gap-1">
-                    <span>了解详情</span><ArrowRight className="w-3 h-3" />
-                  </div>
-                </motion.div>
-              </FloatingCard>
-            ))}
           </div>
         </div>
       </section>
@@ -1054,7 +1011,7 @@ export default function LandingPage() {
             <p className="text-muted-foreground text-pretty">灵活的付费方案，从个人学习到团队协作一站满足</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-3 gap-3 md:gap-6 items-start">
             {plans.map((plan, i) => (
               <motion.div
                 key={i}
@@ -1071,46 +1028,46 @@ export default function LandingPage() {
                     : 'border border-border/60 shadow-lg hover:shadow-xl'
                 }`}>
                   {/* 顶部彩色渐变头 */}
-                  <div className={`p-7 bg-gradient-to-br ${plan.color} text-white relative overflow-hidden`}>
+                  <div className={`p-4 sm:p-7 bg-gradient-to-br ${plan.color} text-white relative overflow-hidden`}>
                     {/* 装饰光晕 */}
                     <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
                     <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/10 to-transparent" />
                     <div className="relative">
-                      <div className="flex items-center gap-3 mb-5">
-                        <div className="p-2.5 rounded-xl bg-white/20 shadow-inner backdrop-blur-sm">
-                          <plan.icon className="w-5 h-5" />
+                      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-5">
+                        <div className="p-1.5 sm:p-2.5 rounded-xl bg-white/20 shadow-inner backdrop-blur-sm">
+                          <plan.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
-                        <span className="font-bold text-lg">{plan.name}</span>
+                        <span className="font-bold text-sm sm:text-lg">{plan.name}</span>
                       </div>
-                      <div className="flex items-baseline gap-1.5 mb-1">
-                        <span className="text-5xl font-extrabold tracking-tight">{plan.price}</span>
-                        <span className="text-white/70 text-sm">{plan.period}</span>
+                      <div className="flex items-baseline gap-1 mb-1">
+                        <span className="text-2xl sm:text-5xl font-extrabold tracking-tight">{plan.price}</span>
+                        <span className="text-white/70 text-xs sm:text-sm">{plan.period}</span>
                       </div>
-                      <p className="text-white/75 text-sm">{plan.desc}</p>
+                      <p className="text-white/75 text-[10px] sm:text-sm truncate">{plan.desc}</p>
                     </div>
                   </div>
 
                   {/* 功能列表 */}
-                  <div className="p-6 bg-card flex-1 flex flex-col">
-                    <ul className="space-y-3 flex-1 mb-6">
+                  <div className="p-3 sm:p-6 bg-card flex-1 flex flex-col">
+                    <ul className="space-y-2.5 flex-1 mb-4 sm:mb-6">
                       {plan.features.map((feat, j) => (
-                        <li key={j} className="flex items-start gap-2.5">
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                        <li key={j} className="flex items-start gap-1.5 sm:gap-2.5">
+                          <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                             plan.highlight ? 'bg-primary/10' : 'bg-muted'
                           }`}>
-                            <CheckCircle2 className={`w-3 h-3 ${plan.highlight ? 'text-primary' : 'text-muted-foreground'}`} />
+                            <CheckCircle2 className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${plan.highlight ? 'text-primary' : 'text-muted-foreground'}`} />
                           </div>
-                          <span className="text-sm text-foreground/80 leading-relaxed">{feat}</span>
+                          <span className="text-[11px] sm:text-sm text-foreground/80 leading-relaxed">{feat}</span>
                         </li>
                       ))}
                     </ul>
                     <Button
-                      className={`w-full h-11 text-sm font-semibold ${plan.highlight ? 'shadow-lg shadow-primary/20' : ''}`}
+                      className={`w-full h-9 sm:h-11 text-xs sm:text-sm font-semibold ${plan.highlight ? 'shadow-lg shadow-primary/20' : ''}`}
                       variant={plan.highlight ? 'default' : 'outline'}
                       asChild
                     >
                       <Link to="/login">
-                        {plan.cta}<ArrowRight className="w-4 h-4 ml-1.5" />
+                        <span className="hidden sm:inline">{plan.cta}</span><span className="sm:hidden">选择</span><ArrowRight className="w-3.5 h-3.5 ml-1 sm:ml-1.5 shrink-0" />
                       </Link>
                     </Button>
                   </div>
@@ -1121,111 +1078,121 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── CTA 底部（无卡片背景，与页面融合） ─── */}
-      <section className="relative py-28 px-4 overflow-hidden">
-        <div className="relative z-10 text-center max-w-2xl mx-auto">
+      {/* ─── CTA 底部（模仿上传图排版重新设计） ─── */}
+      <section className="relative py-20 px-4 overflow-hidden bg-background border-t border-border/10">
+        {/* 左侧和右侧柔和的渐变微光 */}
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-violet-500/10 blur-[90px] pointer-events-none" />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-emerald-500/5 blur-[90px] pointer-events-none" />
+
+        <div className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-6 shadow-xl shadow-primary/30">
-              <GraduationCap className="w-8 h-8 text-primary-foreground" />
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-5 text-balance">
-              开启你的智能学习之旅
+            <h2 className="text-3xl md:text-5xl font-extrabold mb-6 text-foreground tracking-tight leading-tight">
+              准备好开启你的 <span className="bg-gradient-to-r from-violet-600 via-primary to-amber-500 bg-clip-text text-transparent">智能学习之旅</span> 了吗？
             </h2>
-            <p className="text-muted-foreground mb-8 text-pretty text-lg">
-              加入 50,000+ 学习者，今天就改变你的学习方式
+            <p className="text-muted-foreground mb-10 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+              加入 50,000+ 用户，体验全新的智能辅导。让 智学伴 成为你学业提升的得力助手。
             </p>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" asChild className="h-12 text-base shadow-xl shadow-primary/20 min-w-40">
-                <Link to="/login">
-                  <Zap className="w-5 h-5 mr-2" />免费开始
-                </Link>
-              </Button>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Shield className="w-4 h-4 text-primary" />
-                <span>无需信用卡 · 永久免费基础版</span>
-              </div>
+              {/* 立即开始按钮 */}
+              <Link
+                to="/login"
+                className="relative flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-base shadow-lg shadow-violet-500/25 transition-all hover:scale-102 active:scale-98 min-w-[160px]"
+              >
+                <span>立即开始</span>
+                <ArrowRight className="w-4.5 h-4.5" />
+              </Link>
+
+              {/* 了解更多按钮 */}
+              <a
+                href="#六大核心特色功能"
+                className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-background border border-border/80 text-foreground hover:bg-muted/40 font-bold text-base transition-all hover:scale-102 active:scale-98 min-w-[160px]"
+              >
+                <BookOpen className="w-4.5 h-4.5 text-muted-foreground" />
+                <span>了解更多</span>
+              </a>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ─── Footer（三列布局） ─── */}
-      <footer className="border-t border-border/60 bg-muted/30 pt-14 pb-8 px-4">
+      {/* ─── Footer（电脑端模仿上传图排版，移动端自适应） ─── */}
+      <footer className="border-t border-border/60 bg-muted/30 py-12 px-6">
         <div className="max-w-6xl mx-auto">
-          {/* 三列主体 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
-            {/* 品牌列 */}
-            <div>
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md">
-                  <GraduationCap className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <span className="text-xl font-extrabold text-primary tracking-tight">智学伴</span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed text-pretty max-w-[220px]">
-                多智能体个性化学习系统，苏格拉底式 AI 辅导助你精准成长。
+          {/* 电脑端三列布局 */}
+          <div className="hidden md:grid grid-cols-3 gap-12 pb-10">
+            {/* 左侧：品牌与描述 */}
+            <div className="flex flex-col gap-4">
+              <span className="text-2xl font-extrabold text-violet-600 tracking-tight">智学伴</span>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                多智能体个性化学习系统
               </p>
-              <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground/70">
-                <InfinityIcon className="w-3.5 h-3.5 text-primary/60" />
-                <span>AI驱动 · 持续进化</span>
+            </div>
+
+            {/* 中间：快速链接 */}
+            <div className="flex flex-col gap-4">
+              <span className="font-bold text-sm text-foreground">快速链接</span>
+              <div className="flex flex-col gap-3 text-sm text-muted-foreground">
+                <Link to="/home" className="hover:text-primary transition-colors">学习空间</Link>
+                <Link to="/tutoring" className="hover:text-primary transition-colors">智能答疑</Link>
+                <Link to="/learning-path" className="hover:text-primary transition-colors">学习路径</Link>
+                <Link to="/report" className="hover:text-primary transition-colors">数据报告</Link>
               </div>
             </div>
 
-            {/* 快速链接列 */}
-            <div>
-              <h4 className="text-sm font-semibold text-foreground mb-5">快速链接</h4>
-              <ul className="space-y-3">
-                {[
-                  { label: '学习空间', href: '/home' },
-                  { label: '智能答疑', href: '/tutoring' },
-                  { label: '学习路径', href: '/learning-path' },
-                  { label: '数据报告', href: '/report' },
-                ].map(link => (
-                  <li key={link.label}>
-                    <Link
-                      to={link.href}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* 联系我们列 */}
-            <div>
-              <h4 className="text-sm font-semibold text-foreground mb-5">联系我们</h4>
-              <ul className="space-y-3">
-                <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                  <MessageCircle className="w-4 h-4 text-primary/70 shrink-0" />
-                  <span>微信：zhixueba2026</span>
-                </li>
-                <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                  <Globe className="w-4 h-4 text-primary/70 shrink-0" />
+            {/* 右侧：联系我们 */}
+            <div className="flex flex-col gap-4">
+              <span className="font-bold text-sm text-foreground">联系我们</span>
+              <div className="flex flex-col gap-3 text-sm text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-emerald-500 fill-emerald-500/10" />
+                  <span>zhixueba2026</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-muted-foreground/80" />
                   <span>support@zhixueba.ai</span>
-                </li>
-                <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                  <Shield className="w-4 h-4 text-primary/70 shrink-0" />
+                </span>
+                <span className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground/80" />
                   <span>中国 · 互联网教育</span>
-                </li>
-              </ul>
-
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* 底部分割线 + 版权 */}
-          <div className="border-t border-border/50 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground/70">
-            <span>© 2026 智学伴. 保留所有权利。</span>
-            <div className="flex gap-5">
-              <a href="#" className="hover:text-foreground transition-colors">用户协议</a>
-              <a href="#" className="hover:text-foreground transition-colors">隐私政策</a>
-              <a href="#" className="hover:text-foreground transition-colors">帮助中心</a>
+          {/* 移动端/平板端自适应一排显示 */}
+          <div className="md:hidden flex flex-col items-center gap-6 pb-6">
+            <div className="flex items-center gap-2 group">
+              <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-md">
+                <GraduationCap className="w-4.5 h-4.5 text-primary-foreground" />
+              </div>
+              <span className="text-base font-bold text-primary">智学伴</span>
             </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-[11px] text-muted-foreground text-center">
+              <span className="font-semibold text-foreground">快速链接</span>
+              <Link to="/home" className="hover:text-primary transition-colors">学习空间</Link>
+              <Link to="/tutoring" className="hover:text-primary transition-colors">智能答疑</Link>
+              <Link to="/learning-path" className="hover:text-primary transition-colors">学习路径</Link>
+              <Link to="/report" className="hover:text-primary transition-colors">数据报告</Link>
+              
+              <span className="text-border/60 mx-1">|</span>
+
+              <span className="font-semibold text-foreground">联系我们</span>
+              <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-emerald-500" />微信：zhixueba2026</span>
+              <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />support@zhixueba.ai</span>
+              <span>中国 · 互联网教育</span>
+            </div>
+          </div>
+
+          {/* 底部分割线与版权 */}
+          <div className="border-t border-border/20 pt-8 text-center text-xs text-muted-foreground/75">
+            <span>© 2026 智学伴. All rights reserved. Made with ♡ by wyxpro</span>
           </div>
         </div>
       </footer>

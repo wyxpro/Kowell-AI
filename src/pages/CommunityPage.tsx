@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Users, Heart, MessageSquare, Share2, Send, User, Clock, Flame, Sparkles,
   Hash, ChevronRight, ArrowLeft, TrendingUp, BookOpen, Code2, Brain,
-  Calculator, Globe, Microscope, Music,
+  Calculator, Globe, Microscope, Music, Languages, Trophy,
 } from 'lucide-react';
 
 interface Post {
@@ -42,6 +42,8 @@ const CIRCLES = [
   { id: 'ai', name: 'AI学习圈', icon: Brain, color: 'text-violet-500', bg: 'bg-violet-50 dark:bg-violet-900/20', members: '2.4k', hot: true, desc: 'AI学习与技术前沿讨论' },
   { id: 'math', name: '数学圈', icon: Calculator, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', members: '1.8k', hot: false, desc: '数学问题解答与思维拓展' },
   { id: 'exam', name: '考研备考圈', icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20', members: '2.9k', hot: true, desc: '考研备考经验与资料分享' },
+  { id: 'eng', name: '英语学霸圈', icon: Languages, color: 'text-cyan-500', bg: 'bg-cyan-50 dark:bg-cyan-900/20', members: '2.1k', hot: true, desc: '英语四六级、托福雅思备考与学术英语交流' },
+  { id: 'career', name: '求职竞赛圈', icon: Trophy, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20', members: '2.7k', hot: true, desc: '求职面试、大厂内推、保研及竞赛经验分享' },
   { id: 'science', name: '理工科圈', icon: Microscope, color: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-900/20', members: '1.5k', hot: false, desc: '理工科知识交流与实验分享' },
   { id: 'arts', name: '文艺圈', icon: Music, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', members: '900', hot: false, desc: '文艺创作与灵感交流' },
 ];

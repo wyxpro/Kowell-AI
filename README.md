@@ -1,4 +1,4 @@
-# 🎓 Kowell AI — 智学伴·智能教育平台
+# 🎓 Kowell AI — 多智能体智能学习平台
 [![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/) [![Vite](https://img.shields.io/badge/Vite-5.x-646CFF.svg)](https://vitejs.dev/) [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg)](https://www.typescriptlang.org/) [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-38B2AC.svg)](https://tailwindcss.com/) [![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E.svg)](https://supabase.com/) [![Zustand](https://img.shields.io/badge/Zustand-State-764ABC.svg)](https://github.com/pmndrs/zustand)
 ---
 
