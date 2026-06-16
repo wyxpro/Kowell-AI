@@ -27,6 +27,7 @@ const features = [
     borderColor: 'border-violet-500/80',
     shadowColor: 'shadow-[0_20px_50px_rgba(139,92,246,0.18)] ring-violet-500/20',
     activeText: 'text-violet-500',
+    bgImage: '/images/features/ai_tutor_bg.png',
   },
   {
     icon: Network,
@@ -38,6 +39,7 @@ const features = [
     borderColor: 'border-sky-500/80',
     shadowColor: 'shadow-[0_20px_50px_rgba(14,165,233,0.18)] ring-sky-500/20',
     activeText: 'text-sky-500',
+    bgImage: '/images/features/knowledge_graph_bg.png',
   },
   {
     icon: Target,
@@ -49,6 +51,7 @@ const features = [
     borderColor: 'border-rose-500/80',
     shadowColor: 'shadow-[0_20px_50px_rgba(244,63,94,0.18)] ring-rose-500/20',
     activeText: 'text-rose-500',
+    bgImage: '/images/features/weakness_bg.png',
   },
   {
     icon: Code2,
@@ -60,6 +63,7 @@ const features = [
     borderColor: 'border-emerald-500/80',
     shadowColor: 'shadow-[0_20px_50px_rgba(16,185,129,0.18)] ring-emerald-500/20',
     activeText: 'text-emerald-500',
+    bgImage: '/images/features/code_lab_bg.png',
   },
   {
     icon: BarChart3,
@@ -71,6 +75,7 @@ const features = [
     borderColor: 'border-amber-500/80',
     shadowColor: 'shadow-[0_20px_50px_rgba(245,158,11,0.18)] ring-amber-500/20',
     activeText: 'text-amber-500',
+    bgImage: '/images/features/profile_analysis_bg.png',
   },
   {
     icon: Users,
@@ -82,6 +87,7 @@ const features = [
     borderColor: 'border-pink-500/80',
     shadowColor: 'shadow-[0_20px_50px_rgba(236,72,153,0.18)] ring-pink-500/20',
     activeText: 'text-pink-500',
+    bgImage: '/images/features/community_learning_bg.png',
   },
 ];
 
@@ -508,8 +514,8 @@ export default function LandingPage() {
   const [activeIndex, setActiveIndex] = useState(0);
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % 6); // features length is 6
-    }, 4500);
+      setActiveIndex((prev) => (prev + 1) % 6);
+    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
@@ -521,6 +527,14 @@ export default function LandingPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [activeCompetitor, setActiveCompetitor] = useState<string | null>(null);
   const competitorNames = ['智学伴', 'Khan', '学而思', 'Duolingo'];
   const competitorColors = ['hsl(162,63%,45%)', 'hsl(220,70%,55%)', 'hsl(36,80%,52%)', 'hsl(0,70%,55%)'];
@@ -666,10 +680,9 @@ export default function LandingPage() {
       </section>
 
 
-      {/* ─── 特色功能 ─── */}
-      <section id="特色功能" className="py-24 px-4 overflow-hidden relative">
-        {/* 背景光环，与上传图类似的渐变光斑配合 */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] pointer-events-none z-0" />
+      {/* ─── 特色功能 3D 轮播图 ─── */}
+      <section id="特色功能" className="py-24 px-4 overflow-hidden relative bg-transparent">
+        {/* Deleted previous background to make this area completely clean */}
 
         <div className="max-w-6xl mx-auto px-4 mb-16 relative z-10">
           <motion.div
@@ -678,83 +691,97 @@ export default function LandingPage() {
             viewport={{ once: true }}
             className="text-center"
           >
-            <Badge className="mb-3 bg-primary/15 text-primary border-primary/30">差异化优势</Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">六大核心特色功能</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-pretty">
+            <Badge className="mb-4 bg-primary/10 text-primary border-primary/25 px-3 py-1 text-xs">差异化优势</Badge>
+            <h2 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80">
+              六大核心特色功能
+            </h2>
+            <p className="text-muted-foreground text-sm max-w-xl mx-auto leading-relaxed">
               每个功能都针对学习中的核心痛点精心设计，助你突破瓶颈
             </p>
           </motion.div>
         </div>
 
-        {/* 轮播主体结构：三栏焦点式轮播，完全对齐上传图的审美 */}
-        <div className="relative max-w-6xl mx-auto px-4 py-8 flex flex-col items-center justify-center z-10">
-          <div className="relative flex justify-center items-center gap-4 md:gap-8 w-full min-h-[360px] overflow-visible">
-            {[-1, 0, 1].map((offset) => {
-              const cardIndex = (activeIndex + offset + features.length) % features.length;
-              const f = features[cardIndex];
-              const isActive = offset === 0;
+        {/* Accordion Stage */}
+        <div className="relative max-w-6xl mx-auto px-4 py-8 z-10 w-full">
+          <div className="flex flex-col md:flex-row gap-4 items-stretch h-[650px] md:h-[500px] w-full">
+            {features.map((f, idx) => {
+              const isActive = activeIndex === idx;
 
               return (
-                <motion.div
-                  key={cardIndex}
-                  layout
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{
-                    opacity: isActive ? 1 : 0.35,
-                    scale: isActive ? 1.05 : 0.9,
-                    zIndex: isActive ? 10 : 1,
+                <div
+                  key={idx}
+                  onMouseEnter={() => setActiveIndex(idx)}
+                  className="relative rounded-[2rem] border border-white/10 overflow-hidden shadow-2xl group cursor-pointer flex flex-col justify-end"
+                  style={{
+                    flex: isActive ? (windowWidth < 768 ? 3.0 : 3.5) : 1.0,
+                    transition: "flex 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s, box-shadow 0.3s",
                   }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className={`w-[290px] sm:w-[340px] md:w-[380px] shrink-0 ${
-                    isActive ? 'block' : 'hidden sm:block'
-                  }`}
-                  onClick={() => !isActive && setActiveIndex(cardIndex)}
                 >
-                  <div className={`h-full p-8 rounded-3xl backdrop-blur-md border transition-all duration-500 flex flex-col justify-between cursor-pointer select-none ${
-                    isActive
-                      ? `${f.borderColor} bg-card/95 ${f.shadowColor} ring-1`
-                      : 'border-border/40 bg-card/30 hover:bg-card/50'
-                  }`}>
-                    {/* 卡片头部 */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${f.color} flex items-center justify-center shadow-md`}>
-                        <f.icon className={`w-6 h-6 ${f.iconColor}`} />
+                  {/* Real Image Background - 100% visible, no overlay wash out */}
+                  <div
+                    className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                    style={{ backgroundImage: `url(${f.bgImage})` }}
+                  />
+
+                  {/* Vibrant Purple-blue gradient overlay matching upload design style */}
+                  <div className="absolute inset-0 z-10 bg-gradient-to-t from-violet-950/90 via-violet-950/45 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
+
+                  {/* Card Content Interior */}
+                  <div className="w-full relative z-20 flex flex-col justify-end p-6 md:p-8 overflow-hidden h-full">
+                    <div className="flex flex-col md:flex-row md:items-end md:justify-between w-full h-full gap-6">
+                      <div className="flex-1 flex flex-col justify-end h-full">
+                        <span className="text-3xl md:text-5xl font-light text-white/90 tracking-tight font-mono mb-2">
+                          {String(idx + 1).padStart(2, '0')}
+                        </span>
+                        
+                        <h3 className="text-lg md:text-2xl font-bold text-white tracking-tight leading-snug break-words">
+                          {f.title}
+                        </h3>
+
+                        {/* Collapsible details container */}
+                        <div 
+                          className="transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden flex flex-col"
+                          style={{
+                            maxHeight: isActive ? "180px" : "0px",
+                            opacity: isActive ? 1 : 0,
+                            transform: isActive ? "translateY(0)" : "translateY(12px)",
+                            marginTop: isActive ? "8px" : "0px",
+                          }}
+                        >
+                          {/* Limit description to at most 2 lines */}
+                          <p className="text-zinc-200 text-xs leading-relaxed line-clamp-2 max-w-sm mb-4">
+                            {f.desc}
+                          </p>
+                          <Link
+                            to="/login"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-white hover:text-primary transition-colors duration-200 group/link w-fit"
+                          >
+                            <span>立即体验</span>
+                            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/link:translate-x-1" />
+                          </Link>
+                        </div>
                       </div>
-                      <span className="text-4xl font-extrabold text-foreground/5 select-none font-mono">
-                        {String(cardIndex + 1).padStart(2, '0')}
-                      </span>
-                    </div>
 
-                    {/* 卡片核心文字 */}
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-3 text-foreground">{f.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed min-h-[60px] text-pretty">{f.desc}</p>
+                      {/* Floating mockup in glass frame displayed only when card is expanded */}
+                      <div 
+                        className="hidden md:flex items-center justify-center transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                        style={{
+                          flex: isActive ? 1 : 0,
+                          opacity: isActive ? 1 : 0,
+                          transform: isActive ? "scale(1)" : "scale(0.92)",
+                          maxWidth: isActive ? "240px" : "0px",
+                          pointerEvents: isActive ? "auto" : "none",
+                        }}
+                      >
+                        <div className="w-full bg-slate-950/45 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl">
+                          {renderMockup(f.title)}
+                        </div>
+                      </div>
                     </div>
-
-                    {/* 卡片底部操作区（立即体验链接） */}
-                    <Link to="/login" className={`mt-8 pt-4 border-t border-border/20 flex items-center gap-1.5 text-sm font-semibold transition-colors duration-300 ${
-                      isActive ? f.activeText : 'text-muted-foreground hover:text-foreground'
-                    } group`}>
-                      <span>立即体验</span>
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
-          </div>
-
-          {/* 指示器点 */}
-          <div className="flex justify-center items-center gap-2 mt-8">
-            {features.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveIndex(i)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === activeIndex ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/30'
-                }`}
-              />
-            ))}
           </div>
         </div>
       </section>

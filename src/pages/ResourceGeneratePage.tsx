@@ -26,7 +26,7 @@ import {
   CheckCircle, PenTool, Cpu, MessageSquare, FileCheck, Layers,
   Video, Presentation, Lock, Paperclip, X, ImageIcon, Film, FileUp,
   ChevronDown, ChevronUp, Link2, Download, Image as ImageIcon2, Play,
-  RefreshCw, FileDown,
+  RefreshCw, FileDown, Plus, Trash2, Edit, Search, Calendar,
 } from 'lucide-react';
 
 /* ──────────────────────────────────────────────────────────────
@@ -493,6 +493,157 @@ export default function ResourceGeneratePage() {
 
   const [previewExample, setPreviewExample] = useState<typeof STANDARD_EXAMPLES[0] | null>(null);
 
+  // 我的界面 (资源管理 CRUD) 相关状态
+  const [showMyInterface, setShowMyInterface] = useState(false);
+  const [userResources, setUserResources] = useState<any[]>([]);
+  const [loadingResources, setLoadingResources] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeResource, setActiveResource] = useState<any | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isCreatingManual, setIsCreatingManual] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    topic: '',
+    course_name: '',
+    content: '',
+    type: 'document'
+  });
+
+  const fetchUserResources = useCallback(async () => {
+    if (!user) return;
+    setLoadingResources(true);
+    try {
+      const { data, error } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUserResources(data || []);
+    } catch (err) {
+      toast.error('获取资源失败: ' + (err as Error).message);
+    } finally {
+      setLoadingResources(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (showMyInterface) {
+      fetchUserResources();
+    }
+  }, [showMyInterface, fetchUserResources]);
+
+  const handleDeleteResource = async (id: string) => {
+    if (!confirm('确定要删除该资源吗？此操作无法撤销。')) return;
+    try {
+      const { error } = await supabase
+        .from('resources')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('删除成功！');
+      fetchUserResources();
+      if (activeResource?.id === id) {
+        setActiveResource(null);
+        setIsEditing(false);
+      }
+    } catch (err) {
+      toast.error('删除失败: ' + (err as Error).message);
+    }
+  };
+
+  const startEditResource = (res: any) => {
+    setActiveResource(res);
+    setIsEditing(true);
+    setIsCreatingManual(false);
+    setEditForm({
+      title: res.title || '',
+      topic: res.topic || '',
+      course_name: res.course_name || '',
+      content: res.content || '',
+      type: res.type || 'document'
+    });
+  };
+
+  const startCreateManual = () => {
+    setIsCreatingManual(true);
+    setIsEditing(false);
+    setActiveResource(null);
+    setEditForm({
+      title: '',
+      topic: '',
+      course_name: '',
+      content: '',
+      type: 'document'
+    });
+  };
+
+  const handleSaveResource = async () => {
+    if (!editForm.title.trim()) { toast.error('请填写标题'); return; }
+    try {
+      if (isCreatingManual) {
+        if (!user) return;
+        const { error } = await supabase
+          .from('resources')
+          .insert({
+            user_id: user.id,
+            title: editForm.title,
+            topic: editForm.topic,
+            course_name: editForm.course_name,
+            content: editForm.content,
+            type: editForm.type,
+            resource_type: editForm.type,
+            status: 'completed'
+          });
+
+        if (error) throw error;
+        toast.success('手动创建成功！');
+        setIsCreatingManual(false);
+      } else if (activeResource) {
+        const { error } = await supabase
+          .from('resources')
+          .update({
+            title: editForm.title,
+            topic: editForm.topic,
+            course_name: editForm.course_name,
+            content: editForm.content,
+            type: editForm.type,
+            resource_type: editForm.type
+          })
+          .eq('id', activeResource.id);
+
+        if (error) throw error;
+        toast.success('保存成功！');
+        setIsEditing(false);
+      }
+      fetchUserResources();
+      if (activeResource) {
+        setActiveResource((prev: any) => ({
+          ...prev,
+          title: editForm.title,
+          topic: editForm.topic,
+          course_name: editForm.course_name,
+          content: editForm.content,
+          type: editForm.type
+        }));
+      }
+    } catch (err) {
+      toast.error('保存失败: ' + (err as Error).message);
+    }
+  };
+
+  const filteredResources = userResources.filter(res => {
+    const query = searchQuery.toLowerCase();
+    return (
+      (res.title || '').toLowerCase().includes(query) ||
+      (res.course_name || '').toLowerCase().includes(query) ||
+      (res.topic || '').toLowerCase().includes(query)
+    );
+  });
+
+
   const applyExampleTemplate = (ex: typeof STANDARD_EXAMPLES[0]) => {
     setTopic(ex.exampleTopic);
     setResourceTypes([ex.type]);
@@ -694,11 +845,18 @@ export default function ResourceGeneratePage() {
   return (
     <AppLayout>
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             AI资源生成
           </h1>
+          <button
+            onClick={() => setShowMyInterface(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-primary/15 to-purple-500/15 text-primary border border-primary/25 hover:border-primary/60 hover:from-primary/25 hover:to-purple-500/25 transition-all duration-200 hover:scale-105 shadow-sm"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            我的资源
+          </button>
         </div>
 
         {/* 生成标准示例 - 桌面端横向排版 */}
@@ -1195,6 +1353,296 @@ export default function ResourceGeneratePage() {
             </DialogFooter>
           </DialogContent>
         )}
+      </Dialog>
+
+      {/* ── 我的资源 Dialog ─────────────────────────────────── */}
+      <Dialog open={showMyInterface} onOpenChange={(v) => { setShowMyInterface(v); if (!v) { setActiveResource(null); setIsEditing(false); setIsCreatingManual(false); } }}>
+        <DialogContent className="max-w-[1100px] w-[96vw] h-[88vh] flex flex-col p-0 overflow-hidden rounded-2xl border-0 shadow-2xl bg-[#0f1117]">
+
+          {/* ── 顶部渐变标题栏 */}
+          <div className="relative shrink-0 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 opacity-90" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.12),transparent_60%)]" />
+            <div className="relative flex items-center justify-between px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-white/15 backdrop-blur-sm">
+                  <Layers className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-base font-bold text-white leading-tight">
+                    我的资源库
+                  </DialogTitle>
+                  <DialogDescription className="text-[11px] text-white/65 mt-0.5">
+                    管理您所有 AI 生成与手动创建的教学资源
+                  </DialogDescription>
+                </div>
+              </div>
+              <button
+                onClick={startCreateManual}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/25 hover:border-white/50 transition-all duration-200 backdrop-blur-sm hover:scale-105 shadow-lg"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                新建资源
+              </button>
+            </div>
+          </div>
+
+          {/* ── 主体双栏 */}
+          <div className="flex-1 flex min-h-0">
+
+            {/* 左栏：搜索 + 列表 */}
+            <div className="w-72 shrink-0 flex flex-col border-r border-white/8 bg-[#13161f]">
+
+              {/* 搜索栏 */}
+              <div className="p-3 border-b border-white/8">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
+                  <input
+                    placeholder="搜索资源标题、课程..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.12)' }}
+                    className="w-full pl-8 pr-3 py-2 text-xs rounded-lg focus:outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* 计数 */}
+              <div className="px-3 py-2 flex items-center justify-between">
+                <span className="text-[10px] text-white/35 font-medium">
+                  {filteredResources.length} 个资源
+                </span>
+                <button onClick={fetchUserResources} className="text-white/30 hover:text-primary transition-colors">
+                  <RefreshCw className="w-3 h-3" />
+                </button>
+              </div>
+
+              {/* 列表 */}
+              <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
+                {loadingResources ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <span className="text-[11px] text-white/40">加载中...</span>
+                  </div>
+                ) : filteredResources.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-4">
+                    <div className="p-3 rounded-2xl bg-white/5">
+                      <FileText className="w-6 h-6 text-white/20" />
+                    </div>
+                    <p className="text-[11px] text-white/30">暂无资源，点击右上角"新建资源"</p>
+                  </div>
+                ) : (
+                  filteredResources.map((res) => {
+                    const opt = resourceTypeOptions.find(o => o.value === res.type);
+                    const isSelected = activeResource?.id === res.id;
+                    return (
+                      <div
+                        key={res.id}
+                        onClick={() => { setActiveResource(res); setIsEditing(false); setIsCreatingManual(false); }}
+                        className={`group relative p-3 rounded-xl cursor-pointer transition-all duration-200 ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-primary/20 to-purple-500/10 border border-primary/40 shadow-lg shadow-primary/10'
+                            : 'border border-transparent hover:bg-white/5 hover:border-white/10'
+                        }`}
+                      >
+                        {isSelected && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-primary rounded-full" />}
+                        <div className="flex items-start gap-2.5">
+                          <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${isSelected ? 'bg-primary/20' : 'bg-white/8'}`}>
+                            {opt ? <opt.icon className={`w-3.5 h-3.5 ${opt.color}`} /> : <FileText className="w-3.5 h-3.5 text-white/40" />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-xs font-semibold truncate ${isSelected ? 'text-primary' : 'text-white/80'}`}>
+                              {res.title || '无标题'}
+                            </p>
+                            {(res.course_name || res.topic) && (
+                              <p className="text-[10px] text-white/35 truncate mt-0.5">
+                                {[res.course_name, res.topic].filter(Boolean).join(' · ')}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-1 mt-1.5">
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${isSelected ? 'bg-primary/20 text-primary' : 'bg-white/8 text-white/35'}`}>
+                                {opt?.label || '文档'}
+                              </span>
+                              <span className="text-[9px] text-white/25">
+                                {res.created_at ? new Date(res.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }) : ''}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* 右栏：详情 / 编辑 / 新建 */}
+            <div className="flex-1 flex flex-col bg-[#0f1117] overflow-hidden">
+
+              {isCreatingManual || isEditing ? (
+                /* ── 新建 / 编辑表单 */
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {/* 表单顶栏 */}
+                  <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-white/8">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-primary/15">
+                        {isCreatingManual ? <Plus className="w-4 h-4 text-primary" /> : <Edit className="w-4 h-4 text-primary" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white">{isCreatingManual ? '新建资源' : '编辑资源'}</p>
+                        <p className="text-[10px] text-white/35">{isCreatingManual ? '填写信息后点击保存创建' : `修改「${activeResource?.title}」`}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => { setIsEditing(false); setIsCreatingManual(false); }}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white hover:bg-white/8 transition-all border border-white/10"
+                      >
+                        取消
+                      </button>
+                      <button
+                        onClick={handleSaveResource}
+                        className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-white transition-all hover:scale-105 shadow-lg shadow-primary/25"
+                      >
+                        保存资源
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 表单内容 */}
+                  <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                    <div className="grid grid-cols-2 gap-4">
+                      {[
+                        { label: '资源标题 *', key: 'title', placeholder: '例如: 快速排序算法多维度分析' },
+                        { label: '所属课程', key: 'course_name', placeholder: '例如: 数据结构与算法' },
+                        { label: '学习主题', key: 'topic', placeholder: '例如: 快速排序' },
+                      ].map(({ label, key, placeholder }) => (
+                        <div key={key} className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-white/45 uppercase tracking-wider">{label}</label>
+                          <input
+                            value={editForm[key as keyof typeof editForm]}
+                            onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                            placeholder={placeholder}
+                            style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.12)' }}
+                            className="w-full px-3 py-2 text-xs rounded-lg focus:outline-none transition-all"
+                          />
+                        </div>
+                      ))}
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-white/45 uppercase tracking-wider">资源类型</label>
+                        <select
+                          value={editForm.type}
+                          onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
+                          style={{ background: '#1a1d2a', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.12)' }}
+                          className="w-full px-3 py-2 text-xs rounded-lg focus:outline-none transition-all appearance-none"
+                        >
+                          {resourceTypeOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value} style={{ background: '#1a1d2a', color: '#e2e8f0' }}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 flex-1">
+                      <label className="text-[11px] font-semibold text-white/45 uppercase tracking-wider">
+                        资源内容 <span className="text-white/25 normal-case font-normal">（支持 Markdown 语法）</span>
+                      </label>
+                      <textarea
+                        value={editForm.content}
+                        onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+                        placeholder="# 标题&#10;&#10;在这里编写资源正文，支持 Markdown 标题、列表、**粗体**、`代码`、代码块等..."
+                        style={{ background: 'rgba(255,255,255,0.04)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.09)', minHeight: '340px' }}
+                        className="w-full px-4 py-3 text-xs font-mono rounded-xl focus:outline-none transition-all resize-none leading-relaxed"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              ) : activeResource ? (
+                /* ── 详情预览 */
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {/* 详情顶栏 */}
+                  <div className="shrink-0 px-6 py-4 border-b border-white/8">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {(() => {
+                            const opt = resourceTypeOptions.find(o => o.value === activeResource.type);
+                            return opt ? (
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/8 ${opt.color}`}>
+                                <opt.icon className="w-3 h-3" />{opt.label}
+                              </span>
+                            ) : null;
+                          })()}
+                          <span className="text-[10px] text-white/30">
+                            {activeResource.created_at ? new Date(activeResource.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                          </span>
+                        </div>
+                        <h3 className="text-base font-bold text-white leading-tight truncate">
+                          {activeResource.title}
+                        </h3>
+                        {(activeResource.course_name || activeResource.topic) && (
+                          <p className="text-[11px] text-white/40 mt-1">
+                            {[activeResource.course_name, activeResource.topic].filter(Boolean).join(' · ')}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => startEditResource(activeResource)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white bg-white/6 hover:bg-white/12 border border-white/10 hover:border-white/20 transition-all"
+                        >
+                          <Edit className="w-3.5 h-3.5" />编辑
+                        </button>
+                        <button
+                          onClick={() => handleDeleteResource(activeResource.id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-400/70 hover:text-red-400 bg-red-500/6 hover:bg-red-500/12 border border-red-500/15 hover:border-red-500/30 transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />删除
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Markdown 内容 */}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    <div className="max-w-3xl mx-auto bg-white/3 border border-white/8 rounded-2xl p-6 shadow-xl">
+                      <div className="prose prose-invert prose-sm max-w-none">
+                        {renderMarkdownBlocks(activeResource.content || '')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              ) : (
+                /* ── 空状态 */
+                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                  <div className="relative mb-6">
+                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center border border-primary/20">
+                      <Layers className="w-8 h-8 text-primary/60" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center shadow-lg">
+                      <Sparkles className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-bold text-white/70 mb-2">选择一个资源开始查看</h3>
+                  <p className="text-xs text-white/35 max-w-[260px] leading-relaxed">
+                    从左侧列表选择资源预览内容，或点击右上角"新建资源"手动添加教学资料
+                  </p>
+                  <button
+                    onClick={startCreateManual}
+                    className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-primary/80 to-purple-500/80 hover:from-primary hover:to-purple-500 text-white transition-all hover:scale-105 shadow-lg shadow-primary/20"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    新建第一个资源
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
       </Dialog>
     </AppLayout>
   );
