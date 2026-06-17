@@ -164,49 +164,49 @@ export default function LoginPage() {
         <LoginBackground />
         <div className="relative z-10 px-12 py-16 max-w-xl">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
-            <Link to="/" className="flex items-center gap-3 mb-12">
+            <Link to="/" className="flex items-center gap-4 mb-12">
               <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.6 }}
-                className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-xl">
-                <GraduationCap className="w-6 h-6 text-primary-foreground" />
+                className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-xl">
+                <GraduationCap className="w-7 h-7 text-primary-foreground" />
               </motion.div>
               <div>
-                <div className="text-white font-bold text-xl">智学伴</div>
-                <div className="text-white/50 text-xs">个性化学习多智能体系统</div>
+                <div className="text-white font-bold text-2xl">智学伴</div>
+                <div className="text-white/60 text-sm">个性化学习多智能体系统</div>
               </div>
             </Link>
-            <h2 className="text-4xl font-bold text-white mb-4 leading-tight text-balance">
+            <h2 className="text-5xl font-extrabold text-white mb-6 leading-tight text-balance">
               让学习更
               <span className="bg-clip-text text-transparent"
                 style={{ backgroundImage: 'linear-gradient(90deg,hsl(162,63%,55%),hsl(180,55%,55%))' }}>
                 聪明
               </span>，<br />让成长更精准
             </h2>
-            <p className="text-white/60 text-base mb-10 leading-relaxed text-pretty">
+            <p className="text-white/70 text-lg mb-10 leading-relaxed text-pretty">
               基于多智能体协作，提供苏格拉底式引导、知识图谱可视化与弱项精准强化。
             </p>
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               {featureList.map((f, i) => (
                 <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + i * 0.1 }} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
-                    <f.icon className={`w-4 h-4 ${f.color}`} />
+                  transition={{ delay: 0.4 + i * 0.1 }} className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
+                    <f.icon className={`w-5 h-5 ${f.color}`} />
                   </div>
-                  <span className="text-white/80 text-sm">{f.label}</span>
-                  <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />
+                  <span className="text-white/90 text-base font-semibold">{f.label}</span>
+                  <CheckCircle2 className="w-5 h-5 text-primary ml-auto" />
                 </motion.div>
               ))}
             </div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
-              className="mt-12 p-4 rounded-2xl bg-white/5 border border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-2">
+              className="mt-14 p-5 rounded-2xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-4">
+                <div className="flex -space-x-2.5">
                   {['陈', '李', '王', '赵'].map((n, i) => (
-                    <div key={i} className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-xs text-primary-foreground font-bold border-2 border-black/20">{n}</div>
+                    <div key={i} className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-sm text-primary-foreground font-bold border-2 border-black/20">{n}</div>
                   ))}
                 </div>
-                <div className="text-sm">
-                  <span className="text-white font-medium">50,000+</span>
-                  <span className="text-white/50 ml-1">位学习者正在使用</span>
+                <div className="text-base">
+                  <span className="text-white font-bold text-lg">50,000+</span>
+                  <span className="text-white/60 ml-1.5 font-medium">位学习者正在使用</span>
                 </div>
               </div>
             </motion.div>
