@@ -510,6 +510,112 @@ const renderMockup = (type: string) => {
   }
 };
 
+/* ─────────────────────── Hero 交互式动效组件 ─────────────────────── */
+function HeroInteractiveVisual() {
+  const [activeStep, setActiveStep] = useState(1);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev % 3) + 1);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const steps = [
+    { id: 1, title: '01 变量与内存模型', status: 'completed' },
+    { id: 2, title: '02 双指针与二分搜索', status: 'active' },
+    { id: 3, title: '03 动态规划专项强化', status: 'locked' }
+  ];
+
+  return (
+    <div className="relative w-full max-w-[460px] aspect-[1.05/1] flex items-center justify-center select-none py-6">
+      
+      {/* 科技霓虹发光背板 */}
+      <div className="absolute -top-10 -left-10 w-64 h-64 rounded-full bg-primary/10 blur-[80px] pointer-events-none" />
+      <div className="absolute -bottom-10 -right-10 w-64 h-64 rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none" />
+
+      {/* Layer 1: Core Dashboard (主学区面板) */}
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8 }}
+        className="w-full bg-card/65 backdrop-blur-xl border border-border/80 rounded-3xl shadow-[0_30px_70px_rgba(0,0,0,0.12)] flex flex-col overflow-hidden h-[330px]"
+      >
+        {/* 面板伪标题栏 */}
+        <div className="flex items-center justify-between px-5 py-3.5 bg-muted/40 border-b border-border/40">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-400/80" />
+            <span className="w-2.5 h-2.5 rounded-full bg-yellow-400/80" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/80" />
+          </div>
+          <div className="text-[10px] font-medium text-muted-foreground bg-background/50 px-3.5 py-0.5 rounded-full border border-border/40 flex items-center gap-1">
+            <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+            kowell-ai.com/classroom
+          </div>
+          <div className="w-8" />
+        </div>
+
+        {/* 主体工作区 */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* 左侧：个性化学习路径导航 */}
+          <div className="w-[45%] border-r border-border/40 p-3.5 flex flex-col gap-2.5 bg-muted/15">
+            <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+              Personalized Path
+            </div>
+            <div className="space-y-2 flex-1">
+              {steps.map((s) => {
+                const isCompleted = s.status === 'completed';
+                const isActive = s.id === activeStep;
+                return (
+                  <div
+                    key={s.id}
+                    className={`p-2 rounded-xl border text-[10.5px] flex items-center gap-2 transition-all duration-300 ${
+                      isCompleted
+                        ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                        : isActive
+                        ? 'bg-primary/5 border-primary/20 text-primary font-medium shadow-sm ring-1 ring-primary/10'
+                        : 'bg-zinc-500/5 border-transparent text-muted-foreground opacity-55'
+                    }`}
+                  >
+                    <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] shrink-0 ${
+                      isCompleted
+                        ? 'bg-emerald-500 text-white'
+                        : isActive
+                        ? 'bg-primary text-primary-foreground animate-pulse'
+                        : 'bg-zinc-800 text-zinc-400'
+                    }`}>
+                      {isCompleted ? '✓' : s.id}
+                    </div>
+                    <span className="truncate">{s.title}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 右侧：代码实验室 */}
+          <div className="flex-1 p-3.5 flex flex-col bg-background/40">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[9px] font-mono text-muted-foreground">socrates_practice.py</span>
+              <span className="text-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-500/20 font-medium">
+                ✓ 运行通过
+              </span>
+            </div>
+            <div className="flex-1 font-mono text-[10px] bg-muted/40 rounded-xl p-3 border border-border/30 text-muted-foreground leading-relaxed overflow-hidden">
+              <span className="text-blue-500">def</span> <span className="text-yellow-500">find_target</span>(nums, val):<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;left, right = <span className="text-purple-500">0</span>, len(nums) - <span className="text-purple-500">1</span><br />
+              &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-blue-500">while</span> left &lt;= right:<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mid = (left + right) // <span className="text-purple-500">2</span><br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-zinc-500"># AI 辅导提示: 缩小区间...</span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const [activeIndex, setActiveIndex] = useState(0);
   useEffect(() => {
@@ -552,131 +658,134 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* ─── 顶部导航 ─── */}
       <motion.header
-        className={`fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-4 flex items-center justify-between backdrop-blur-md transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 py-4 backdrop-blur-md transition-all duration-300 ${
           scrolled ? 'bg-background/40 border-b border-border/20 shadow-sm' : 'bg-transparent'
         }`}
       >
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <motion.div
-            whileHover={{ rotate: 360 }}
-            transition={{ duration: 0.6 }}
-            className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg"
-          >
-            <GraduationCap className="w-5 h-5 text-primary-foreground" />
-          </motion.div>
-          <span className="font-bold text-lg text-foreground">智学伴</span>
-        </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          {['特色功能', '竞品分析', '用户评价', '会员计划'].map(label => (
-            <a
-              key={label}
-              href={`#${label}`}
-              className="text-foreground/70 hover:text-foreground transition-colors"
+        <div className="max-w-7xl mx-auto w-full px-4 md:px-8 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5 group pl-2 md:pl-8">
+            <motion.div
+              whileHover={{ rotate: 360 }}
+              transition={{ duration: 0.6 }}
+              className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg"
             >
-              {label}
-            </a>
-          ))}
-        </nav>
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" asChild className="hidden md:inline-flex">
-            <Link to="/login">登录</Link>
-          </Button>
-          <Button asChild className="shadow-lg">
-            <Link to="/login">
-              <Zap className="w-4 h-4 mr-1.5" />立即使用
-            </Link>
-          </Button>
+              <GraduationCap className="w-5 h-5 text-primary-foreground" />
+            </motion.div>
+            <span className="font-bold text-xl text-foreground tracking-tight">智学伴</span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-8 text-base font-semibold">
+            {['特色功能', '竞品分析', '用户评价', '会员计划'].map(label => (
+              <a
+                key={label}
+                href={`#${label}`}
+                className="text-foreground/70 hover:text-foreground transition-colors"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" asChild className="hidden md:inline-flex text-base font-semibold">
+              <Link to="/login">登录</Link>
+            </Button>
+            <Button asChild className="shadow-lg text-base font-semibold px-5 py-2">
+              <Link to="/login">
+                <Zap className="w-4.5 h-4.5 mr-2" />立即使用
+              </Link>
+            </Button>
+          </div>
         </div>
       </motion.header>
 
       {/* ─── Hero Section ─── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-28 pb-16 lg:pb-0">
         <HeroBackground />
-        {/* 内容 */}
-        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <Badge className="mb-6 px-4 py-1.5 text-sm gap-2 bg-primary/15 text-primary border-primary/30">
-              <Sparkles className="w-3.5 h-3.5" />
-              多智能体个性化学习系统
-            </Badge>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.1 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-balance"
-          >
-            <span className="bg-clip-text text-transparent"
-              style={{ backgroundImage: 'linear-gradient(135deg, hsl(162,63%,38%), hsl(180,55%,42%), hsl(220,60%,55%))' }}>
-              智能学习
-            </span>
-            <br />
-            <span className="text-foreground">精准成长</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed text-pretty"
-          >
-            基于苏格拉底式AI辅导、知识图谱可视化与弱项精准强化，
-            为每位学习者构建专属的个性化学业提升路径。
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-          >
-            <Button size="lg" asChild className="min-w-44 shadow-xl h-12 text-base">
-              <Link to="/login">
-                <Zap className="w-5 h-5 mr-2" />立即开始使用
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild className="min-w-36 h-12 text-base bg-background/10 backdrop-blur-sm">
-              <a href="#特色功能">
-                了解更多<ArrowRight className="w-4 h-4 ml-2" />
-              </a>
-            </Button>
-          </motion.div>
-
-          {/* 统计数据 */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 max-w-3xl mx-auto"
-          >
-            {stats.map((s, i) => (
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            {/* Left Column: Text & Buttons */}
+            <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left">
               <motion.div
-                key={i}
-                whileHover={{ scale: 1.05 }}
-                className="p-4 rounded-2xl bg-background/60 backdrop-blur-md border border-border/50 text-center shadow-lg"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
               >
-                <div className="text-2xl font-bold text-primary">{s.value}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
+                <Badge className="mb-6 px-4 py-1.5 text-sm gap-2 bg-primary/15 text-primary border-primary/30">
+                  <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                  多智能体个性化学习系统
+                </Badge>
               </motion.div>
-            ))}
-          </motion.div>
-        </div>
 
-        {/* 滚动提示 */}
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 opacity-60"
-        >
-          <div className="w-6 h-10 rounded-full border-2 border-foreground/30 flex justify-center pt-2">
-            <div className="w-1 h-2 bg-foreground/50 rounded-full" />
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.9, delay: 0.1 }}
+                className="text-4xl md:text-6xl xl:text-7xl font-bold mb-6 leading-tight text-balance"
+              >
+                <span className="bg-clip-text text-transparent"
+                  style={{ backgroundImage: 'linear-gradient(135deg, hsl(162,63%,38%), hsl(180,55%,42%), hsl(220,60%,55%))' }}>
+                  智能学习
+                </span>
+                <br />
+                <span className="text-foreground">精准成长</span>
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl lg:mx-0 mx-auto leading-relaxed text-pretty"
+              >
+                基于苏格拉底式AI辅导、知识图谱可视化与弱项精准强化，
+                为每位学习者构建专属的个性化学业提升路径。
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center w-full sm:w-auto"
+              >
+                <Button size="lg" asChild className="w-full sm:w-44 shadow-xl h-12 text-base">
+                  <Link to="/login">
+                    <Zap className="w-5 h-5 mr-2" />立即开始使用
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="w-full sm:w-36 h-12 text-base bg-background/10 backdrop-blur-sm">
+                  <a href="#特色功能">
+                    了解更多<ArrowRight className="w-4 h-4 ml-2" />
+                  </a>
+                </Button>
+              </motion.div>
+
+              {/* 统计数据 */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-16 w-full max-w-2xl"
+              >
+                {stats.map((s, i) => (
+                  <motion.div
+                    key={i}
+                    whileHover={{ scale: 1.05 }}
+                    className="p-4 rounded-2xl bg-background/60 backdrop-blur-md border border-border/50 text-center shadow-lg"
+                  >
+                    <div className="text-2xl font-bold text-primary">{s.value}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+
+            {/* Right Column: Interactive Visual */}
+            <div className="lg:col-span-5 relative w-full flex items-center justify-center mt-12 lg:mt-0">
+              <HeroInteractiveVisual />
+            </div>
+
           </div>
-        </motion.div>
+        </div>
       </section>
 
 
