@@ -146,9 +146,9 @@ export default function InvitePage() {
 
   const shareLink = () => {
     const link = `${window.location.origin}/register?invite=${inviteCode}`;
-    const text = `我在智学伴学习AI/计算机课程，效果很棒！用我的邀请码 ${inviteCode} 注册，我们各得积分奖励 🎁`;
+    const text = `我在 Kowell AI 学习AI/计算机课程，效果很棒！用我的邀请码 ${inviteCode} 注册，我们各得积分奖励 🎁`;
     if (navigator.share) {
-      navigator.share({ title: '智学伴邀请', text, url: link }).catch(() => {});
+      navigator.share({ title: 'Kowell AI 邀请', text, url: link }).catch(() => {});
     } else {
       navigator.clipboard.writeText(`${text}\n${link}`);
       toast.success('分享内容已复制！');

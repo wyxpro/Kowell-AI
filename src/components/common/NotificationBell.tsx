@@ -30,7 +30,7 @@ export default function NotificationBell() {
         .order('created_at', { ascending: false });
 
       const mockNotifs: Notification[] = [
-        { id: '1', title: '欢迎使用智学伴', content: '开始构建你的学习画像，获取个性化学习体验', is_read: false, created_at: new Date().toISOString() },
+        { id: '1', title: '欢迎使用 Kowell AI', content: '开始构建你的学习画像，获取个性化学习体验', is_read: false, created_at: new Date().toISOString() },
       ];
 
       if (Array.isArray(resources) && resources.length > 0) {

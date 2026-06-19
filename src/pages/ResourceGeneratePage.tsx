@@ -44,7 +44,7 @@ async function downloadAsPptx(topic: string, content: string) {
     x: 0.5, y: 1.5, w: '90%', h: 1.5,
     fontSize: 36, color: 'FFFFFF', bold: true, align: 'center',
   });
-  coverSlide.addText('智学伴 AI 生成课件', {
+  coverSlide.addText('Kowell AI 生成课件', {
     x: 0.5, y: 3.5, w: '90%', h: 0.6,
     fontSize: 16, color: 'EDE9FE', align: 'center',
   });

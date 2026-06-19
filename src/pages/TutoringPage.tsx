@@ -38,7 +38,7 @@ const SOCRATIC_SYSTEM_PROMPT = `你是一位采用苏格拉底教学法的AI导�
 请始终以引导者而非答题者的角色出现，让学生通过自己的思考获得顿悟。`;
 
 // 直接回答系统提示词
-const DIRECT_SYSTEM_PROMPT = `你是智学伴AI答疑助手，为高校学生提供精准、清晰的学习辅导。
+const DIRECT_SYSTEM_PROMPT = `你是 Kowell AI 答疑助手，为高校学生提供精准、清晰的学习辅导。
 回答时请：简洁明了、逻辑清晰、配合示例、适当使用Markdown格式增强可读性。`;
 
 export default function TutoringPage() {
@@ -107,8 +107,8 @@ export default function TutoringPage() {
       .limit(50)
       .then(({ data }) => {
         const welcomeMsg = socraticMode
-          ? '你好！我是智学伴的**苏格拉底式AI导师** 🤔\n\n我不会直接给出答案，而是通过提问引导你自己找到答案。这样能帮助你真正理解知识，而不只是记住答案。\n\n遇到任何问题，和我一起思考吧！'
-          : '你好！我是智学伴智能答疑助手。支持文字和图片提问。请问有什么可以帮助你？';
+          ? '你好！我是 Kowell AI 的**苏格拉底式AI导师** 🤔\n\n我不会直接给出答案，而是通过提问引导你自己找到答案。这样能帮助你真正理解知识，而不只是记住答案。\n\n遇到任何问题，和我一起思考吧！'
+          : '你好！我是 Kowell AI 智能答疑助手。支持文字和图片提问。请问有什么可以帮助你？';
         const msgs = Array.isArray(data) && data.length > 0
           ? data.map(m => ({ id: m.id, role: m.role as 'user' | 'assistant', content: m.content }))
           : [{ id: 'welcome', role: 'assistant' as const, content: welcomeMsg }];
@@ -137,10 +137,10 @@ export default function TutoringPage() {
   const exportMarkdown = () => {
     if (messages.length === 0) { toast.warning('暂无对话内容'); return; }
     const md = messages.map(m => {
-      const role = m.role === 'user' ? '**我**' : '**智学伴 AI**';
+      const role = m.role === 'user' ? '**我**' : '**Kowell AI**';
       return `${role}\n\n${m.content}`;
     }).join('\n\n---\n\n');
-    const blob = new Blob([`# 智学伴 答疑对话记录\n\n${md}`], { type: 'text/markdown;charset=utf-8' });
+    const blob = new Blob([`# Kowell AI 答疑对话记录\n\n${md}`], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `答疑记录-${new Date().toLocaleDateString('zh-CN')}.md`;

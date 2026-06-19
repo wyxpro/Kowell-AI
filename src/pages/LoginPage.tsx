@@ -170,7 +170,7 @@ export default function LoginPage() {
                 <GraduationCap className="w-7 h-7 text-primary-foreground" />
               </motion.div>
               <div>
-                <div className="text-white font-bold text-2xl">智学伴</div>
+                <div className="text-white font-bold text-2xl">Kowell AI</div>
                 <div className="text-white/60 text-sm">个性化学习多智能体系统</div>
               </div>
             </Link>
@@ -226,7 +226,7 @@ export default function LoginPage() {
               <GraduationCap className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <div className="font-bold">智学伴</div>
+              <div className="font-bold">Kowell AI</div>
               <div className="text-xs text-muted-foreground">个性化学习系统</div>
             </div>
           </Link>

@@ -138,7 +138,7 @@ export default function HomePage() {
             </div>
             <h1 className="text-xl md:text-2xl font-bold text-balance">
               {profile?.username || user?.email?.split('@')[0] || '同学'}
-              {!user && '欢迎来到智学伴'}
+              {!user && '欢迎来到 Kowell AI'}
             </h1>
             {profile && (
               <div className="flex flex-wrap items-center gap-2 mt-2 mb-4">

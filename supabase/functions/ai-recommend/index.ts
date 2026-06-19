@@ -64,7 +64,7 @@ ${portraitSummary}
       },
       body: JSON.stringify({
         messages: [
-          { role: "system", content: "你是智学伴AI学习规划师，根据学生画像制定个性化学习推荐方案。只输出JSON，不输出其他内容。" },
+          { role: "system", content: "你是Kowell AI学习规划师，根据学生画像制定个性化学习推荐方案。只输出JSON，不输出其他内容。" },
           { role: "user", content: prompt },
         ],
         stream: false,

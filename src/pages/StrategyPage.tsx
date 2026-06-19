@@ -399,7 +399,7 @@ const gapAnalysis = [
 const differentiators = [
   {
     title: '多智能体透明化',
-    desc: '其他产品 AI 为黑盒，智学伴实时展示 AI 决策过程和智能体协作可视化，增强用户信任感。',
+    desc: '其他产品 AI 为黑盒，Kowell AI 实时展示 AI 决策过程和智能体协作可视化，增强用户信任感。',
     advantage: '独家优势',
     color: 'from-primary/20 to-primary/5',
     border: 'border-primary/30',
@@ -487,7 +487,7 @@ const priorityColor: Record<string, string> = {
 
 const COMPETITOR_KEYS = ['us', 'khan', 'duolingo', 'xueersi', 'ape', 'ifly'] as const;
 const COMPETITOR_LABELS: Record<string, string> = {
-  us: '智学伴', khan: 'Khan Academy', duolingo: 'Duolingo',
+  us: 'Kowell AI', khan: 'Khan Academy', duolingo: 'Duolingo',
   xueersi: '学而思', ape: '猿辅导', ifly: '科大讯飞',
 };
 const COMPETITOR_COLORS: Record<string, string> = {
@@ -567,7 +567,7 @@ export default function StrategyPage() {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">能力雷达对比</CardTitle>
-                  <p className="text-xs text-muted-foreground">智学伴 vs 竞品均值</p>
+                  <p className="text-xs text-muted-foreground">Kowell AI vs 竞品均值</p>
                 </CardHeader>
                 <CardContent>
                   <div className="w-full min-w-0 overflow-hidden">
@@ -575,14 +575,14 @@ export default function StrategyPage() {
                       <RadarChart data={radarData}>
                         <PolarGrid gridType="polygon" />
                         <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11 }} />
-                        <Radar name="智学伴" dataKey="us" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.25} strokeWidth={2} />
+                        <Radar name="Kowell AI" dataKey="us" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.25} strokeWidth={2} />
                         <Radar name="竞品均值" dataKey="avg" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground))" fillOpacity={0.1} strokeWidth={1.5} strokeDasharray="4,2" />
                         <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', fontSize: '12px' }} />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="flex items-center gap-4 justify-center text-xs text-muted-foreground mt-2">
-                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 rounded bg-primary" />智学伴</div>
+                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 rounded bg-primary" />Kowell AI</div>
                     <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 rounded bg-muted-foreground border-dashed" />竞品均值</div>
                   </div>
                 </CardContent>

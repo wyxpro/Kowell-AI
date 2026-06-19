@@ -17,31 +17,31 @@ import {
 
 // ─── 工具箱工具列表 ────
 const TOOLBOX_ITEMS = [
-  { label: '错题本',     icon: BookOpen,  href: '/notes',             color: 'text-rose-500',    bg: 'bg-rose-50 dark:bg-rose-900/30'     },
-  { label: '弱项强化',   icon: Target,    href: '/weakness-training', color: 'text-violet-500',  bg: 'bg-violet-50 dark:bg-violet-900/30' },
-  { label: '知识图谱',   icon: GitBranch, href: '/knowledge-graph',   color: 'text-sky-500',     bg: 'bg-sky-50 dark:bg-sky-900/30'       },
-  { label: '代码实验室', icon: Code2,     href: '/code-lab',          color: 'text-indigo-500',  bg: 'bg-indigo-50 dark:bg-indigo-900/30' },
+  { label: '错题本', icon: BookOpen, href: '/notes', color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/30' },
+  { label: '弱项强化', icon: Target, href: '/weakness-training', color: 'text-violet-500', bg: 'bg-violet-50 dark:bg-violet-900/30' },
+  { label: '知识图谱', icon: GitBranch, href: '/knowledge-graph', color: 'text-sky-500', bg: 'bg-sky-50 dark:bg-sky-900/30' },
+  { label: '代码实验室', icon: Code2, href: '/code-lab', color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/30' },
 ];
 
 const navGroups = [
   {
     label: '学习中心',
     items: [
-      { path: '/home',               label: '首页',     icon: Home          },
-      { path: '/resources/generate', label: '资源中心', icon: BookOpen      },
-      { path: '/learning-path',      label: '学习路径', icon: Route         },
-      { path: '/portrait',           label: '画像构建', icon: Brain         },
-      { path: '/tutoring',           label: '智能答疑', icon: MessageCircle },
-      { path: '/evaluation',         label: '学习评估', icon: BarChart3     },
-      { path: '/report',             label: '数据报告', icon: TrendingUp    },
+      { path: '/home', label: '首页', icon: Home },
+      { path: '/resources/generate', label: '资源中心', icon: BookOpen },
+      { path: '/learning-path', label: '学习路径', icon: Route },
+      { path: '/portrait', label: '画像构建', icon: Brain },
+      { path: '/tutoring', label: '智能答疑', icon: MessageCircle },
+      { path: '/evaluation', label: '学习评估', icon: BarChart3 },
+      { path: '/report', label: '数据报告', icon: TrendingUp },
     ],
   },
   {
     label: '社区与成就',
     items: [
-      { path: '/community',   label: '学习社群', icon: Users  },
-      { path: '/badges',      label: '成就徽章', icon: Trophy },
-      { path: '/leaderboard', label: '排行榜',   icon: Medal  },
+      { path: '/community', label: '学习社群', icon: Users },
+      { path: '/badges', label: '成就徽章', icon: Trophy },
+      { path: '/leaderboard', label: '排行榜', icon: Medal },
     ],
   },
 ];
@@ -87,8 +87,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <GraduationCap className="w-5 h-5 text-sidebar-primary-foreground" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-base font-bold text-sidebar-foreground">智学伴</h1>
-            <p className="text-xs text-sidebar-foreground/60">个性化学习系统</p>
+            <h1 className="text-base font-bold text-sidebar-foreground">Kowell AI</h1>
+            <p className="text-xs text-sidebar-foreground/60">多智能体学习系统</p>
           </div>
         </Link>
       </div>
@@ -107,11 +107,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       key={item.path}
                       to={item.path}
                       onClick={onNavigate}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActive
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
-                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                      }`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                        }`}
                     >
                       <item.icon className="w-4 h-4 shrink-0" />
                       {item.label}
@@ -125,11 +124,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     <button
                       type="button"
                       onClick={handleToolboxToggle}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isToolboxActive
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
-                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                      }`}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isToolboxActive
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                        }`}
                     >
                       <Wrench className="w-4 h-4 shrink-0" />
                       <span className="flex-1 text-left">学习工具箱</span>
@@ -158,11 +156,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                                   key={tool.href}
                                   type="button"
                                   onClick={() => handleToolNav(tool.href)}
-                                  className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
-                                    active
-                                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                                      : 'text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground'
-                                  }`}
+                                  className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${active
+                                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                                    : 'text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground'
+                                    }`}
                                 >
                                   <div className={`w-5 h-5 rounded-md ${tool.bg} flex items-center justify-center shrink-0`}>
                                     <tool.icon className={`w-3 h-3 ${tool.color}`} />
@@ -222,12 +219,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SheetTrigger>
           <div className="flex items-center gap-2 min-w-0">
             <GraduationCap className="w-5 h-5 text-primary shrink-0" />
-            <span className="font-bold text-sm truncate">智学伴</span>
+            <span className="font-bold text-sm truncate">Kowell AI</span>
           </div>
           {user && (
             <div className="ml-auto flex items-center gap-1.5 shrink-0">
               <NotificationBell />
               <UserMenu profile={profile} signOut={signOut} />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                onClick={signOut}
+                title="退出登录"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
           )}
         </div>
@@ -289,6 +295,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* 头像 */}
             {user && <UserMenu profile={profile} signOut={signOut} />}
+
+            {/* 退出登录 */}
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                onClick={signOut}
+                title="退出登录"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
 

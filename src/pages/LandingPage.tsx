@@ -92,12 +92,12 @@ const features = [
 ];
 
 const competitorData = [
-  { subject: 'AI个性化', 智学伴: 95, Khan: 70, 学而思: 75, Duolingo: 60 },
-  { subject: '苏格拉底式', 智学伴: 92, Khan: 85, 学而思: 40, Duolingo: 35 },
-  { subject: '代码实验室', 智学伴: 90, Khan: 50, 学而思: 55, Duolingo: 20 },
-  { subject: '知识图谱', 智学伴: 95, Khan: 45, 学而思: 60, Duolingo: 30 },
-  { subject: '弱项强化', 智学伴: 93, Khan: 65, 学而思: 70, Duolingo: 55 },
-  { subject: '社群驱动', 智学伴: 85, Khan: 60, 学而思: 65, Duolingo: 90 },
+  { subject: 'AI个性化', 'Kowell AI': 95, Khan: 70, 学而思: 75, Duolingo: 60 },
+  { subject: '苏格拉底式', 'Kowell AI': 92, Khan: 85, 学而思: 40, Duolingo: 35 },
+  { subject: '代码实验室', 'Kowell AI': 90, Khan: 50, 学而思: 55, Duolingo: 20 },
+  { subject: '知识图谱', 'Kowell AI': 95, Khan: 45, 学而思: 60, Duolingo: 30 },
+  { subject: '弱项强化', 'Kowell AI': 93, Khan: 65, 学而思: 70, Duolingo: 55 },
+  { subject: '社群驱动', 'Kowell AI': 85, Khan: 60, 学而思: 65, Duolingo: 90 },
 ];
 
 const reviews = [
@@ -138,7 +138,7 @@ const reviews = [
     role: '电子信息 大三',
     avatar: '张',
     rating: 5,
-    text: '每周学习报告让我对自己的进度一清二楚，智能建议真的很精准。现在每天都期待打开智学伴！',
+    text: '每周学习报告让我对自己的进度一清二楚，智能建议真的很精准。现在每天都期待打开 Kowell AI！',
     tag: '习惯养成',
   },
 ];
@@ -642,12 +642,12 @@ export default function LandingPage() {
   }, []);
 
   const [activeCompetitor, setActiveCompetitor] = useState<string | null>(null);
-  const competitorNames = ['智学伴', 'Khan', '学而思', 'Duolingo'];
+  const competitorNames = ['Kowell AI', 'Khan', '学而思', 'Duolingo'];
   const competitorColors = ['hsl(162,63%,45%)', 'hsl(220,70%,55%)', 'hsl(36,80%,52%)', 'hsl(0,70%,55%)'];
 
   const radarData = competitorData.map(d => {
     const obj: Record<string, string | number> = { subject: d.subject };
-    if (!activeCompetitor || activeCompetitor === '智学伴') obj['智学伴'] = d['智学伴'];
+    if (!activeCompetitor || activeCompetitor === 'Kowell AI') obj['Kowell AI'] = d['Kowell AI'];
     if (!activeCompetitor || activeCompetitor === 'Khan') obj['Khan'] = d['Khan'];
     if (!activeCompetitor || activeCompetitor === '学而思') obj['学而思'] = d['学而思'];
     if (!activeCompetitor || activeCompetitor === 'Duolingo') obj['Duolingo'] = d['Duolingo'];
@@ -671,7 +671,7 @@ export default function LandingPage() {
             >
               <GraduationCap className="w-5 h-5 text-primary-foreground" />
             </motion.div>
-            <span className="font-bold text-xl text-foreground tracking-tight">智学伴</span>
+            <span className="font-bold text-xl text-foreground tracking-tight">Kowell AI</span>
           </Link>
           <nav className="hidden md:flex items-center gap-8 text-base font-semibold">
             {['特色功能', '竞品分析', '用户评价', '会员计划'].map(label => (
@@ -906,7 +906,7 @@ export default function LandingPage() {
           >
             <Badge className="mb-3 bg-secondary/15 text-secondary border-secondary/30">适合人群</Badge>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-balance">为各类学习者量身打造</h2>
-            <p className="text-muted-foreground text-pretty max-w-xl mx-auto">无论你的目标是什么，智学伴都有专属方案助你高效达成</p>
+            <p className="text-muted-foreground text-pretty max-w-xl mx-auto">无论你的目标是什么，Kowell AI 都有专属方案助你高效达成</p>
           </motion.div>
 
           {/* 左侧大卡 + 右侧网格 */}
@@ -1063,8 +1063,8 @@ export default function LandingPage() {
                           dataKey={name}
                           stroke={competitorColors[i]}
                           fill={competitorColors[i]}
-                          fillOpacity={name === '智学伴' ? 0.25 : 0.08}
-                          strokeWidth={name === '智学伴' ? 2.5 : 1.5}
+                          fillOpacity={name === 'Kowell AI' ? 0.25 : 0.08}
+                          strokeWidth={name === 'Kowell AI' ? 2.5 : 1.5}
                         />
                       )
                     ))}
@@ -1231,7 +1231,7 @@ export default function LandingPage() {
               准备好开启你的 <span className="bg-gradient-to-r from-violet-600 via-primary to-amber-500 bg-clip-text text-transparent">智能学习之旅</span> 了吗？
             </h2>
             <p className="text-muted-foreground mb-10 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-              加入 50,000+ 用户，体验全新的智能辅导。让 智学伴 成为你学业提升的得力助手。
+              加入 50,000+ 用户，体验全新的智能辅导。让 Kowell AI 成为你学业提升的得力助手。
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -1264,7 +1264,7 @@ export default function LandingPage() {
           <div className="hidden md:grid grid-cols-3 gap-12 pb-10">
             {/* 左侧：品牌与描述 */}
             <div className="flex flex-col gap-4">
-              <span className="text-2xl font-extrabold text-violet-600 tracking-tight">智学伴</span>
+              <span className="text-2xl font-extrabold text-violet-600 tracking-tight">Kowell AI</span>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 多智能体个性化学习系统
               </p>
@@ -1307,7 +1307,7 @@ export default function LandingPage() {
               <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-md">
                 <GraduationCap className="w-4.5 h-4.5 text-primary-foreground" />
               </div>
-              <span className="text-base font-bold text-primary">智学伴</span>
+              <span className="text-base font-bold text-primary">Kowell AI</span>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-[11px] text-muted-foreground text-center">
@@ -1328,7 +1328,7 @@ export default function LandingPage() {
 
           {/* 底部分割线与版权 */}
           <div className="border-t border-border/20 pt-8 text-center text-xs text-muted-foreground/75">
-            <span>© 2026 智学伴. All rights reserved. Made with ♡ by wyxpro</span>
+            <span>© 2026 Kowell AI. All rights reserved. Made with ♡ by wyxpro</span>
           </div>
         </div>
       </footer>

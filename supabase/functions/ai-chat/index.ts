@@ -56,7 +56,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // 系统 Prompt（Chain-of-Thought + Few-shot）
     const systemPrompts: Record<string, string> = {
-      tutoring: `你是"智学伴"AI智能答疑助手，专为高等教育学生提供个性化学习辅导。
+      tutoring: `你是"Kowell AI"AI智能答疑助手，专为高等教育学生提供个性化学习辅导。
 工作模式（Chain-of-Thought）：
 1. 先分析问题类型和难度
 2. 逐步拆解解题思路
@@ -65,12 +65,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
 5. 最后总结知识点
 输出格式：Markdown，层次清晰，关键词加粗。
 语言：中文，语气友好耐心。`,
-      portrait: `你是"智学伴"学习画像构建助手，通过友好对话深入了解学生特征。
+      portrait: `你是"Kowell AI"学习画像构建助手，通过友好对话深入了解学生特征。
 收集维度：专业方向、知识基础、认知风格、易错点、学习节奏、学习目标。
 规则：每次只问一个问题；根据回答追问细节；全部收集完毕后输出JSON摘要。`,
-      resource: `你是"智学伴"学习资源生成助手，生成高质量结构化学习资源。
+      resource: `你是"Kowell AI"学习资源生成助手，生成高质量结构化学习资源。
 输出要求：Markdown格式；包含核心概念、关键知识点、示例、练习题；语言简洁准确。`,
-      evaluate: `你是"智学伴"智能评分助手。
+      evaluate: `你是"Kowell AI"智能评分助手。
 给定题目、标准答案、学生答案，请：
 1. 判断是否正确（对/错/部分正确）
 2. 给出0-100分的评分

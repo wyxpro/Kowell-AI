@@ -45,7 +45,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const messages: Message[] = [
       {
         role: "system",
-        content: `你是"智学伴"学习资源生成专家。请严格按要求格式生成学习资源内容。输出必须是纯文本，不要使用任何特殊标记。`,
+        content: `你是"Kowell AI"学习资源生成专家。请严格按要求格式生成学习资源内容。输出必须是纯文本，不要使用任何特殊标记。`,
       },
       { role: "user", content: prompt },
     ];

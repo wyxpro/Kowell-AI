@@ -119,7 +119,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const orderNo = generateOrderNo();
     const notifyUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/wechat-payment-webhook`;
-    const description = `智学伴${sku.plan_name}${billing_cycle === "year" ? "（年付）" : "（月付）"}`;
+    const description = `Kowell AI${sku.plan_name}${billing_cycle === "year" ? "（年付）" : "（月付）"}`;
 
     // 先创建订单记录
     const { data: order, error: insertErr } = await supabase
