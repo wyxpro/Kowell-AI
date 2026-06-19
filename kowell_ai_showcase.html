@@ -1,0 +1,3614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kowell AI - 基于多智能体的资源生成与个性化学习系统</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #09090b;
+      --bg-card: rgba(20, 20, 25, 0.6);
+      --bg-card-hover: rgba(28, 28, 35, 0.8);
+      --primary: #8b5cf6;
+      --primary-glow: rgba(139, 92, 246, 0.4);
+      --secondary: #06b6d4;
+      --secondary-glow: rgba(6, 182, 212, 0.4);
+      --accent: #ec4899;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-color-hover: rgba(255, 255, 255, 0.16);
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --font-outfit: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.12) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
+    }
+
+    /* Layout & Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    header {
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border-color);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(9, 9, 11, 0.8);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 2.25rem;
+      height: 2.25rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 15px var(--primary-glow);
+      font-weight: 800;
+      font-family: var(--font-outfit);
+      color: white;
+      font-size: 1.25rem;
+    }
+
+    .logo-text {
+      font-family: var(--font-outfit);
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #ffffff, #d8b4fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .nav-link:hover {
+      color: var(--text-main);
+    }
+
+    .btn-nav-action {
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      color: white;
+      padding: 0.5rem 1.25rem;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 4px 12px var(--primary-glow);
+      transition: all 0.3s;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-nav-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(139, 92, 246, 0.6);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 6rem 0 4rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+      filter: blur(40px);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .badge-track {
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: #c084fc;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-family: var(--font-outfit);
+      letter-spacing: 1px;
+    }
+
+    .hero-title {
+      font-family: var(--font-outfit);
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -2px;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(to right, #ffffff, #e4e4e7, #a78bfa, #22d3ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: titleglow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes titleglow {
+      from { filter: drop-shadow(0 0 2px rgba(255,255,255,0.1)); }
+      to { filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.2)); }
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      max-width: 750px;
+      margin: 0 auto 2.5rem;
+      font-weight: 400;
+    }
+
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 4rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 0.85rem 2rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 1.05rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      box-shadow: 0 4px 20px var(--primary-glow);
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(139, 92, 246, 0.5), 0 0 15px rgba(6, 182, 212, 0.3);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      padding: 0.85rem 2rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 1.05rem;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-color-hover);
+    }
+
+    /* Grid & Cards for Overview info */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 5rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      text-align: left;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.1);
+    }
+
+    .stat-num {
+      font-family: var(--font-outfit);
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 0.25rem;
+      background: linear-gradient(135deg, white, var(--text-muted));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .stat-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #c084fc;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Section titles */
+    .section-title-wrap {
+      text-align: center;
+      margin-bottom: 3.5rem;
+      position: relative;
+    }
+
+    .section-tag {
+      color: var(--secondary);
+      font-family: var(--font-outfit);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .section-title {
+      font-family: var(--font-outfit);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -1px;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 600px;
+      margin: 0.5rem auto 0;
+    }
+
+    /* Showcase Section with Layout */
+    .showcase-section {
+      padding: 5rem 0;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .two-col-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .content-side h3 {
+      font-family: var(--font-outfit);
+      font-size: 1.85rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: white;
+    }
+
+    .content-side p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .feature-item {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .icon-check {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: var(--success);
+      flex-shrink: 0;
+      margin-top: 0.2rem;
+    }
+
+    .feature-item-text strong {
+      color: white;
+      display: block;
+      margin-bottom: 0.1rem;
+    }
+
+    .feature-item-text span {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Screen / Interactive Sandbox design */
+    .screen-side {
+      position: relative;
+    }
+
+    .glass-mockup {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1.25rem;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255,255,255,0.05);
+      transition: all 0.3s;
+    }
+
+    .glass-mockup:hover {
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 25px 60px rgba(139, 92, 246, 0.15), 0 20px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    .mockup-header {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mockup-dots {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .mockup-dot {
+      width: 0.65rem;
+      height: 0.65rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .mockup-dot:nth-child(1) { background-color: #ef4444; }
+    .mockup-dot:nth-child(2) { background-color: #f59e0b; }
+    .mockup-dot:nth-child(3) { background-color: #10b981; }
+
+    .mockup-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-outfit);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .mockup-body {
+      padding: 1.5rem;
+      min-height: 320px;
+      position: relative;
+    }
+
+    /* Socrates Chat Simulator Specific styling */
+    .socrates-chat {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      height: 320px;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+
+    .chat-bubble {
+      max-width: 85%;
+      padding: 0.85rem 1rem;
+      border-radius: 1rem;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .bubble-ai {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-top-left-radius: 0;
+      color: var(--text-main);
+      align-self: flex-start;
+    }
+
+    .bubble-user {
+      background: linear-gradient(135deg, var(--primary), #6d28d9);
+      color: white;
+      border-top-right-radius: 0;
+      align-self: flex-end;
+    }
+
+    .voice-control-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .voice-wave {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+      height: 24px;
+    }
+
+    .wave-bar {
+      width: 3px;
+      height: 8px;
+      background: var(--secondary);
+      border-radius: 99px;
+      animation: wave 1.2s infinite ease-in-out;
+    }
+
+    .wave-bar:nth-child(2) { height: 16px; animation-delay: 0.15s; background-color: var(--primary); }
+    .wave-bar:nth-child(3) { height: 24px; animation-delay: 0.3s; background-color: var(--accent); }
+    .wave-bar:nth-child(4) { height: 14px; animation-delay: 0.45s; background-color: var(--primary); }
+    .wave-bar:nth-child(5) { height: 6px; animation-delay: 0.6s; background-color: var(--secondary); }
+
+    .voice-btn {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
+      transition: all 0.3s;
+    }
+
+    .voice-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(236, 72, 153, 0.7);
+    }
+
+    .voice-btn svg {
+      width: 1.5rem;
+      height: 1.5rem;
+      color: white;
+      fill: white;
+    }
+
+    @keyframes wave {
+      0%, 100% { transform: scaleY(1); }
+      50% { transform: scaleY(2.2); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* DAG Path SVG Simulator */
+    .dag-svg-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 340px;
+    }
+
+    .dag-node {
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .dag-node circle {
+      fill: #1f1f29;
+      stroke: var(--border-color);
+      stroke-width: 2;
+      transition: all 0.3s;
+    }
+
+    .dag-node text {
+      fill: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      text-anchor: middle;
+      font-family: var(--font-outfit);
+      transition: all 0.3s;
+    }
+
+    .dag-node.active circle {
+      fill: rgba(139, 92, 246, 0.2);
+      stroke: var(--primary);
+      filter: drop-shadow(0 0 8px var(--primary-glow));
+    }
+
+    .dag-node.active text {
+      fill: white;
+    }
+
+    .dag-node.completed circle {
+      fill: rgba(16, 185, 129, 0.15);
+      stroke: var(--success);
+    }
+
+    .dag-node.completed text {
+      fill: #a7f3d0;
+    }
+
+    .dag-line {
+      stroke: var(--border-color);
+      stroke-width: 2;
+      stroke-dasharray: 4;
+      transition: all 0.3s;
+    }
+
+    .dag-line.active {
+      stroke: var(--primary);
+      stroke-dasharray: none;
+      animation: dash 20s linear infinite;
+    }
+
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -1000;
+      }
+    }
+
+    .dag-info-panel {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      right: 1rem;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+      backdrop-filter: blur(10px);
+      font-size: 0.85rem;
+    }
+
+    .dag-info-title {
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.15rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .dag-info-status {
+      font-size: 0.75rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+    .status-completed { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .status-active { background: rgba(139, 92, 246, 0.2); color: #c084fc; }
+    .status-locked { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+    /* Resource CRUD Manager style */
+    .resource-manager {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      height: 360px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .resource-sidebar {
+      background: rgba(0, 0, 0, 0.4);
+      border-right: 1px solid var(--border-color);
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .resource-sidebar-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-action-small {
+      background: none;
+      border: none;
+      color: var(--secondary);
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-action-small:hover {
+      text-decoration: underline;
+    }
+
+    .resource-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+
+    .resource-list-item {
+      padding: 0.5rem;
+      border-radius: 0.35rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+    }
+
+    .resource-list-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+      color: white;
+    }
+
+    .resource-list-item.selected {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.2);
+      color: white;
+      font-weight: 500;
+    }
+
+    .resource-actions-wrap {
+      display: flex;
+      gap: 0.25rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .resource-list-item:hover .resource-actions-wrap,
+    .resource-list-item.selected .resource-actions-wrap {
+      opacity: 1;
+    }
+
+    .resource-item-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .resource-item-btn:hover {
+      color: white;
+    }
+    .resource-item-btn.btn-delete:hover {
+      color: #ef4444;
+    }
+
+    .resource-detail {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .resource-detail-header {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .resource-detail-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .resource-detail-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .resource-detail-content {
+      font-size: 0.85rem;
+      color: #d4d4d8;
+      line-height: 1.6;
+      flex-grow: 1;
+      white-space: pre-wrap;
+    }
+
+    .resource-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .resource-empty-state svg {
+      width: 3rem;
+      height: 3rem;
+      color: rgba(255,255,255,0.05);
+    }
+
+    /* Streaming Generation Animation */
+    .stream-loader {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--secondary);
+      margin-top: 0.5rem;
+    }
+
+    .stream-cursor {
+      display: inline-block;
+      width: 6px;
+      height: 14px;
+      background: var(--secondary);
+      animation: blink 0.8s infinite;
+      vertical-align: middle;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Monaco Editor Mockup */
+    .monaco-sandbox {
+      background: #1e1e1e;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      font-family: 'Consolas', 'Courier New', Courier, monospace;
+      font-size: 0.85rem;
+      padding: 1rem;
+      height: 350px;
+      overflow-y: auto;
+      color: #d4d4d4;
+      position: relative;
+    }
+
+    .code-line {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .line-number {
+      color: #858585;
+      text-align: right;
+      width: 24px;
+      user-select: none;
+    }
+
+    .code-content {
+      white-space: pre;
+    }
+
+    .keyword { color: #569cd6; }
+    .type { color: #4ec9b0; }
+    .string { color: #ce9178; }
+    .function { color: #dcdcaa; }
+    .number { color: #b5cea8; }
+    .comment { color: #6a9955; }
+
+    /* Inline review bubble from DeepSeek */
+    .review-bubble {
+      margin: 0.5rem 0 0.5rem 34px;
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-left: 4px solid var(--primary);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      font-family: var(--font-outfit);
+      font-size: 0.8rem;
+      color: var(--text-main);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      animation: bubbleSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .review-header {
+      font-weight: 700;
+      color: #c084fc;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .review-header svg {
+      width: 0.95rem;
+      height: 0.95rem;
+    }
+
+    .review-body {
+      color: #e4e4e7;
+    }
+
+    .review-fix {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 0.4rem;
+      border-radius: 0.25rem;
+      margin-top: 0.4rem;
+      font-family: monospace;
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.2);
+    }
+
+    @keyframes bubbleSlideIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Multi-Agent Console */
+    .console-terminal {
+      background: #09090b;
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      font-family: 'Consolas', monospace;
+      font-size: 0.8rem;
+      padding: 1rem;
+      height: 350px;
+      overflow-y: auto;
+      color: #a1a1aa;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    .console-line {
+      display: flex;
+      gap: 0.5rem;
+      line-height: 1.4;
+      animation: consoleFade 0.2s ease-out;
+    }
+
+    @keyframes consoleFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .console-time {
+      color: #71717a;
+      flex-shrink: 0;
+    }
+
+    .agent-tag {
+      padding: 0.05rem 0.35rem;
+      border-radius: 3px;
+      font-weight: 700;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .tag-profile { background: rgba(6, 182, 212, 0.15); color: var(--secondary); border: 1px solid rgba(6, 182, 212, 0.3); }
+    .tag-planner { background: rgba(139, 92, 246, 0.15); color: var(--primary); border: 1px solid rgba(139, 92, 246, 0.3); }
+    .tag-resource { background: rgba(236, 72, 153, 0.15); color: var(--accent); border: 1px solid rgba(236, 72, 153, 0.3); }
+    .tag-coder { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .tag-eval { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .console-msg {
+      color: #e4e4e7;
+      word-break: break-all;
+    }
+
+    /* Radar Chart Visualization CSS */
+    .radar-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 320px;
+      position: relative;
+    }
+
+    .radar-svg {
+      width: 280px;
+      height: 280px;
+    }
+
+    .radar-polygon {
+      fill: rgba(139, 92, 246, 0.2);
+      stroke: var(--primary);
+      stroke-width: 2;
+      filter: drop-shadow(0 0 6px var(--primary-glow));
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .radar-grid {
+      fill: none;
+      stroke: rgba(255,255,255,0.06);
+      stroke-width: 1;
+    }
+
+    .radar-axis {
+      stroke: rgba(255,255,255,0.12);
+      stroke-width: 1;
+    }
+
+    .radar-label {
+      fill: var(--text-muted);
+      font-size: 10px;
+      font-weight: 600;
+      text-anchor: middle;
+      font-family: var(--font-outfit);
+    }
+    .radar-label.highlighted {
+      fill: white;
+      font-weight: 700;
+    }
+
+    .eval-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .metric-bar-item {
+      font-size: 0.75rem;
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.15rem;
+      color: var(--text-muted);
+    }
+
+    .metric-name { color: #e4e4e7; }
+    .metric-val { color: var(--secondary); font-weight: 700; }
+
+    .metric-track {
+      height: 5px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .metric-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      width: 0%;
+      transition: width 0.6s ease-out;
+      border-radius: 99px;
+    }
+
+    /* Tab Controller */
+    .tab-nav {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border-color);
+      padding: 0.35rem;
+      border-radius: 0.75rem;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.5rem 1.25rem;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: var(--font-outfit);
+    }
+
+    .tab-btn:hover {
+      color: white;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.4s ease-out both;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Multi-Agent Collab Dashboard (Simulator Trigger) */
+    .agent-collab-trigger-box {
+      background: rgba(139, 92, 246, 0.06);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .trigger-info h4 {
+      font-family: var(--font-outfit);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.25rem;
+    }
+    
+    .trigger-info p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .btn-trigger-collab {
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: white;
+      border: none;
+      padding: 0.75rem 1.75rem;
+      border-radius: 0.5rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-outfit);
+      letter-spacing: 0.5px;
+    }
+
+    .btn-trigger-collab:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.5);
+    }
+
+    .btn-trigger-collab:disabled {
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .agent-avatar-row {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+      justify-content: center;
+      position: relative;
+    }
+
+    .agent-avatar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      position: relative;
+    }
+
+    .agent-avatar {
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 50%;
+      background: #1f1f29;
+      border: 2px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: all 0.3s;
+    }
+
+    .agent-avatar-wrap.active .agent-avatar {
+      border-color: var(--color-glow);
+      box-shadow: 0 0 15px var(--color-glow-solid);
+      color: white;
+      transform: scale(1.1);
+    }
+
+    .agent-avatar-wrap.active .agent-avatar-name {
+      color: white;
+      font-weight: 700;
+    }
+
+    .agent-avatar-name {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Modals or Dialog details */
+    .dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dialog-content {
+      background: #121217;
+      border: 1px solid var(--border-color);
+      border-radius: 1.25rem;
+      width: 90%;
+      max-width: 500px;
+      padding: 1.5rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .dialog-title {
+      font-family: var(--font-outfit);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-close:hover {
+      color: white;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-color);
+      padding: 0.65rem 0.85rem;
+      border-radius: 0.5rem;
+      color: white;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 0 10px rgba(139,92,246,0.15);
+    }
+
+    .form-checkbox-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-label input {
+      accent-color: var(--primary);
+    }
+
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 1rem;
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Pricing Section */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 3rem;
+      margin-bottom: 4rem;
+    }
+
+    .pricing-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1.25rem;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .pricing-card.popular {
+      border-color: var(--primary);
+      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15);
+      background: linear-gradient(180deg, rgba(139, 92, 246, 0.05) 0%, rgba(20, 20, 25, 0.6) 100%);
+    }
+
+    .pricing-card.popular:hover {
+      box-shadow: 0 20px 40px rgba(139, 92, 246, 0.25);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.75rem;
+      border-radius: 99px;
+      font-family: var(--font-outfit);
+    }
+
+    .plan-name {
+      font-family: var(--font-outfit);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+
+    .plan-price-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .plan-price {
+      font-family: var(--font-outfit);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: white;
+    }
+
+    .plan-price-period {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .plan-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      flex-grow: 1;
+    }
+
+    .plan-feature-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: #d4d4d8;
+    }
+
+    .plan-feature-item svg {
+      width: 1rem;
+      height: 1rem;
+      color: var(--primary);
+    }
+    
+    .pricing-card.popular .plan-feature-item svg {
+      color: var(--accent);
+    }
+
+    .btn-plan {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-color);
+      color: white;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      width: 100%;
+      font-family: var(--font-outfit);
+    }
+
+    .btn-plan:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .pricing-card.popular .btn-plan {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: none;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    }
+
+    .pricing-card.popular .btn-plan:hover {
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+      transform: translateY(-1px);
+    }
+
+    /* Game and Tokens */
+    .game-tokens-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .checkin-calendar {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 1.25rem;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .calendar-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .streak-badge {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--warning);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      text-align: center;
+    }
+
+    .calendar-day-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 0.35rem;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .calendar-day:hover {
+      background: rgba(255,255,255,0.05);
+      color: white;
+    }
+
+    .calendar-day.checked {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--success);
+      position: relative;
+    }
+
+    .calendar-day.checked::after {
+      content: '✓';
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      font-size: 6px;
+      font-weight: 800;
+    }
+
+    .calendar-day.today {
+      border-color: var(--primary);
+      color: white;
+      background: rgba(139, 92, 246, 0.1);
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+    }
+
+    .token-rules {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .token-rule-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .token-rule-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.5rem;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--secondary);
+      flex-shrink: 0;
+    }
+
+    .token-rule-info h5 {
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.15rem;
+    }
+
+    .token-rule-info p {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .token-rule-points {
+      margin-left: auto;
+      font-family: var(--font-outfit);
+      font-weight: 800;
+      color: var(--secondary);
+      font-size: 1.1rem;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 3rem 0;
+      background: #050507;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .footer-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .footer-link:hover {
+      color: white;
+    }
+
+    /* Utilities */
+    .text-glow-primary {
+      text-shadow: 0 0 10px var(--primary-glow);
+    }
+    .text-glow-secondary {
+      text-shadow: 0 0 10px var(--secondary-glow);
+    }
+
+    /* Responsiveness */
+    @media (max-width: 968px) {
+      .two-col-layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      .overview-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .game-tokens-layout {
+        grid-template-columns: 1fr;
+      }
+      .hero-title {
+        font-size: 3rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .overview-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-title {
+        font-size: 2.25rem;
+      }
+      .tab-nav {
+        flex-wrap: wrap;
+      }
+      .resource-manager {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .resource-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+    }
+
+    /* Submission Details Section Styles */
+    .submission-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    @media (max-width: 968px) {
+      .submission-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .submission-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1.25rem;
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .submission-card:hover {
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.08);
+      transform: translateY(-4px);
+    }
+
+    .submission-card-title {
+      font-family: var(--font-outfit);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 0.75rem;
+    }
+
+    .submission-subtitle {
+      font-weight: 700;
+      color: #c084fc;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .submission-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .submission-text ul {
+      margin-left: 1.25rem;
+      margin-top: 0.5rem;
+      list-style-type: square;
+    }
+
+    .submission-text li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Accordion Section Styles */
+    .accordion-section {
+      padding: 5rem 0;
+      border-top: 1px solid var(--border-color);
+      background: linear-gradient(180deg, var(--bg-dark) 0%, rgba(20, 20, 25, 0.4) 100%);
+    }
+
+    .accordion-container {
+      display: flex;
+      width: 100%;
+      height: 440px;
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+
+    .accordion-card {
+      flex: 1;
+      height: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1.25rem;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.25rem;
+    }
+
+    .accordion-card:hover {
+      flex: 3;
+      background: var(--bg-card-hover);
+      border-color: rgba(139, 92, 246, 0.4);
+      box-shadow: 0 15px 40px rgba(139, 92, 246, 0.15);
+    }
+
+    .accordion-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to top, rgba(9, 9, 11, 0.95) 0%, rgba(9, 9, 11, 0.4) 50%, transparent 100%);
+      z-index: 1;
+    }
+
+    .accordion-card-img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 0.75rem;
+      margin-bottom: auto; /* Push content to bottom */
+      border: 1px solid var(--border-color);
+      z-index: 2;
+      opacity: 0.4;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .accordion-card:hover .accordion-card-img {
+      opacity: 0.95;
+      height: 180px;
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .accordion-title {
+      font-family: var(--font-outfit);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+      z-index: 2;
+      margin-bottom: 0.25rem;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .accordion-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      z-index: 2;
+      line-height: 1.4;
+      opacity: 0;
+      max-height: 0;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .accordion-card:hover .accordion-desc {
+      opacity: 1;
+      max-height: 120px;
+      margin-top: 0.5rem;
+    }
+
+    .accordion-badge {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      font-family: var(--font-outfit);
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--secondary);
+      z-index: 3;
+      opacity: 0;
+      transition: opacity 0.3s;
+      background: rgba(0,0,0,0.6);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+
+    .accordion-card:hover .accordion-badge {
+      opacity: 1;
+    }
+
+    /* Agent Flow Styles */
+    .agent-pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-top: 3rem;
+      position: relative;
+    }
+
+    .agent-pipeline::before {
+      content: '';
+      position: absolute;
+      top: 50px;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: linear-gradient(to right, var(--primary), var(--secondary), var(--accent), var(--success));
+      z-index: 1;
+      display: block;
+    }
+
+    .pipeline-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(12px);
+    }
+
+    .pipeline-badge {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .pipeline-step.step-profile .pipeline-badge { background: rgba(6, 182, 212, 0.15); color: var(--secondary); border-color: var(--secondary); }
+    .pipeline-step.step-planner .pipeline-badge { background: rgba(139, 92, 246, 0.15); color: var(--primary); border-color: var(--primary); }
+    .pipeline-step.step-resource .pipeline-badge { background: rgba(236, 72, 153, 0.15); color: var(--accent); border-color: var(--accent); }
+    .pipeline-step.step-coder .pipeline-badge { background: rgba(16, 185, 129, 0.15); color: var(--success); border-color: var(--success); }
+
+    .pipeline-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+
+    .pipeline-model {
+      font-size: 0.75rem;
+      font-family: var(--font-outfit);
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 0.75rem;
+    }
+    .model-gemini { background: rgba(6, 182, 212, 0.1); color: var(--secondary); border: 1px solid rgba(6, 182, 212, 0.2); }
+    .model-gpt { background: rgba(139, 92, 246, 0.1); color: var(--primary); border: 1px solid rgba(139, 92, 246, 0.2); }
+    .model-claude { background: rgba(236, 72, 153, 0.1); color: var(--accent); border: 1px solid rgba(236, 72, 153, 0.2); }
+    .model-deepseek { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+
+    .pipeline-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Competitive Table Styles */
+    .comp-table-wrap {
+      overflow-x: auto;
+      margin-top: 3rem;
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+    }
+
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .comp-table th, .comp-table td {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .comp-table th {
+      font-family: var(--font-outfit);
+      font-weight: 700;
+      color: white;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .comp-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .comp-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .comp-table td strong {
+      color: white;
+    }
+
+    .comp-tag-kowell {
+      color: #c084fc;
+      font-weight: 700;
+    }
+
+    .badge-comp-yes {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .badge-comp-no {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .badge-comp-part {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    /* Technical Metrics Styles */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .metric-panel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1.25rem;
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .metric-file-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .metric-file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .metric-file-name {
+      font-family: monospace;
+      color: #c084fc;
+      font-weight: 600;
+    }
+
+    .metric-file-size {
+      font-family: var(--font-outfit);
+      color: white;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .metric-scale-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .scale-stat {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .scale-num {
+      font-family: var(--font-outfit);
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 0.25rem;
+    }
+
+    .scale-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    @media (max-width: 968px) {
+      .agent-pipeline {
+        grid-template-columns: 1fr;
+      }
+      .agent-pipeline::before {
+        display: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .accordion-container {
+        flex-direction: column;
+        height: auto;
+      }
+      .accordion-card {
+        height: 180px;
+        flex: none;
+      }
+      .accordion-card:hover {
+        flex: none;
+        height: 240px;
+      }
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container header-content">
+      <div class="logo-container">
+        <div class="logo-icon">K</div>
+        <div class="logo-text">Kowell AI</div>
+      </div>
+      <nav class="nav-links">
+        <a href="#submission-details" class="nav-link">大赛申报</a>
+        <a href="#features" class="nav-link">核心特色</a>
+        <a href="#accordion-features" class="nav-link">六大技术</a>
+        <a href="#gamification" class="nav-link">积分裂变</a>
+        <a href="#simulator" class="nav-link">系统演示</a>
+        <a href="#agent-orchestration" class="nav-link">协同机制</a>
+        <a href="#competitive-matrix" class="nav-link">竞品分析</a>
+        <a href="#technical-metrics" class="nav-link">工程量化</a>
+        <a href="#pricing" class="nav-link">套餐资费</a>
+        <a href="#simulator" class="btn-nav-action">开始体验</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <span class="badge-track">
+        <svg style="width:14px;height:14px;fill:currentColor;vertical-align:middle" viewBox="0 0 24 24"><path d="M12,3L1,9L12,15L21,10.09V17H23V9L12,3M21,12.38V15.5L12,20.5L3,15.5V12.38L12,17.38L21,12.38Z"/></svg>
+        智能工作学习赛道 · 个性化教育革命
+      </span>
+      <h1 class="hero-title">Kowell AI</h1>
+      <p class="hero-subtitle">基于多智能体协作的资源生成与自适应个性化学习系统，打通“画像诊断-路径规划-资源生成-启发答疑-代码沙箱-效果评估”完整学业跃升闭环。</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="document.getElementById('simulator').scrollIntoView({behavior: 'smooth'})">
+          <svg style="width:18px;height:18px;fill:currentColor" viewBox="0 0 24 24"><path d="M8,5.14V19.14L19,12.14L8,5.14Z"/></svg>
+          交互式沙箱演示
+        </button>
+        <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior: 'smooth'})">
+          核心优势剖析
+        </button>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="overview-grid">
+        <div class="stat-card">
+          <div class="stat-num">45<span style="font-size:1.2rem;color:var(--text-muted)">秒</span></div>
+          <div class="stat-title">教案与课件生成</div>
+          <div class="stat-desc">流式多线程并发生成，传统4小时备课极限压缩至秒级。</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">6<span style="font-size:1.2rem;color:var(--text-muted)">维</span></div>
+          <div class="stat-title">认知画像诊断</div>
+          <div class="stat-desc">苏格拉底启发式对话，生成量化能力底盘，因材施教。</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">8<span style="font-size:1.2rem;color:var(--text-muted)">种</span></div>
+          <div class="stat-title">沙箱免配置语言</div>
+          <div class="stat-desc">内置安全Web编译沙箱与DeepSeek即时行级改错。</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">3D</div>
+          <div class="stat-title">拓扑知识图谱</div>
+          <div class="stat-desc">WebGL力导向先修关系网络，建立宏观概念认知体系。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Official Submission Document Details -->
+  <section class="showcase-section" id="submission-details" style="background: rgba(0, 0, 0, 0.15);">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">OFFICIAL PROPOSAL</span>
+        <h2 class="section-title">官方申报核心方案</h2>
+        <p class="section-desc">Kowell AI 学习工作赛道全国大赛官方提报内容，全景解析创意初心与核心价值。</p>
+      </div>
+
+      <div class="submission-grid">
+        <!-- Card 1: 创意介绍 -->
+        <div class="submission-card">
+          <div class="submission-card-title">
+            <svg style="width:1.5rem;height:1.5rem;color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            1. 创意名称与产品形态
+          </div>
+          <div class="submission-text">
+            <div class="submission-subtitle">💎 创意名称</div>
+            <p><strong>Kowell AI</strong> — 基于多智能体协作的自适应智能学习与教研系统</p>
+            
+            <div class="submission-subtitle">❓ 想解决什么问题</div>
+            <p>在高等理工科专业教育阶段，大班授课制面临“一刀切”的教学进度限制，难以兼顾学生不同的起点与逻辑理解速度；同时，理论学习与实际写码实操严重割裂，本地开发环境的高配置门槛易劝退初学者；而一线教师面临极为繁重的教研备课负担，高质量一对一诊断和辅导资源稀缺昂贵。</p>
+
+            <div class="submission-subtitle">💡 为什么会想到做这个</div>
+            <p>灵感来源于大语言模型（如 DeepSeek-v4-pro、Claude-3.5 等）的推理能力以及多智能体（Multi-agent）并行协作工作流。我们结合自身理工科学习中遇到的代码报错无处求助、教研室助教备课重复劳动的痛点，希望利用多智能体网络，为学生打造一个“免配置、千人千面、伴随式”的 1v1 AI 教授，并为老师打造一个极速并发教研大纲与课件的利器。</p>
+
+            <div class="submission-subtitle">📱 产品形态</div>
+            <p>Kowell AI 是一款面向高等教育阶段（本科、研究生、高职）理工科专业师生的<strong>高端自适应多智能体协作智能学习与教研 Web 系统</strong>。</p>
+          </div>
+        </div>
+
+        <!-- Card 2: 目标用户及痛点 -->
+        <div class="submission-card">
+          <div class="submission-card-title">
+            <svg style="width:1.5rem;height:1.5rem;color:var(--secondary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            2. 目标用户及场景痛点
+          </div>
+          <div class="submission-text">
+            <div class="submission-subtitle">👥 面向哪些用户</div>
+            <ul>
+              <li>高校理工科方向（计算机、人工智能、电子信息等）的在读学生及考研备考人群。</li>
+              <li>零基础转行或跨考硬核算法、写码的自学者。</li>
+              <li>日常教学和教研任务繁重、需要高度定制教案的高校专业骨干教师。</li>
+            </ul>
+
+            <div class="submission-subtitle">🎬 在什么场景下使用</div>
+            <ul>
+              <li><strong>学生</strong>在期末备考、独立算法实操、代码纠错调试以及能力多维诊断的自学场景。</li>
+              <li><strong>专业教师</strong>在新学期编制课程大纲、生成 SVG 思维导图、随堂测验出题以及导出 Word/PPT 讲义课件的备课场景。</li>
+            </ul>
+
+            <div class="submission-subtitle">⚡ 当前痛点</div>
+            <ul>
+              <li><strong>没有该产品时</strong>，学生遇到代码 Bug 经常被编译器繁琐的环境配置报错折磨甚至放弃；传统错题本只有堆砌，缺乏错因归类和变式题的强化特训；网上教程千人一面，缺乏先修依存关系指引。</li>
+              <li><strong>教师备课时</strong>，手动编写教案和排版 PPT 动辄耗费 3 至 4 小时，且无法根据每个班级学生的平均画像调整知识点深度。</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Card 3: 价值与意义 -->
+        <div class="submission-card">
+          <div class="submission-card-title">
+            <svg style="width:1.5rem;height:1.5rem;color:var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            3. 项目核心价值与意义
+          </div>
+          <div class="submission-text">
+            <div class="submission-subtitle">🚀 效率提升 (教师/教研端)</div>
+            <p>平台利用多智能体异步并行生成引擎，将教师编制一套涵盖“讲义大纲 + SVG思维导图 + 经典测试题 + 示例源码”的传统教案准备时间，从 <strong>4 小时极限压缩至 45 秒</strong>，且支持一键 CRUD 版本管理，带来指数级的教研增效。</p>
+
+            <div class="submission-subtitle">🌍 教育普惠与因材施教 (社会价值)</div>
+            <p>系统通过苏格拉底式的多轮提问，构建 6 维认知画像，动态激活有向无环图 (DAG) 自适应学习路线，免去了本地配置 8 种语言编译环境的痛苦；结合启发式数字人答疑，引导学生在错误中独立摸索成长，极大拉近了偏远地区和职业院校的师资差距。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Problem & Motive Features Section -->
+  <section id="features" class="showcase-section">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">BACKGROUND & DESIGN</span>
+        <h2 class="section-title">痛点分析与设计初心</h2>
+        <p class="section-desc">打破理工科硬核学习的知行割裂，让优质的个性化因材施教惠及每位学子。</p>
+      </div>
+
+      <div class="two-col-layout">
+        <div class="content-side">
+          <h3>我们想解决什么问题？</h3>
+          <p>在高等教育硬核理工科（计算机、AI、电子）学习中，学生常面临“知行分离”与“缺乏规划”的痛点：理论知识抽象，大班授课进度一刀切，本地开发环境配置繁琐，遇到报错无人解答易被劝退；而专业老师则面临高昂的备课时间成本，难以针对每个学生的基础实施因材施教。</p>
+          
+          <ul class="feature-list">
+            <li class="feature-item">
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <div class="feature-item-text">
+                <strong>千人一面的大班瓶颈</strong>
+                <span>传统学习路径是静态硬性的，Kowell AI 通过自适应有向无环图 (DAG) 动态解锁知识点。</span>
+              </div>
+            </li>
+            <li class="feature-item">
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <div class="feature-item-text">
+                <strong>昂贵的答疑诊断成本</strong>
+                <span>启发式AI数字人绝不直接给答案，而是通过苏格拉底提问引导学生自己查错纠错。</span>
+              </div>
+            </li>
+            <li class="feature-item">
+              <svg class="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <div class="feature-item-text">
+                <strong>本地环境配置报错黑洞</strong>
+                <span>一开箱即用的Web Monaco沙箱，配合DeepSeek-Coder智能inline Code Review改错气泡。</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="screen-side">
+          <!-- Glass Mockup representing the Architecture -->
+          <div class="glass-mockup">
+            <div class="mockup-header">
+              <div class="mockup-dots">
+                <div class="mockup-dot"></div>
+                <div class="mockup-dot"></div>
+                <div class="mockup-dot"></div>
+              </div>
+              <div class="mockup-title">KOWELL AI ARCHITECTURE</div>
+              <div></div>
+            </div>
+            <div class="mockup-body" style="display:flex; flex-direction:column; justify-content:center; align-items:center; gap: 1.5rem; background: rgba(0,0,0,0.3);">
+              <!-- Simple custom schema -->
+              <div style="text-align:center; padding: 1rem; border: 1px solid rgba(139,92,246,0.3); border-radius:0.5rem; background:rgba(139,92,246,0.05); width:80%;">
+                <div style="font-weight:700; color:white; font-size:0.9rem; margin-bottom:0.25rem;">用户学业动态底座</div>
+                <div style="color:var(--text-muted); font-size:0.75rem;">6维认知诊断画像 (Socrates AI)</div>
+              </div>
+              
+              <div style="display:flex; justify-content:space-between; width:80%; position:relative;">
+                <div style="position:absolute; top:50%; left:10%; right:10%; height:2px; background:linear-gradient(to right, var(--primary), var(--secondary)); z-index:1; transform:translateY(-50%);"></div>
+                <div style="z-index:2; padding:0.5rem; background:#181825; border:1px solid var(--border-color); border-radius:4px; font-size:0.75rem; font-weight:600;">有向无环图路径</div>
+                <div style="z-index:2; padding:0.5rem; background:#181825; border:1px solid var(--border-color); border-radius:4px; font-size:0.75rem; font-weight:600;">多智能体并发生成</div>
+              </div>
+
+              <div style="text-align:center; padding: 1rem; border: 1px solid rgba(6,182,212,0.3); border-radius:0.5rem; background:rgba(6,182,212,0.05); width:80%;">
+                <div style="font-weight:700; color:white; font-size:0.9rem; margin-bottom:0.25rem;">学练闭环实战终端</div>
+                <div style="color:var(--text-muted); font-size:0.75rem;">Monaco 沙箱 + 弱项特训 + 评估雷达</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Accordion Section -->
+  <section class="accordion-section" id="accordion-features">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">CORE CAPABILITIES</span>
+        <h2 class="section-title">拟物手风琴：六大核心技术底座</h2>
+        <p class="section-desc">Kowell AI 核心架构的六个关键业务板块，基于高内聚低耦合的多智能体协作模式打造。</p>
+      </div>
+
+      <div class="accordion-container">
+        <!-- Card 1 -->
+        <div class="accordion-card">
+          <div class="accordion-badge">Gemini-1.5-Flash 驱动</div>
+          <img src="./socrates_ai_avatar.png" class="accordion-card-img" alt="Socrates 画像诊断">
+          <h3 class="accordion-title">1. Socrates 画像诊断</h3>
+          <p class="accordion-desc">基于苏格拉底式对话的认知底盘检测，大模型以5-6轮循序渐进的答疑形式判断用户真实的数理及代码理解起点，杜绝“一刀切”授课。</p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="accordion-card">
+          <div class="accordion-badge">GPT-4o 路径计算</div>
+          <img src="./dag_learning_path.png" class="accordion-card-img" alt="DAG 路径规划">
+          <h3 class="accordion-title">2. 有向无环图 (DAG) 规划</h3>
+          <p class="accordion-desc">将知识体系映射为有向无环图节点拓扑，通过前置关系约束阻断“跳级”学习，并依据认知评估动态更新后续学习拓扑权重。</p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="accordion-card">
+          <div class="accordion-badge">Claude-3.5 异步并发</div>
+          <img src="./monaco_code_sandbox.png" class="accordion-card-img" alt="资源生成与导出">
+          <h3 class="accordion-title">3. 资源并行生成与导出</h3>
+          <p class="accordion-desc">多线程并发生成大纲、思维导图、随堂习题及源码，由 Claude 精准控噪排版，并支持一键 CRUD 操作及本地 Word/PPT 资源导出。</p>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="accordion-card">
+          <div class="accordion-badge">DeepSeek-Coder-V2 纠错</div>
+          <img src="./monaco_code_sandbox.png" class="accordion-card-img" alt="Monaco 代码实验室">
+          <h3 class="accordion-title">4. Monaco 在线代码沙箱</h3>
+          <p class="accordion-desc">开箱即用的前端 Web Sandboxing 编程实验室，集成行级 Review 改错提示气泡，在 AST 层面为学生指出逻辑死循环与栈溢出风险。</p>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="accordion-card">
+          <div class="accordion-badge">Claude-3.5 智能分析</div>
+          <img src="./dag_learning_path.png" class="accordion-card-img" alt="能力雷达大盘">
+          <h3 class="accordion-title">5. 6维能力雷达诊断大盘</h3>
+          <p class="accordion-desc">实时量化学员的逻辑推理、实操编写、问题拆解、知识广度、学习毅力和理论基础，提供周度错题原因溯源及自适应能力演化路径。</p>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="accordion-card">
+          <div class="accordion-badge">TTS 启发语音</div>
+          <img src="./socrates_ai_avatar.png" class="accordion-card-img" alt="语音通话">
+          <h3 class="accordion-title">6. 拟真语音通话</h3>
+          <p class="accordion-desc">集成了 MiniMax 极速语音合成技术，模拟电话连线的拟真波动波形动效，用户可随时打断 AI，降低指尖输入障碍，提升沟通拟真度。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gamification / Streak & Tokens Section -->
+  <section id="gamification" class="showcase-section" style="background: rgba(0, 0, 0, 0.1);">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">GAME & TOKENS</span>
+        <h2 class="section-title">游戏化打卡与积分代币裂变</h2>
+        <p class="section-desc">社交邀请获赠积分，每日签到翻倍奖励，控制大模型调用成本，激发主动学习热情。</p>
+      </div>
+
+      <div class="game-tokens-layout">
+        <!-- Interactive Checkin Calendar -->
+        <div class="checkin-calendar">
+          <div class="calendar-header">
+            <div class="calendar-title">
+              <svg style="width:16px;height:16px;fill:var(--warning)" viewBox="0 0 24 24"><path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.9 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/></svg>
+              每日打卡 Streak 体系
+            </div>
+            <div class="streak-badge" id="streak-count">已连续签到 4 天</div>
+          </div>
+          <div class="calendar-grid">
+            <span class="calendar-day-label">一</span>
+            <span class="calendar-day-label">二</span>
+            <span class="calendar-day-label">三</span>
+            <span class="calendar-day-label">四</span>
+            <span class="calendar-day-label">五</span>
+            <span class="calendar-day-label">六</span>
+            <span class="calendar-day-label">日</span>
+            
+            <div class="calendar-day checked">12</div>
+            <div class="calendar-day checked">13</div>
+            <div class="calendar-day checked">14</div>
+            <div class="calendar-day checked">15</div>
+            <div class="calendar-day checked">16</div>
+            <div class="calendar-day checked">17</div>
+            <div class="calendar-day checked">18</div>
+            
+            <div class="calendar-day checked">19</div>
+            <div class="calendar-day checked">20</div>
+            <div class="calendar-day checked">21</div>
+            <div class="calendar-day checked">22</div>
+            <div class="calendar-day today" id="today-day" onclick="clickTodayCheckin()">23</div>
+            <div class="calendar-day">24</div>
+            <div class="calendar-day">25</div>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:1rem;" id="checkin-hint">
+            今日（23日）尚未打卡，点击对应日期完成签到，赚取今日积分！
+          </p>
+        </div>
+
+        <!-- Token Rules -->
+        <div>
+          <ul class="token-rules">
+            <li class="token-rule-card">
+              <div class="token-rule-icon">
+                <svg style="width:1.2rem;height:1.2rem;fill:currentColor" viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></svg>
+              </div>
+              <div class="token-rule-info">
+                <h5>每日打卡签到</h5>
+                <p>签到即获积分，连续签到将触发积分翻倍系数。</p>
+              </div>
+              <div class="token-rule-points">+10 Tokens</div>
+            </li>
+            
+            <li class="token-rule-card">
+              <div class="token-rule-icon" style="color:var(--primary); background:rgba(139,92,246,0.1); border-color:rgba(139,92,246,0.2);">
+                <svg style="width:1.2rem;height:1.2rem;fill:currentColor" viewBox="0 0 24 24"><path d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z"/></svg>
+              </div>
+              <div class="token-rule-info">
+                <h5>邀请好友加入</h5>
+                <p>新用户填写您的邀请码注册并绑定邮箱后，双方共享奖励。</p>
+              </div>
+              <div class="token-rule-points">+100 Tokens</div>
+            </li>
+
+            <li class="token-rule-card">
+              <div class="token-rule-icon" style="color:var(--accent); background:rgba(236,72,153,0.1); border-color:rgba(236,72,153,0.2);">
+                <svg style="width:1.2rem;height:1.2rem;fill:currentColor" viewBox="0 0 24 24"><path d="M12,3C7.58,3 4,4.79 4,7C4,9.21 7.58,11 12,11C16.42,11 20,9.21 20,7C20,4.79 16.42,3 12,3M4,9V12C4,14.21 7.58,16 12,16C16.42,16 20,14.21 20,12V9C20,11.21 16.42,13 12,13C7.58,13 4,11.21 4,9M4,14V17C4,19.21 7.58,21 12,21C16.42,21 20,19.21 20,17V14C20,16.21 16.42,18 12,18C7.58,18 4,16.21 4,14Z"/></svg>
+              </div>
+              <div class="token-rule-info">
+                <h5>共享优秀代码/笔记</h5>
+                <p>在社群内分享已被沙箱安全编译且获得 AI 精英标记的代码案例。</p>
+              </div>
+              <div class="token-rule-points">+50 Tokens</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive System Simulator Section -->
+  <section id="simulator" class="showcase-section" style="background: rgba(0, 0, 0, 0.2);">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">INTERACTIVE SIMULATOR</span>
+        <h2 class="section-title">核心功能交互式工作流</h2>
+        <p class="section-desc">点击下方 Tab 查看 Kowell AI 核心学习链条中各模块的交互模拟，体验多智能体协作细节。</p>
+      </div>
+
+      <!-- Trigger Box for Collab Simulation -->
+      <div class="agent-collab-trigger-box">
+        <div class="trigger-info">
+          <h4>🤖 多智能体协同流式演示 (Simulation Control)</h4>
+          <p id="collab-status">就绪。点击右侧按钮模拟完整的“画像诊断-路径规划-资源生成-代码纠错-综合评估”协作流程。</p>
+        </div>
+        <button class="btn-trigger-collab" id="btn-simulate-all" onclick="simulateFullWorkflow()">
+          <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/></svg>
+          一键联动模拟
+        </button>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab(0)">1. Socrates 画像</button>
+        <button class="tab-btn" onclick="switchTab(1)">2. 自适应 DAG 路径</button>
+        <button class="tab-btn" onclick="switchTab(2)">3. 资源生成 (CRUD)</button>
+        <button class="tab-btn" onclick="switchTab(3)">4. 代码实验室 (Monaco)</button>
+        <button class="tab-btn" onclick="switchTab(4)">5. 诊断评估雷达</button>
+        <button class="tab-btn" onclick="switchTab(5)">🤖 多智能体日志</button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="glass-mockup">
+        <div class="mockup-header">
+          <div class="mockup-dots">
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+          </div>
+          <div class="mockup-title" id="simulator-tab-title">Socrates Portrait - 画像构建</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:0.25rem;">
+            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--success)"></span>
+            Connected (DeepSeek-v4-pro)
+          </div>
+        </div>
+
+        <!-- Tab 0: Socrates Chat -->
+        <div class="tab-pane active" id="pane-0">
+          <div class="mockup-body">
+            <div class="socrates-chat" id="socrates-chat-box">
+              <div class="chat-bubble bubble-ai">
+                您好！我是您的 Socrates 教学助理。听说您打算深入学习人工智能与数据结构？在开始之前，我想先了解一下，您以前用 C++ 或 Python 独立编写过最复杂的程序是什么？大概有多少行代码？
+              </div>
+              <div class="chat-bubble bubble-user">
+                我以前只学过一些基础的 Python，写过一个 100 行左右的学生管理系统，没接触过复杂的算法。
+              </div>
+              <div class="chat-bubble bubble-ai">
+                非常好，100行的学生管理系统是一个扎实的起点！这说明你已经掌握了变量、条件分支和基本的文件/列表操作。那么，当你听到“二叉树”或“链表”这些词时，你的脑海中会浮现出怎样的物理模型？你会如何尝试用 Python 的列表或字典去表示它们？
+              </div>
+            </div>
+            <div class="voice-control-panel">
+              <div class="voice-wave">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+              </div>
+              <button class="voice-btn" onclick="triggerVoiceSpeak()">
+                <svg viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/></svg>
+              </button>
+              <div style="font-size:0.8rem; color:var(--text-muted)">
+                点击麦克风模拟语音交互 (MiniMax TTS 驱动)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 1: DAG SVG Path -->
+        <div class="tab-pane" id="pane-1">
+          <div class="mockup-body" style="padding:0; position:relative;">
+            <div class="dag-svg-wrap">
+              <svg width="600" height="300" viewBox="0 0 600 300">
+                <!-- Lines -->
+                <line x1="80" y1="150" x2="200" y2="80" class="dag-line active" id="line-0"></line>
+                <line x1="80" y1="150" x2="200" y2="220" class="dag-line active" id="line-1"></line>
+                <line x1="200" y1="80" x2="350" y2="80" class="dag-line" id="line-2"></line>
+                <line x1="200" y1="220" x2="350" y2="220" class="dag-line" id="line-3"></line>
+                <line x1="350" y1="80" x2="480" y2="150" class="dag-line" id="line-4"></line>
+                <line x1="350" y1="220" x2="480" y2="150" class="dag-line" id="line-5"></line>
+
+                <!-- Nodes -->
+                <g class="dag-node completed" onclick="clickDagNode(0, '数据结构底座: Python 基础', '已通关', '掌握变量、控制流、函数及基础OOP。耗时 6.4 小时。')">
+                  <circle cx="80" cy="150" r="28"></circle>
+                  <text x="80" y="154">Python基础</text>
+                </g>
+                <g class="dag-node active" id="node-1" onclick="clickDagNode(1, '线性结构通关: 链表与栈', '进行中', '重点分析链表指针逻辑与栈的进出顺序，包含Monaco沙箱实操。')">
+                  <circle cx="200" cy="80" r="28"></circle>
+                  <text x="200" y="84">链表与栈</text>
+                </g>
+                <g class="dag-node active" id="node-2" onclick="clickDagNode(2, '非线性探索: 树与二叉树', '进行中', '研究二叉树遍历算法与堆结构。前置依赖：Python基础。')">
+                  <circle cx="200" cy="220" r="28"></circle>
+                  <text x="200" y="224">树与二叉树</text>
+                </g>
+                <g class="dag-node" id="node-3" onclick="clickDagNode(3, '算法核心: 递归与分治', '未解锁', '深度探讨递归栈空间开销与大O复杂度优化。')">
+                  <circle cx="350" cy="80" r="28"></circle>
+                  <text x="350" y="84">递归与分治</text>
+                </g>
+                <g class="dag-node" id="node-4" onclick="clickDagNode(4, '经典算法: 深度优先搜索', '未解锁', '学习图深度遍历与拓扑排序。前置依赖：树与二叉树。')">
+                  <circle cx="350" cy="220" r="28"></circle>
+                  <text x="350" y="224">DFS/BFS</text>
+                </g>
+                <g class="dag-node" id="node-5" onclick="clickDagNode(5, '综合实践: AI推理智能体', '未解锁', '整合自研算法，构建首个能进行问题拆解的智能体节点。')">
+                  <circle cx="480" cy="150" r="28"></circle>
+                  <text x="480" y="154">AI推理实践</text>
+                </g>
+              </svg>
+            </div>
+            
+            <div class="dag-info-panel">
+              <div class="dag-info-title">
+                <span id="dag-selected-title">树与二叉树</span>
+                <span class="dag-info-status status-active" id="dag-selected-status">进行中</span>
+              </div>
+              <div style="color:var(--text-muted); font-size:0.75rem;" id="dag-selected-desc">
+                系统诊断推荐学习节点。研究二叉树的递归与非递归遍历。双击此节点将自动并发生成相关讲义大纲。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Resource Manager (CRUD) -->
+        <div class="tab-pane" id="pane-2">
+          <div class="mockup-body" style="padding:0;">
+            <div class="resource-manager">
+              <div class="resource-sidebar">
+                <div class="resource-sidebar-title">
+                  <span>我的资源 (CRUD)</span>
+                  <button class="btn-action-small" onclick="openNewResourceModal()">+ 新建</button>
+                </div>
+                <ul class="resource-list" id="resource-ul">
+                  <!-- JS Dynamic Insertion -->
+                </ul>
+              </div>
+              <div class="resource-detail" id="resource-detail-box">
+                <!-- JS Dynamic Detail -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Monaco Code Sandbox -->
+        <div class="tab-pane" id="pane-3">
+          <div class="mockup-body" style="padding:0;">
+            <div class="monaco-sandbox">
+              <div class="code-line"><span class="line-number">1</span><span class="code-content"><span class="keyword">class</span> <span class="type">Node</span>:</span></div>
+              <div class="code-line"><span class="line-number">2</span><span class="code-content">    <span class="keyword">def</span> <span class="function">__init__</span>(self, val):</span></div>
+              <div class="code-line"><span class="line-number">3</span><span class="code-content">        self.val = val</span></div>
+              <div class="code-line"><span class="line-number">4</span><span class="code-content">        self.left = <span class="keyword">None</span></span></div>
+              <div class="code-line"><span class="line-number">5</span><span class="code-content">        self.right = <span class="keyword">None</span></span></div>
+              <div class="code-line"><span class="line-number">6</span><span class="code-content"></span></div>
+              <div class="code-line"><span class="line-number">7</span><span class="code-content"><span class="comment"># AI 提醒：递归计算树的深度</span></span></div>
+              <div class="code-line"><span class="line-number">8</span><span class="code-content"><span class="keyword">def</span> <span class="function">maxDepth</span>(root: <span class="type">Node</span>) -> <span class="keyword">int</span>:</span></div>
+              <div class="code-line"><span class="line-number">9</span><span class="code-content">    <span class="keyword">if</span> root <span class="keyword">is</span> <span class="keyword">None</span>:</span></div>
+              <div class="code-line"><span class="line-number">10</span><span class="code-content">        <span class="keyword">return</span> <span class="number">0</span></span></div>
+              <div class="code-line"><span class="line-number">11</span><span class="code-content">    <span class="comment"># 此处如果出现深层大树可能导致递归栈溢出</span></span></div>
+              <div class="code-line"><span class="line-number">12</span><span class="code-content">    <span class="keyword">return</span> max(maxDepth(root.left), maxDepth(root.right)) + <span class="number">1</span></span></div>
+              
+              <!-- Inline DeepSeek review bubble -->
+              <div class="review-bubble">
+                <div class="review-header">
+                  <svg style="fill:currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/></svg>
+                  <span>DeepSeek Code Reviewer (Inline)</span>
+                </div>
+                <div class="review-body">
+                  第 12 行：此处采用朴素递归求最大深度，在大数据量或斜树下，最坏时间复杂度为 O(N)，且空间复杂度退化为 O(N)（栈开销）。<br>
+                  <strong>优化策略</strong>：可以考虑使用迭代法（广度优先搜索 BFS 借助队列）来限制内存栈的暴涨。
+                </div>
+                <div class="review-fix">
+                  # BFS 迭代写法可以规避栈溢出风险
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Evaluation Radar -->
+        <div class="tab-pane" id="pane-4">
+          <div class="mockup-body" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:center;">
+            <div>
+              <div class="radar-container">
+                <svg class="radar-svg" viewBox="0 0 300 300">
+                  <!-- Grid levels -->
+                  <polygon points="150,30 253,90 253,210 150,270 47,210 47,90" class="radar-grid"></polygon>
+                  <polygon points="150,70 219,110 219,190 150,230 81,190 81,110" class="radar-grid"></polygon>
+                  <polygon points="150,110 185,130 185,170 150,190 115,170 115,130" class="radar-grid"></polygon>
+                  
+                  <!-- Axis -->
+                  <line x1="150" y1="150" x2="150" y2="30" class="radar-axis"></line>
+                  <line x1="150" y1="150" x2="253" y2="90" class="radar-axis"></line>
+                  <line x1="150" y1="150" x2="253" y2="210" class="radar-axis"></line>
+                  <line x1="150" y1="150" x2="150" y2="270" class="radar-axis"></line>
+                  <line x1="150" y1="150" x2="47" y2="210" class="radar-axis"></line>
+                  <line x1="150" y1="150" x2="47" y2="90" class="radar-axis"></line>
+
+                  <!-- Labels -->
+                  <text x="150" y="20" class="radar-label highlighted">理论基础 (85)</text>
+                  <text x="275" y="85" class="radar-label">实操编写 (62)</text>
+                  <text x="275" y="225" class="radar-label">问题拆解 (74)</text>
+                  <text x="150" y="288" class="radar-label">逻辑推理 (90)</text>
+                  <text x="20" y="225" class="radar-label">学习毅力 (88)</text>
+                  <text x="20" y="85" class="radar-label">知识广度 (55)</text>
+
+                  <!-- Radar value shape -->
+                  <!-- 6 vertexes based on core metrics -->
+                  <polygon id="radar-shape" points="150,48 213,112 226,194 150,258 59,202 93,117" class="radar-polygon"></polygon>
+                </svg>
+              </div>
+            </div>
+
+            <div>
+              <h4 style="color:white; font-family:var(--font-outfit); font-size:1.1rem; margin-bottom:0.5rem;">AI 学情诊断分析报告</h4>
+              <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">经过本周 4 次 DAG 节点练习与 12 次沙箱测试，大模型生成了如下量化评级：</p>
+              
+              <div class="eval-metrics">
+                <div class="metric-bar-item">
+                  <div class="metric-header">
+                    <span class="metric-name">逻辑推理</span>
+                    <span class="metric-val">90%</span>
+                  </div>
+                  <div class="metric-track"><div class="metric-fill" id="metric-fill-0" style="width: 90%;"></div></div>
+                </div>
+                <div class="metric-bar-item">
+                  <div class="metric-header">
+                    <span class="metric-name">理论基础</span>
+                    <span class="metric-val">85%</span>
+                  </div>
+                  <div class="metric-track"><div class="metric-fill" id="metric-fill-1" style="width: 85%;"></div></div>
+                </div>
+                <div class="metric-bar-item">
+                  <div class="metric-header">
+                    <span class="metric-name">学习毅力</span>
+                    <span class="metric-val">88%</span>
+                  </div>
+                  <div class="metric-track"><div class="metric-fill" id="metric-fill-2" style="width: 88%;"></div></div>
+                </div>
+                <div class="metric-bar-item">
+                  <div class="metric-header">
+                    <span class="metric-name">问题拆解</span>
+                    <span class="metric-val">74%</span>
+                  </div>
+                  <div class="metric-track"><div class="metric-fill" id="metric-fill-3" style="width: 74%;"></div></div>
+                </div>
+                <div class="metric-bar-item">
+                  <div class="metric-header">
+                    <span class="metric-name">实操编写</span>
+                    <span class="metric-val">62%</span>
+                  </div>
+                  <div class="metric-track"><div class="metric-fill" id="metric-fill-4" style="width: 62%;"></div></div>
+                </div>
+                <div class="metric-bar-item">
+                  <div class="metric-header">
+                    <span class="metric-name">知识广度</span>
+                    <span class="metric-val">55%</span>
+                  </div>
+                  <div class="metric-track"><div class="metric-fill" id="metric-fill-5" style="width: 55%;"></div></div>
+                </div>
+              </div>
+
+              <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:0.5rem; padding:0.75rem; margin-top:1rem; font-size:0.75rem;">
+                <strong style="color:var(--warning); display:block; margin-bottom:0.15rem;">⚠️ AI 教师提升建议：</strong>
+                您在理论与逻辑上表现极佳，但在<span style="color:white;font-weight:600;">代码编写实操</span>上得分较低（62分）。建议本周重点突破“树与二叉树”沙箱，编写二叉树的前中后序递归，增强手写代码肌肉记忆。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 5: Multi-Agent Logs -->
+        <div class="tab-pane" id="pane-5">
+          <div class="mockup-body" style="padding:0;">
+            <div class="console-terminal" id="console-logs-box">
+              <div class="console-line">
+                <span class="console-time">[12:00:01]</span>
+                <span class="agent-tag tag-profile">Profile Agent</span>
+                <span class="console-msg">画像智能体检测到用户登录。开始监听苏格拉底多轮问答对话...</span>
+              </div>
+              <div class="console-line">
+                <span class="console-time">[12:00:15]</span>
+                <span class="agent-tag tag-profile">Profile Agent</span>
+                <span class="console-msg">多轮对话完成，已生成最新用户6维认知画像分值 JSON，写入 user_profiles 物理表。</span>
+              </div>
+              <div class="console-line">
+                <span class="console-time">[12:00:16]</span>
+                <span class="agent-tag tag-planner">Planner Agent</span>
+                <span class="console-msg">路径智能体加载 6 维画像底牌，计算专业 DAG 依存度，重新渲染有向无环学习拓扑。</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Agent Orchestration Section -->
+  <section class="showcase-section" id="agent-orchestration" style="background: rgba(0, 0, 0, 0.05);">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">AGENT ORCHESTRATION</span>
+        <h2 class="section-title">多智能体协同机制与提示词策略</h2>
+        <p class="section-desc">Kowell AI 核心由五个独立的智能体路由组成，它们通过统一的 JSON 状态机进行上下文同步与流式回传。</p>
+      </div>
+
+      <div class="agent-pipeline">
+        <!-- Step 1 -->
+        <div class="pipeline-step step-profile">
+          <div class="pipeline-badge">1</div>
+          <div class="pipeline-title">画像智能体 (Profile)</div>
+          <span class="pipeline-model model-gemini">Gemini-1.5-Flash</span>
+          <p class="pipeline-desc"><strong>Prompt 策略：</strong>“扮演苏格拉底，不要直接给出代码，用追问启发学生指出思路缺陷，每轮对话后以 JSON 输出 6 维认知分。”</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="pipeline-step step-planner">
+          <div class="pipeline-badge">2</div>
+          <div class="pipeline-title">路径智能体 (Planner)</div>
+          <span class="pipeline-model model-gpt">GPT-4o</span>
+          <p class="pipeline-desc"><strong>Prompt 策略：</strong>“输入当前用户的 6 维认知得分与目标章节，以 JSON Array 格式输出包含依存关系与权重排序的 DAG 拓扑图数组。”</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="pipeline-step step-resource">
+          <div class="pipeline-badge">3</div>
+          <div class="pipeline-title">资源生成智能体</div>
+          <span class="pipeline-model model-claude">Claude-3.5-Sonnet</span>
+          <p class="pipeline-desc"><strong>Prompt 策略：</strong>“扮演理工科教授，生成包含讲义大纲、经典测验和思维导图的 Markdown 流，以 SSE 协议向客户端进行毫秒级流式回传。”</p>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="pipeline-step step-coder">
+          <div class="pipeline-badge">4</div>
+          <div class="pipeline-title">代码评审智能体</div>
+          <span class="pipeline-model model-deepseek">DeepSeek-Coder-V2</span>
+          <p class="pipeline-desc"><strong>Prompt 策略：</strong>“作为行级代码审计专家，定位 Monaco 编辑器内的逻辑漏洞和时间复杂度瓶颈，仅输出行号与 Review 改错气泡提示。”</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Competitive Analysis Section -->
+  <section class="showcase-section" id="competitive-matrix">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">COMPETITIVE MATRIX</span>
+        <h2 class="section-title">竞品差异化对比矩阵</h2>
+        <p class="section-desc">Kowell AI 填补了理工科专业课程在动手编程与自适应路线上的空白，兼备游戏化高粘性与智能教研提效。</p>
+      </div>
+
+      <div class="comp-table-wrap">
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>对比维度</th>
+              <th class="comp-tag-kowell">Kowell AI (本产品)</th>
+              <th>多邻国 (Duolingo)</th>
+              <th>可汗学院 (Khan Academy)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>硬核理工科专业适配</strong></td>
+              <td><span class="badge-comp-yes">✓ 深度适配</span> (支持计算机/算法/AI)</td>
+              <td><span class="badge-comp-no">✗ 无适配</span> (主要为语言/少儿数学)</td>
+              <td><span class="badge-comp-part">○ 局部适配</span> (仅限基础科学)</td>
+            </tr>
+            <tr>
+              <td><strong>代码实操在线沙箱</strong></td>
+              <td><span class="badge-comp-yes">✓ 支持</span> (内置 Monaco 及行级 Code Review)</td>
+              <td><span class="badge-comp-no">✗ 无</span></td>
+              <td><span class="badge-comp-part">○ 局部支持</span> (仅基础 JS 画图)</td>
+            </tr>
+            <tr>
+              <td><strong>自适应学习拓扑</strong></td>
+              <td><span class="badge-comp-yes">✓ 动态 DAG</span> (自适应生成拓扑节点)</td>
+              <td><span class="badge-comp-part">○ 线性关卡</span> (游戏化固定关卡)</td>
+              <td><span class="badge-comp-part">○ 静态树形</span> (不可动态变更)</td>
+            </tr>
+            <tr>
+              <td><strong>教研辅助生成 (B端)</strong></td>
+              <td><span class="badge-comp-yes">✓ 毫秒级生成</span> (大纲/课件/导图并支持导出)</td>
+              <td><span class="badge-comp-no">✗ 无此项功能</span></td>
+              <td><span class="badge-comp-no">✗ 无此项功能</span></td>
+            </tr>
+            <tr>
+              <td><strong>游戏化与裂变闭环</strong></td>
+              <td><span class="badge-comp-yes">✓ 全方位</span> (日历签到+裂变代币分享机制)</td>
+              <td><span class="badge-comp-yes">✓ 深度集成</span> (生命值与连胜体系)</td>
+              <td><span class="badge-comp-no">✗ 弱集成</span> (仅徽章收集)</td>
+            </tr>
+            <tr>
+              <td><strong>环境依赖度</strong></td>
+              <td><span class="badge-comp-yes">✓ 免配置</span> (开箱即用，零环境依赖)</td>
+              <td><span class="badge-comp-yes">✓ 免配置</span></td>
+              <td><span class="badge-comp-yes">✓ 免配置</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technical Codebase Metrics Section -->
+  <section class="showcase-section" id="technical-metrics" style="background: rgba(0, 0, 0, 0.05);">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">ENGINEERING METRICS</span>
+        <h2 class="section-title">项目开发量化与工程规模</h2>
+        <p class="section-desc">Kowell AI 拥有雄厚的工程实现度，已完成全部基础组件研发，拒绝纸上谈兵。</p>
+      </div>
+
+      <div class="metrics-grid">
+        <!-- Column 1: Scale stats -->
+        <div class="metric-panel-card" style="display:flex; flex-direction:column; justify-content:space-between; gap: 1.5rem;">
+          <h4 style="color:white; font-family:var(--font-outfit); font-size:1.15rem;">代码库核心开发规模</h4>
+          <div class="metric-scale-box">
+            <div class="scale-stat">
+              <div class="scale-num" style="color:var(--primary);">21,720</div>
+              <div class="scale-label">总代码行数 (Lines of Code)</div>
+            </div>
+            <div class="scale-stat">
+              <div class="scale-num" style="color:var(--secondary);">109</div>
+              <div class="scale-label">TypeScript/TSX 源码文件</div>
+            </div>
+            <div class="scale-stat">
+              <div class="scale-num" style="color:var(--accent);">29</div>
+              <div class="scale-label">前端业务逻辑视图 (Subpages)</div>
+            </div>
+            <div class="scale-stat">
+              <div class="scale-num" style="color:var(--success);">13</div>
+              <div class="scale-label">Deno Edge Functions (Serverless)</div>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:0.5rem; padding:0.75rem; font-size:0.75rem; color:var(--text-muted);">
+            数据底座由 <strong>Supabase Postgres</strong> 物理库支撑，编写了 8 个 SQL migration 迁移文件，配置了精细的行级安全控制策略（RLS），保障教研数据的绝对隐私安全。
+          </div>
+        </div>
+
+        <!-- Column 2: Code File Sizes rank -->
+        <div class="metric-panel-card">
+          <h4 style="color:white; font-family:var(--font-outfit); font-size:1.15rem; margin-bottom:1rem;">前五大核心组件代码体量排行</h4>
+          <ul class="metric-file-list">
+            <li class="metric-file-item">
+              <span class="metric-file-name">LandingPage.tsx</span>
+              <span class="metric-file-size">1,824 行</span>
+            </li>
+            <li class="metric-file-item">
+              <span class="metric-file-name">LearningPathPage.tsx</span>
+              <span class="metric-file-size">1,560 行</span>
+            </li>
+            <li class="metric-file-item">
+              <span class="metric-file-name">ChatContainer.tsx</span>
+              <span class="metric-file-size">1,422 行</span>
+            </li>
+            <li class="metric-file-item">
+              <span class="metric-file-name">CodeEditor.tsx</span>
+              <span class="metric-file-size">1,288 行</span>
+            </li>
+            <li class="metric-file-item">
+              <span class="metric-file-name">ProfileDashboard.tsx</span>
+              <span class="metric-file-size">1,154 行</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Tier Section -->
+  <section id="pricing" class="showcase-section">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-tag">COMMERCIAL DESIGN</span>
+        <h2 class="section-title">商业模式与套餐订阅</h2>
+        <p class="section-desc">经典的 "Freemium"（免费体验+多级套餐订阅）商业机制，覆盖各阶段用户需求。</p>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Tier 1 -->
+        <div class="pricing-card">
+          <div class="plan-name">基础免费版 (Free)</div>
+          <div class="plan-price-wrap">
+            <span class="plan-price">¥0</span>
+            <span class="plan-price-period">/ 永久</span>
+          </div>
+          <ul class="plan-features">
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              解锁前 2 阶段自适应路线图
+            </li>
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              每日 30 次 Socrates AI 答疑
+            </li>
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              资源生成上限 3 次/天（不可导出）
+            </li>
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              基础 Python 语言编译沙箱
+            </li>
+          </ul>
+          <button class="btn-plan">当前版本</button>
+        </div>
+
+        <!-- Tier 2 -->
+        <div class="pricing-card popular">
+          <div class="popular-badge">最受欢迎</div>
+          <div class="plan-name">专业订阅版 (Pro)</div>
+          <div class="plan-price-wrap">
+            <span class="plan-price">¥29</span>
+            <span class="plan-price-period">/ 每月</span>
+          </div>
+          <ul class="plan-features">
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <strong>全阶段 DAG 路径完全解锁</strong>
+            </li>
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              每日无限次 Socrates AI 答疑
+            </li>
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              资源生成 30 次/天，支持导 Word
+            </li>
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              8 种语言沙箱与每日 50次 Review
+            </li>
+          </ul>
+          <button class="btn-plan">立即订阅</button>
+        </div>
+
+        <!-- Tier 3 -->
+        <div class="pricing-card">
+          <div class="plan-name">尊享精英版 (Elite)</div>
+          <div class="plan-price-wrap">
+            <span class="plan-price">¥89</span>
+            <span class="plan-price-period">/ 每季</span>
+          </div>
+          <ul class="plan-features">
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              尊享一键深度定制 DAG 路径
+            </li>
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              专属学业导师 (Human in the loop)
+            </li>
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              无限次资源生成，支持导出 Word/PPT
+            </li>
+            <li class="plan-feature-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              无限制 Monaco 沙箱与 AI 行级 Review
+            </li>
+          </ul>
+          <button class="btn-plan">开通精英版</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Create Resource Modal -->
+  <div class="dialog-overlay" id="new-resource-modal">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3 class="dialog-title">新建 AI 讲义大纲</h3>
+        <button class="btn-close" onclick="closeNewResourceModal()">
+          <svg style="width:1.2rem;height:1.2rem;fill:currentColor" viewBox="0 0 24 24"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
+        </button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">学科方向与章节主题</label>
+        <input type="text" class="form-input" id="resource-input-title" placeholder="例如：二叉排序树的插入与平衡调整" value="二叉平衡树的核心旋转原理">
+      </div>
+      <div class="form-group">
+        <label class="form-label">生成资源类型 (支持流式并行并发)</label>
+        <div class="form-checkbox-group">
+          <label class="checkbox-label"><input type="checkbox" id="cb-outline" checked> 讲义大纲 (Outline)</label>
+          <label class="checkbox-label"><input type="checkbox" id="cb-mindmap" checked> SVG思维导图</label>
+          <label class="checkbox-label"><input type="checkbox" id="cb-exercises" checked> 经典期末测试题</label>
+          <label class="checkbox-label"><input type="checkbox" id="cb-code"> 示例沙箱源码</label>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn-secondary" style="padding:0.5rem 1rem; font-size:0.85rem;" onclick="closeNewResourceModal()">取消</button>
+        <button class="btn-primary" style="padding:0.5rem 1.25rem; font-size:0.85rem;" onclick="createNewResourceSubmit()">启动多智能体生成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>© 2026 Kowell AI Project. All rights reserved. 智能工作学习赛道备赛创意展示方案。</p>
+      <div class="footer-links">
+        <a href="#features" class="footer-link">关于平台</a>
+        <a href="#simulator" class="footer-link">技术架构</a>
+        <a href="#pricing" class="footer-link">付费套餐</a>
+        <a href="file:///e:/Code/AI/Start/Web/Kowell%20AI/README.md" class="footer-link">本地 README</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Simulation Control Logic JS -->
+  <script>
+    // State Store
+    const state = {
+      activeTab: 0,
+      resources: [
+        { 
+          id: 1, 
+          title: "二叉树深度遍历讲义.md", 
+          date: "2026-06-18 10:12", 
+          size: "4.2 KB",
+          content: "### 二叉树的三种深度遍历算法\n\n二叉树是以递归方式定义的数据结构，因此遍历也主要以递归实现为主。\n\n1. **先序遍历 (Pre-order)**: 根 -> 左 -> 右\n2. **中序遍历 (In-order)**: 左 -> 根 -> 右 (对于二叉搜索树，中序遍历结果即为有序序列)\n3. **后序遍历 (Post-order)**: 左 -> 右 -> 根\n\n```python\ndef inorderTraversal(root):\n    if not root:\n        return []\n    return inorderTraversal(root.left) + [root.val] + inorderTraversal(root.right)\n```"
+        },
+        { 
+          id: 2, 
+          title: "双向循环链表实操代码.cpp", 
+          date: "2026-06-19 09:45", 
+          size: "8.5 KB",
+          content: "/* 双向循环链表的插入与删除 */\n#include <iostream>\nusing namespace std;\n\nstruct Node {\n    int data;\n    Node* prev;\n    Node* next;\n    Node(int val) : data(val), prev(nullptr), next(nullptr) {}\n};\n\nvoid insertAtHead(Node*& head, int val) {\n    Node* newNode = new Node(val);\n    if(!head) {\n        head = newNode;\n        head->next = head;\n        head->prev = head;\n        return;\n    }\n    Node* tail = head->prev;\n    newNode->next = head;\n    newNode->prev = tail;\n    tail->next = newNode;\n    head->prev = newNode;\n    head = newNode;\n}"
+        },
+        { 
+          id: 3, 
+          title: "阶段性画像诊断报告.json", 
+          date: "2026-06-19 12:00", 
+          size: "1.2 KB",
+          content: "{\n  \"portrait_id\": \"port_8832a\",\n  \"user_id\": \"usr_admin\",\n  \"dimensions\": {\n    \"theory_foundation\": 85,\n    \"practical_coding\": 62,\n    \"problem_deconstruction\": 74,\n    \"logic_inference\": 90,\n    \"learning_grit\": 88,\n    \"knowledge_breadth\": 55\n  },\n  \"dominant_learning_style\": \"逻辑主导型 / 动手欠缺者\",\n  \"custom_adjustments\": \"建议缩短理论视频时长，增加Monaco沙箱编码与变式纠错训练。\"\n}"
+        }
+      ],
+      selectedResourceId: 1,
+      logs: [
+        { time: "12:00:01", tag: "profile", msg: "画像智能体检测到用户登录。开始监听苏格拉底多轮问答对话..." },
+        { time: "12:00:15", tag: "profile", msg: "多轮对话完成，已生成最新用户6维认知画像分值 JSON，写入 user_profiles 物理表。" },
+        { time: "12:00:16", tag: "planner", msg: "路径智能体加载 6 维画像底牌，计算专业 DAG 依存度，重新渲染有向无环学习拓扑。" }
+      ],
+      isSimulating: false,
+      streakChecked: false,
+      streakCount: 4
+    };
+
+    const tabTitles = [
+      "Socrates Portrait - 画像构建",
+      "Adaptive DAG Path - 自适应路线图",
+      "Resource Manager - 资源管理抽屉 (CRUD)",
+      "Monaco Sandbox - 在线代码实验室与改错",
+      "Evaluation Radar - 综合诊断评估大盘",
+      "Multi-Agent Terminal - 多智能体协同日志控制台"
+    ];
+
+    // Initialize Page
+    window.addEventListener("DOMContentLoaded", () => {
+      renderResourceList();
+      renderLogs();
+      updateRadarShape();
+    });
+
+    // Tab Switcher
+    function switchTab(tabIndex) {
+      if (state.isSimulating) return; // Prevent manual tab switching when simulator owns the screen
+      
+      const buttons = document.querySelectorAll(".tab-btn");
+      const panes = document.querySelectorAll(".tab-pane");
+      
+      buttons.forEach((btn, i) => {
+        if (i === tabIndex) btn.classList.add("active");
+        else btn.classList.remove("active");
+      });
+
+      panes.forEach((pane, i) => {
+        if (i === tabIndex) pane.classList.add("active");
+        else pane.classList.remove("active");
+      });
+
+      state.activeTab = tabIndex;
+      document.getElementById("simulator-tab-title").innerText = tabTitles[tabIndex];
+    }
+
+    // Voice Simulator Speech Wave
+    let speechTimer = null;
+    function triggerVoiceSpeak() {
+      const bars = document.querySelectorAll(".wave-bar");
+      if (speechTimer) {
+        clearInterval(speechTimer);
+        speechTimer = null;
+        bars.forEach(bar => bar.style.animationPlayState = 'paused');
+        
+        // Push user message
+        const chatBox = document.getElementById("socrates-chat-box");
+        const userMsg = document.createElement("div");
+        userMsg.className = "chat-bubble bubble-user";
+        userMsg.innerText = "我想先学二叉树的深度遍历，因为明天有一场算法小测。";
+        chatBox.appendChild(userMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // Push simulated AI Socrates response after 1.5s
+        setTimeout(() => {
+          const aiMsg = document.createElement("div");
+          aiMsg.className = "chat-bubble bubble-ai";
+          aiMsg.innerText = "明天的测验确实很关键！那我们直接锁定二叉树深度递归。你知道二叉树中序遍历的递归终止条件为什么是 if root is None 吗？如果我们在底层不加这一句限制，程序在运行时会出现什么内存问题？";
+          chatBox.appendChild(aiMsg);
+          chatBox.scrollTop = chatBox.scrollHeight;
+          
+          // Add logs
+          addLog("profile", "收到用户语音指令，识别文本：'我想先学二叉树深度遍历...'");
+          addLog("profile", "苏格拉底AI生成启发性应答，激活语音合成（MiniMax TTS）并发回前端。");
+        }, 1500);
+
+      } else {
+        bars.forEach(bar => bar.style.animationPlayState = 'running');
+        addLog("profile", "语音引擎启动，开始监听输入音频...");
+        speechTimer = setTimeout(() => {
+          triggerVoiceSpeak(); // Trigger pause & send text simulation
+        }, 3000);
+      }
+    }
+
+    // DAG Node Click
+    function clickDagNode(nodeId, title, status, desc) {
+      // Toggle DAG svg active class
+      const nodes = document.querySelectorAll(".dag-node");
+      nodes.forEach((node, i) => {
+        if (i === nodeId) {
+          node.classList.add("active");
+        } else if (i !== 0) { // Keep Python basic completed
+          node.classList.remove("active");
+        }
+      });
+
+      // Update lines
+      const line0 = document.getElementById("line-0");
+      const line1 = document.getElementById("line-1");
+      if (nodeId === 1) {
+        line0.classList.add("active");
+        line1.classList.remove("active");
+      } else if (nodeId === 2) {
+        line0.classList.remove("active");
+        line1.classList.add("active");
+      } else {
+        line0.classList.remove("active");
+        line1.classList.remove("active");
+      }
+
+      document.getElementById("dag-selected-title").innerText = title;
+      
+      const statusSpan = document.getElementById("dag-selected-status");
+      statusSpan.innerText = status;
+      statusSpan.className = "dag-info-status";
+      if (status === '已通关') statusSpan.classList.add("status-completed");
+      else if (status === '进行中') statusSpan.classList.add("status-active");
+      else statusSpan.classList.add("status-locked");
+
+      document.getElementById("dag-selected-desc").innerText = desc;
+      addLog("planner", `用户交互点击路线图节点: [${title}]。当前状态: ${status}。`);
+    }
+
+    // Resource CRUD Lists
+    function renderResourceList() {
+      const ul = document.getElementById("resource-ul");
+      ul.innerHTML = "";
+      state.resources.forEach(res => {
+        const li = document.createElement("li");
+        li.className = `resource-list-item ${res.id === state.selectedResourceId ? 'selected' : ''}`;
+        li.onclick = () => selectResource(res.id);
+        
+        li.innerHTML = `
+          <span>📄 ${res.title}</span>
+          <div class="resource-actions-wrap">
+            <button class="resource-item-btn" onclick="event.stopPropagation(); renameResource(${res.id})">
+              <svg style="width:12px;height:12px;fill:currentColor" viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.88,8.88M3,17.25V21H6.75L17.81,9.93L14.07,6.19L3,17.25Z"/></svg>
+            </button>
+            <button class="resource-item-btn btn-delete" onclick="event.stopPropagation(); deleteResource(${res.id})">
+              <svg style="width:12px;height:12px;fill:currentColor" viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+            </button>
+          </div>
+        `;
+        ul.appendChild(li);
+      });
+
+      renderResourceDetail();
+    }
+
+    function selectResource(id) {
+      state.selectedResourceId = id;
+      renderResourceList();
+    }
+
+    function renderResourceDetail() {
+      const detailBox = document.getElementById("resource-detail-box");
+      const selected = state.resources.find(res => res.id === state.selectedResourceId);
+
+      if (!selected) {
+        detailBox.innerHTML = `
+          <div class="resource-empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+            <p>请选择左侧资源或点击“新建”启动多智能体并发生成</p>
+          </div>
+        `;
+        return;
+      }
+
+      detailBox.innerHTML = `
+        <div class="resource-detail-header">
+          <div>
+            <h4 class="resource-detail-title">${selected.title}</h4>
+            <div class="resource-detail-meta">修改时间: ${selected.date} | 文件大小: ${selected.size}</div>
+          </div>
+          <button class="btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.75rem; display:flex; align-items:center; gap:0.25rem;" onclick="exportResource('${selected.title}')">
+            <svg style="width:12px;height:12px;fill:currentColor" viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>
+            导出讲义
+          </button>
+        </div>
+        <div class="resource-detail-content">${selected.content}</div>
+      `;
+    }
+
+    // Modal Control CRUD
+    function openNewResourceModal() {
+      document.getElementById("new-resource-modal").style.display = "flex";
+      addLog("resource", "用户开启新建资源抽屉。等待参数提交...");
+    }
+
+    function closeNewResourceModal() {
+      document.getElementById("new-resource-modal").style.display = "none";
+    }
+
+    function createNewResourceSubmit() {
+      const title = document.getElementById("resource-input-title").value || "未命名大纲.md";
+      const isOutline = document.getElementById("cb-outline").checked;
+      const isMindmap = document.getElementById("cb-mindmap").checked;
+      const isExercises = document.getElementById("cb-exercises").checked;
+      
+      closeNewResourceModal();
+
+      // Simulated stream generation
+      state.resources.push({
+        id: Date.now(),
+        title: title + ".md",
+        date: "生成中...",
+        size: "计算中...",
+        content: `正在调用 Claude-3.5-Sonnet 并发生成【${title}】的系统大纲与题目资源...\n\n`
+      });
+
+      const newId = state.resources[state.resources.length - 1].id;
+      state.selectedResourceId = newId;
+      renderResourceList();
+
+      addLog("resource", `触发并发资源生成引擎。参数：主题='${title}', 讲义=${isOutline}, 思维导图=${isMindmap}, 测验题=${isExercises}`);
+
+      // Start streaming simulation
+      let progress = 0;
+      const streamText = `### ${title}\n\n[多智能体协作：Claude-3.5 流式回传中]\n\n` + 
+                         `#### 一、核心概念定义\n` +
+                         `二叉平衡树 (AVL Tree) 是一种自平衡二叉搜索树。任意节点的左右两个子树的高度差（平衡因子）最大为 1。\n\n` + 
+                         `#### 二、单向旋转调整 (LL / RR)\n` +
+                         `当插入新节点导致不平衡时，需对受影响节点进行单向旋转复位，使得左右高度差归零。\n\n` +
+                         `#### 三、精选随堂练习\n` +
+                         `* 练习 1：若AVL树高度为 4，最少包含多少个节点？（答案：7）\n` +
+                         `* 练习 2：简述左右双旋 (LR) 调整的两个阶段操作。`;
+      
+      const interval = setInterval(() => {
+        const targetRes = state.resources.find(res => res.id === newId);
+        if (!targetRes) {
+          clearInterval(interval);
+          return;
+        }
+
+        progress += 30;
+        if (progress >= streamText.length) {
+          targetRes.content = streamText;
+          targetRes.date = new Date().toISOString().replace('T', ' ').slice(0, 16);
+          targetRes.size = "2.8 KB";
+          clearInterval(interval);
+          renderResourceDetail();
+          addLog("resource", `[${targetRes.title}] 流式生成完毕。成功写入 PostgreSQL 物理表并开启 RLS 策略。`);
+        } else {
+          targetRes.content = streamText.slice(0, progress) + " █ [流式传输中...]";
+          renderResourceDetail();
+        }
+      }, 50);
+    }
+
+    function renameResource(id) {
+      const res = state.resources.find(r => r.id === id);
+      if (!res) return;
+      const newName = prompt("请输入新的资源文件名：", res.title);
+      if (newName) {
+        res.title = newName;
+        res.date = new Date().toISOString().replace('T', ' ').slice(0, 16);
+        renderResourceList();
+        addLog("resource", `物理库资源 ${id} 重命名为: ${newName}`);
+      }
+    }
+
+    function deleteResource(id) {
+      if (confirm("确定要删除这篇生成的 AI 资源讲义吗？此操作无法撤销。")) {
+        state.resources = state.resources.filter(r => r.id !== id);
+        if (state.selectedResourceId === id) {
+          state.selectedResourceId = state.resources[0]?.id || null;
+        }
+        renderResourceList();
+        addLog("resource", `彻底擦除 resources 表中 id=${id} 的行记录，保证安全合规。`);
+      }
+    }
+
+    function exportResource(title) {
+      alert(`已成功通过 docx/pptxgenjs 导出标准格式的本地文档：${title}`);
+      addLog("resource", `用户导出本地文件：${title}`);
+    }
+
+    // Logger
+    function renderLogs() {
+      const box = document.getElementById("console-logs-box");
+      box.innerHTML = "";
+      state.logs.forEach(log => {
+        const line = document.createElement("div");
+        line.className = "console-line";
+        line.innerHTML = `
+          <span class="console-time">[${log.time}]</span>
+          <span class="agent-tag tag-${log.tag}">${log.tag} Agent</span>
+          <span class="console-msg">${log.msg}</span>
+        `;
+        box.appendChild(line);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function addLog(tag, msg) {
+      const time = new Date().toTimeString().split(' ')[0];
+      state.logs.push({ time, tag, msg });
+      
+      // Keep logs list small
+      if (state.logs.length > 25) state.logs.shift();
+      
+      renderLogs();
+    }
+
+    // Interactive Checkin Calendar
+    function clickTodayCheckin() {
+      if (state.streakChecked) return;
+      
+      const todayNode = document.getElementById("today-day");
+      todayNode.classList.add("checked");
+      state.streakChecked = true;
+      state.streakCount += 1;
+      
+      document.getElementById("streak-count").innerText = `已连续签到 ${state.streakCount} 天`;
+      document.getElementById("checkin-hint").innerHTML = `<span style="color:var(--success);font-weight:700">✓ 签到成功！已获赠 +10 Tokens！连签加成已激活。</span>`;
+      
+      addLog("eval", `触发打卡流水检测。写入 user_check_ins，获取打卡积分，当前 Streak: ${state.streakCount}天。`);
+    }
+
+    // Radar Dynamic Shape Adjust
+    function updateRadarShape() {
+      // Dynamic rendering of radar polygon coordinates based on metrics
+      // Center: 150, 150. Radius: 120.
+      // 6 axis angles:
+      // Theory: 90 deg (150, 150 - r)
+      // Coding: 30 deg (150 + r*cos30, 150 - r*sin30)
+      // Deconstruction: 330 deg (150 + r*cos30, 150 + r*sin30)
+      // Logic: 270 deg (150, 150 + r)
+      // Grit: 210 deg (150 - r*cos30, 150 + r*sin30)
+      // Breadth: 150 deg (150 - r*cos30, 150 - r*sin30)
+      
+      const r = 120;
+      const cos30 = 0.866;
+      const sin30 = 0.5;
+
+      const levels = [
+        85/100, // Theory
+        62/100, // Coding
+        74/100, // Deconstruct
+        90/100, // Logic
+        88/100, // Grit
+        55/100  // Breadth
+      ];
+
+      const p0 = [150, 150 - r * levels[0]];
+      const p1 = [150 + r * cos30 * levels[1], 150 - r * sin30 * levels[1]];
+      const p2 = [150 + r * cos30 * levels[2], 150 + r * sin30 * levels[2]];
+      const p3 = [150, 150 + r * levels[3]];
+      const p4 = [150 - r * cos30 * levels[4], 150 + r * sin30 * levels[4]];
+      const p5 = [150 - r * cos30 * levels[5], 150 - r * sin30 * levels[5]];
+
+      const pointsStr = `${p0[0]},${p0[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p3[0]},${p3[1]} ${p4[0]},${p4[1]} ${p5[0]},${p5[1]}`;
+      document.getElementById("radar-shape").setAttribute("points", pointsStr);
+    }
+
+    // Simulated All workflow Linkage
+    function simulateFullWorkflow() {
+      if (state.isSimulating) return;
+      state.isSimulating = true;
+      
+      const btn = document.getElementById("btn-simulate-all");
+      btn.disabled = true;
+      
+      // Step 1: Switch to Socrates
+      switchTab(0);
+      document.getElementById("collab-status").innerText = "运行中：Socrates Image画像诊断智能体正在处理用户历史问答...";
+      addLog("profile", "🤖 开始运行画像诊断多轮协作...");
+      
+      setTimeout(() => {
+        // Step 2: Switch to DAG Path
+        switchTab(1);
+        document.getElementById("collab-status").innerText = "运行中：Planner Agent依据画像评估，动态规划有向无环依赖图 (DAG)...";
+        clickDagNode(2, '非线性探索: 树与二叉树', '进行中', '因先前Python沙箱表现不佳，规划器在此推荐学习递归二叉树。');
+        
+        setTimeout(() => {
+          // Step 3: Switch to Resource Manager and Add Resource
+          switchTab(2);
+          document.getElementById("collab-status").innerText = "运行中：Resource Agent拉起 Claude-3.5-Sonnet 并发流式生成平衡旋转教讲...";
+          
+          // Inject temp resource and stream it
+          const customTitle = "二叉平衡树的核心旋转原理";
+          state.resources.push({
+            id: 99,
+            title: customTitle + ".md",
+            date: "生成中...",
+            size: "计算中...",
+            content: "### AVL树旋转原理\n\n[正在流式生成中...]"
+          });
+          state.selectedResourceId = 99;
+          renderResourceList();
+
+          setTimeout(() => {
+            const AVLcontent = `### AVL树旋转原理\n\n自平衡二叉搜索树通过 **左旋 (Left Rotate)** 和 **右旋 (Right Rotate)** 调节其高度。\n\n#### 1. 左旋 LL 调节\n若右子树过高导致不平衡，则将右子树提拔为根，旧根旋转为新根的左子树。\n\n#### 2. 右旋 RR 调节\n若左子树过高导致不平衡，则相反。\n\n#### 3. 典型习题与代码验证\n请在下一节【代码实验室】中尝试编写其递归旋转代码。`;
+            const avlRes = state.resources.find(r => r.id === 99);
+            if (avlRes) {
+              avlRes.content = AVLcontent;
+              avlRes.date = new Date().toISOString().replace('T', ' ').slice(0, 16);
+              avlRes.size = "1.5 KB";
+            }
+            renderResourceDetail();
+            addLog("resource", "二叉平衡树核心旋转大纲流式并发推送完成。");
+
+            setTimeout(() => {
+              // Step 4: Switch to Monaco Sandbox
+              switchTab(3);
+              document.getElementById("collab-status").innerText = "运行中：Coder Agent启动，监测 Monaco 编辑器中的代码逻辑，DeepSeek 提供审查...";
+              addLog("coder", "Monaco 实验室接收到 Python 类 AVL 树代码。拉起 DeepSeek-Coder-V2 检查...");
+              addLog("coder", "在第 12 行检测到 O(N) 递归递归深度堆栈隐患，成功吐出 Inline 改错气泡。");
+
+              setTimeout(() => {
+                // Step 5: Switch to Radar Diagnosis
+                switchTab(4);
+                document.getElementById("collab-status").innerText = "运行中：Evaluation Agent收集所有行为指标，由 Claude 生成学业周报大盘...";
+                addLog("eval", "综合收集：4轮问答、AVL树资源学习时间、Monaco代码改错耗时。启动雷达核验...");
+                
+                // Slightly update radar points in simulator to show update
+                document.getElementById("radar-shape").setAttribute("points", "150,32 233,102 246,184 150,238 69,192 103,107");
+                addLog("eval", "学业雷达指标已全面回传，已完成画像分值动态自适应进化！");
+
+                setTimeout(() => {
+                  state.isSimulating = false;
+                  btn.disabled = false;
+                  document.getElementById("collab-status").innerText = "模拟联动结束。数据底盘已同步进化。可切换 Tab 自主审查成果。";
+                  switchTab(5); // Switch to logs at the end so they can see all logs
+                }, 2000);
+              }, 2000);
+            }, 2500);
+          }, 2000);
+        }, 2000);
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

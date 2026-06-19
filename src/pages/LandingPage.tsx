@@ -13,6 +13,7 @@ import {
   Sparkles, BookOpen, Trophy, Code2, Network,
   MessageCircle, BarChart3, Shield, Infinity as InfinityIcon, Crown, Flame, Globe, MapPin,
   Quote, GraduationCap as GradCap, Loader2,
+  Plus, Trash2, Edit, Download, Calendar, UserCheck, Play, Volume2, Info, X, ChevronRight, Activity, FileText, Award,
 } from 'lucide-react';
 
 /* ─────────────────────── 数据 ─────────────────────── */
@@ -641,6 +642,289 @@ export default function LandingPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Gamification State
+  const [streakChecked, setStreakChecked] = useState(false);
+  const [streakCount, setStreakCount] = useState(4);
+
+  // Simulator State
+  const [activeTab, setActiveTab] = useState(0);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [collabStatus, setCollabStatus] = useState("就绪。点击右侧按钮模拟完整的“画像诊断-路径规划-资源生成-代码纠错-综合评估”协作流程。");
+  const [voiceActive, setVoiceActive] = useState(false);
+  const [socratesChat, setSocratesChat] = useState([
+    { role: 'ai', content: '您好！我是您的 Socrates 教学助理。听说您打算深入学习人工智能与数据结构？在开始之前，我想先了解一下，您以前用 C++ 或 Python 独立编写过最复杂的程序是什么？大概有多少行代码？' },
+    { role: 'user', content: '我以前只学过一些基础的 Python，写过一个 100 行左右的学生管理系统，没接触过复杂的算法。' },
+    { role: 'ai', content: '非常好，100行的学生管理系统是一个扎实的起点！这说明你已经掌握了变量、条件分支和基本的文件/列表操作。那么，当你听到“二叉树”或“链表”这些词时，你的脑海中会浮现出怎样的物理模型？你会如何尝试用 Python 的列表或字典去表示它们？' }
+  ]);
+  const [selectedNode, setSelectedNode] = useState(2);
+  const [nodeData, setNodeData] = useState({
+    title: '树与二叉树',
+    status: '进行中',
+    desc: '系统诊断推荐学习节点。研究二叉树的递归与非递归遍历。双击此节点将自动并发生成相关讲义大纲。'
+  });
+  const [simulatorResources, setSimulatorResources] = useState([
+    { 
+      id: 1, 
+      title: "二叉树深度遍历讲义.md", 
+      date: "2026-06-18 10:12", 
+      size: "4.2 KB",
+      content: "### 二叉树的三种深度遍历算法\n\n二叉树是以递归方式定义的数据结构，因此遍历也主要以递归实现为主。\n\n1. **先序遍历 (Pre-order)**: 根 -> 左 -> 右\n2. **中序遍历 (In-order)**: 左 -> 根 -> 右 (对于二叉搜索树，中序遍历结果即为有序序列)\n3. **后序遍历 (Post-order)**: 左 -> 右 -> 根\n\n```python\ndef inorderTraversal(root):\n    if not root:\n        return []\n    return inorderTraversal(root.left) + [root.val] + inorderTraversal(root.right)\n```"
+    },
+    { 
+      id: 2, 
+      title: "双向循环链表实操代码.cpp", 
+      date: "2026-06-19 09:45", 
+      size: "8.5 KB",
+      content: "/* 双向循环链表的插入与删除 */\n#include <iostream>\nusing namespace std;\n\nstruct Node {\n    int data;\n    Node* prev;\n    Node* next;\n    Node(int val) : data(val), prev(nullptr), next(nullptr) {}\n};\n\nvoid insertAtHead(Node*& head, int val) {\n    Node* newNode = new Node(val);\n    if(!head) {\n        head = newNode;\n        head->next = head;\n        head->prev = head;\n        return;\n    }\n    Node* tail = head->prev;\n    newNode->next = head;\n    newNode->prev = tail;\n    tail->next = newNode;\n    head->prev = newNode;\n    head = newNode;\n}"
+    },
+    { 
+      id: 3, 
+      title: "阶段性画像诊断报告.json", 
+      date: "2026-06-19 12:00", 
+      size: "1.2 KB",
+      content: "{\n  \"portrait_id\": \"port_8832a\",\n  \"user_id\": \"usr_admin\",\n  \"dimensions\": {\n    \"theory_foundation\": 85,\n    \"practical_coding\": 62,\n    \"problem_deconstruction\": 74,\n    \"logic_inference\": 90,\n    \"learning_grit\": 88,\n    \"knowledge_breadth\": 55\n  },\n  \"dominant_learning_style\": \"逻辑主导型 / 动手欠缺者\",\n  \"custom_adjustments\": \"建议缩短理论视频时长，增加Monaco沙箱编码与变式纠错训练。\"\n}"
+    }
+  ]);
+  const [selectedResId, setSelectedResId] = useState(1);
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [newTitle, setNewTitle] = useState("二叉平衡树的核心旋转原理");
+  const [newOpts, setNewOpts] = useState({ outline: true, mindmap: true, exercises: true, code: false });
+  const [simulatorLogs, setSimulatorLogs] = useState([
+    { time: "12:00:01", tag: "profile", msg: "画像智能体检测到用户登录。开始监听苏格拉底多轮问答对话..." },
+    { time: "12:00:15", tag: "profile", msg: "多轮对话完成，已生成最新用户6维认知画像分值 JSON，写入 user_profiles 物理表。" },
+    { time: "12:00:16", tag: "planner", msg: "路径智能体加载 6 维画像底牌，计算专业 DAG 依存度，重新渲染有向无环学习拓扑。" }
+  ]);
+  const [radarLevels, setRadarLevels] = useState([85, 62, 74, 90, 88, 55]);
+
+  const addSimulatorLog = (tag: string, msg: string) => {
+    const time = new Date().toTimeString().split(' ')[0];
+    setSimulatorLogs(prev => {
+      const updated = [...prev, { time, tag, msg }];
+      if (updated.length > 25) updated.shift();
+      return updated;
+    });
+  };
+
+  const [speechTimer, setSpeechTimer] = useState<any>(null);
+  const triggerVoiceSpeak = () => {
+    if (speechTimer) {
+      clearTimeout(speechTimer);
+      setSpeechTimer(null);
+      setVoiceActive(false);
+
+      setSocratesChat(prev => [...prev, { role: 'user', content: '我想先学二叉树的深度遍历，因为明天有一场算法小测。' }]);
+      addSimulatorLog("profile", "收到用户语音指令，识别文本：'我想先学二叉树深度遍历...'" );
+
+      setTimeout(() => {
+        setSocratesChat(prev => [...prev, {
+          role: 'ai',
+          content: '明天的测验确实很关键！那我们直接锁定二叉树深度递归。你知道二叉树中序遍历的递归终止条件为什么是 if root is None 吗？如果我们在底层不加这一句限制，程序在运行时会出现什么内存问题？'
+        }]);
+        addSimulatorLog("profile", "苏格拉底AI生成启发性应答，激活语音合成（MiniMax TTS）并发回前端。" );
+      }, 1500);
+    } else {
+      setVoiceActive(true);
+      addSimulatorLog("profile", "语音引擎启动，开始监听输入音频..." );
+      const timer = setTimeout(() => {
+        setVoiceActive(false);
+        setSpeechTimer(null);
+        setSocratesChat(prev => [...prev, { role: 'user', content: '我想先学二叉树的深度遍历，因为明天有一场算法小测。' }]);
+        addSimulatorLog("profile", "收到用户语音指令，识别文本：'我想先学二叉树深度遍历...'" );
+
+        setTimeout(() => {
+          setSocratesChat(prev => [...prev, {
+            role: 'ai',
+            content: '明天的测验确实很关键！那我们直接锁定二叉树深度递归。你知道二叉树中序遍历的递归终止条件为什么是 if root is None 吗？如果我们在底层不加这一句限制，程序在运行时会出现什么内存问题？'
+          }]);
+          addSimulatorLog("profile", "苏格拉底AI生成启发性应答，激活语音合成（MiniMax TTS）并发回前端。" );
+        }, 1500);
+      }, 3000);
+      setSpeechTimer(timer);
+    }
+  };
+
+  const handleCheckin = () => {
+    if (streakChecked) return;
+    setStreakChecked(true);
+    setStreakCount(prev => prev + 1);
+    addSimulatorLog("eval", `触发打卡流水检测。写入 user_check_ins，获取打卡积分，当前 Streak: ${streakCount + 1}天。`);
+  };
+
+  const handleNodeClick = (nodeId: number, title: string, status: string, desc: string) => {
+    setSelectedNode(nodeId);
+    setNodeData({ title, status, desc });
+    addSimulatorLog("planner", `用户交互点击路线图节点: [${title}]。当前状态: ${status}。`);
+  };
+
+  const selectResource = (id: number) => {
+    setSelectedResId(id);
+  };
+
+  const renameResource = (id: number) => {
+    const res = simulatorResources.find(r => r.id === id);
+    if (!res) return;
+    const newName = prompt("请输入新的资源文件名：", res.title);
+    if (newName) {
+      setSimulatorResources(prev => prev.map(r => r.id === id ? { ...r, title: newName, date: new Date().toISOString().replace('T', ' ').slice(0, 16) } : r));
+      addSimulatorLog("resource", `物理库资源 ${id} 重命名为: ${newName}`);
+    }
+  };
+
+  const deleteResource = (id: number) => {
+    if (confirm("确定要删除这篇生成的 AI 资源讲义吗？此操作无法撤销。")) {
+      setSimulatorResources(prev => prev.filter(r => r.id !== id));
+      if (selectedResId === id) {
+        const remaining = simulatorResources.filter(r => r.id !== id);
+        setSelectedResId(remaining[0]?.id || 0);
+      }
+      addSimulatorLog("resource", `彻底擦除 resources 表中 id=${id} 的行记录，保证安全合规。`);
+    }
+  };
+
+  const exportResource = (title: string) => {
+    alert(`已成功通过 docx/pptxgenjs 导出标准格式的本地文档：${title}`);
+    addSimulatorLog("resource", `用户导出本地文件：${title}`);
+  };
+
+  const createNewResourceSubmit = () => {
+    const title = newTitle || "未命名大纲.md";
+    setShowNewModal(false);
+
+    const newId = Date.now();
+    setSimulatorResources(prev => [
+      ...prev,
+      {
+        id: newId,
+        title: title + ".md",
+        date: "生成中...",
+        size: "计算中...",
+        content: `正在调用 Claude-3.5-Sonnet 并发生成【${title}】的系统大纲与题目资源...\n\n`
+      }
+    ]);
+    setSelectedResId(newId);
+
+    addSimulatorLog("resource", `触发并发资源生成引擎。参数：主题='${title}', 讲义=${newOpts.outline}, 思维导图=${newOpts.mindmap}, 测验题=${newOpts.exercises}`);
+
+    let progress = 0;
+    const streamText = `### ${title}\n\n[多智能体协作：Claude-3.5 流式回传中]\n\n` + 
+                       `#### 一、核心概念定义\n` +
+                       `二叉平衡树 (AVL Tree) 是一种自平衡二叉搜索树。任意节点的左右两个子树的高度差（平衡因子）最大为 1。\n\n` + 
+                       `#### 二、单向旋转调整 (LL / RR)\n` +
+                       `当插入新节点导致不平衡时，需对受影响节点进行单向旋转复位，使得左右高度差归零。\n\n` +
+                       `#### 三、精选随堂练习\n` +
+                       `* 练习 1：若AVL树高度为 4，最少包含多少个节点？（答案：7）\n` +
+                       `* 练习 2：简述左右双旋 (LR) 调整的两个阶段操作。`;
+    
+    const interval = setInterval(() => {
+      setSimulatorResources(prev => {
+        const exists = prev.find(r => r.id === newId);
+        if (!exists) {
+          clearInterval(interval);
+          return prev;
+        }
+
+        progress += 30;
+        if (progress >= streamText.length) {
+          clearInterval(interval);
+          addSimulatorLog("resource", `[${title}.md] 流式生成完毕。成功写入 PostgreSQL 物理表并开启 RLS 策略。`);
+          return prev.map(r => r.id === newId ? {
+            ...r,
+            content: streamText,
+            date: new Date().toISOString().replace('T', ' ').slice(0, 16),
+            size: "2.8 KB"
+          } : r);
+        } else {
+          return prev.map(r => r.id === newId ? {
+            ...r,
+            content: streamText.slice(0, progress) + " █ [流式传输中...]"
+          } : r);
+        }
+      });
+    }, 50);
+  };
+
+  const simulateFullWorkflow = () => {
+    if (isSimulating) return;
+    setIsSimulating(true);
+    
+    setActiveTab(0);
+    setCollabStatus("运行中：Socrates Image画像诊断智能体正在处理用户历史问答...");
+    addSimulatorLog("profile", "🤖 开始运行画像诊断多轮协作...");
+    
+    setTimeout(() => {
+      setActiveTab(1);
+      setCollabStatus("运行中：Planner Agent依据画像评估，动态规划有向无环依赖图 (DAG)...");
+      handleNodeClick(2, '非线性探索: 树与二叉树', '进行中', '因先前Python沙箱表现不佳，规划器在此推荐学习递归二叉树。');
+      
+      setTimeout(() => {
+        setActiveTab(2);
+        setCollabStatus("运行中：Resource Agent拉起 Claude-3.5-Sonnet 并发流式生成平衡旋转教讲...");
+        
+        const customTitle = "二叉平衡树的核心旋转原理";
+        const newId = 99;
+        setSimulatorResources(prev => [
+          ...prev,
+          {
+            id: newId,
+            title: customTitle + ".md",
+            date: "生成中...",
+            size: "计算中...",
+            content: "### AVL树旋转原理\n\n[正在流式生成中...]"
+          }
+        ]);
+        setSelectedResId(newId);
+
+        setTimeout(() => {
+          const AVLcontent = `### AVL树旋转原理\n\n自平衡二叉搜索树通过 **左旋 (Left Rotate)** 和 **右旋 (Right Rotate)** 调节其高度。\n\n#### 1. 左旋 LL 调节\n若右子树过高导致不平衡，则将右子树提拔为根，旧根旋转为新根的左子树。\n\n#### 2. 右旋 RR 调节\n若左子树过高导致不平衡，则相反。\n\n#### 3. 典型习题与代码验证\n请在下一节【代码实验室】中尝试编写其递归旋转代码。`;
+          setSimulatorResources(prev => prev.map(r => r.id === newId ? {
+            ...r,
+            content: AVLcontent,
+            date: new Date().toISOString().replace('T', ' ').slice(0, 16),
+            size: "1.5 KB"
+          } : r));
+          addSimulatorLog("resource", "二叉平衡树核心旋转大纲流式并发推送完成。");
+
+          setTimeout(() => {
+            setActiveTab(3);
+            setCollabStatus("运行中：Coder Agent启动，监测 Monaco 编辑器中的代码逻辑，DeepSeek 提供审查...");
+            addSimulatorLog("coder", "Monaco 实验室接收到 Python 类 AVL 树代码。拉起 DeepSeek-Coder-V2 检查...");
+            addSimulatorLog("coder", "在第 12 行检测到 O(N) 递归递归深度堆栈隐患，成功吐出 Inline 改错气泡。");
+
+            setTimeout(() => {
+              setActiveTab(4);
+              setCollabStatus("运行中：Evaluation Agent收集所有行为指标，由 Claude 生成学业周报大盘...");
+              addSimulatorLog("eval", "综合收集：4轮问答、AVL树资源学习时间、Monaco代码改错耗时。启动雷达核验...");
+              
+              setRadarLevels([92, 70, 78, 93, 90, 60]);
+              addSimulatorLog("eval", "学业雷达指标已全面回传，已完成画像分值动态自适应进化！");
+
+              setTimeout(() => {
+                setIsSimulating(false);
+                setCollabStatus("模拟联动结束。数据底盘已同步进化。可切换 Tab 自主审查成果。");
+                setActiveTab(5);
+              }, 2000);
+            }, 2000);
+          }, 2500);
+        }, 2000);
+      }, 2000);
+    }, 2000);
+  };
+
+  const computeRadarPoints = (levels: number[]) => {
+    const r = 120;
+    const cos30 = 0.866;
+    const sin30 = 0.5;
+    
+    const p0 = [150, 150 - r * (levels[0] / 100)];
+    const p1 = [150 + r * cos30 * (levels[1] / 100), 150 - r * sin30 * (levels[1] / 100)];
+    const p2 = [150 + r * cos30 * (levels[2] / 100), 150 + r * sin30 * (levels[2] / 100)];
+    const p3 = [150, 150 + r * (levels[3] / 100)];
+    const p4 = [150 - r * cos30 * (levels[4] / 100), 150 + r * sin30 * (levels[4] / 100)];
+    const p5 = [150 - r * cos30 * (levels[5] / 100), 150 - r * sin30 * (levels[5] / 100)];
+    
+    return `${p0[0]},${p0[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p3[0]},${p3[1]} ${p4[0]},${p4[1]} ${p5[0]},${p5[1]}`;
+  };
+
   const [activeCompetitor, setActiveCompetitor] = useState<string | null>(null);
   const competitorNames = ['Kowell AI', 'Khan', '学而思', 'Duolingo'];
   const competitorColors = ['hsl(162,63%,45%)', 'hsl(220,70%,55%)', 'hsl(36,80%,52%)', 'hsl(0,70%,55%)'];
@@ -789,6 +1073,8 @@ export default function LandingPage() {
       </section>
 
 
+
+
       {/* ─── 特色功能 3D 轮播图 ─── */}
       <section id="特色功能" className="py-24 px-4 overflow-hidden relative bg-transparent">
         {/* Deleted previous background to make this area completely clean */}
@@ -894,6 +1180,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
 
       {/* ─── 适合人群（重新设计） ─── */}
       <section className="py-24 px-4 bg-muted/20 overflow-hidden">
@@ -1015,6 +1302,502 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ─── 核心功能交互式工作流 ─── */}
+      <section id="工作流模拟" className="py-24 px-4 bg-muted/10 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 w-full">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-primary/10 text-primary border-primary/25 px-3 py-1 text-xs">INTERACTIVE SIMULATOR</Badge>
+            <h2 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight">核心功能交互式工作流</h2>
+            <p className="text-muted-foreground text-sm max-w-xl mx-auto leading-relaxed">
+              点击下方 Tab 查看 Kowell AI 核心学习链条中各模块的交互模拟，体验多智能体协作细节。
+            </p>
+          </div>
+
+          {/* Trigger Box */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-card border border-primary/25 shadow-md shadow-primary/5 mb-8">
+            <div className="flex-1">
+              <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+                🤖 多智能体协同流式演示 (Simulation Control)
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{collabStatus}</p>
+            </div>
+            <Button
+              onClick={simulateFullWorkflow}
+              disabled={isSimulating}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-md shrink-0 flex items-center gap-2"
+            >
+              {isSimulating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
+              <span>一键联动模拟</span>
+            </Button>
+          </div>
+
+          {/* Tabs Navigation */}
+          <div className="flex flex-wrap gap-2 mb-6 border-b border-border/60 pb-3">
+            {[
+              "1. Socrates 画像",
+              "2. 自适应 DAG 路径",
+              "3. 资源生成 (CRUD)",
+              "4. 代码实验室 (Monaco)",
+              "5. 诊断评估雷达",
+              "🤖 多智能体日志"
+            ].map((tab, idx) => (
+              <button
+                key={idx}
+                onClick={() => !isSimulating && setActiveTab(idx)}
+                className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                  activeTab === idx
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:bg-muted'
+                } ${isSimulating ? 'cursor-not-allowed opacity-50' : ''}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Mockup Window */}
+          <div className="bg-slate-950 text-slate-100 rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col h-[480px]">
+            <div className="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-slate-900/50">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-red-500/80" />
+                <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
+              </div>
+              <span className="text-xs font-semibold text-slate-400">
+                {["Socrates Portrait - 画像构建", "Adaptive DAG Path - 自适应路线图", "Resource Manager - 资源管理抽屉 (CRUD)", "Monaco Sandbox - 在线代码实验室与改错", "Evaluation Radar - 综合诊断评估大盘", "Multi-Agent Terminal - 多智能体协同日志控制台"][activeTab]}
+              </span>
+              <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span>Connected (DeepSeek)</span>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-auto p-6 relative">
+              {/* Tab 0: Socrates Chat */}
+              {activeTab === 0 && (
+                <div className="flex flex-col h-full justify-between gap-4">
+                  <div className="flex-1 overflow-y-auto space-y-4 pr-2 font-sans text-xs">
+                    {socratesChat.map((msg, i) => (
+                      <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 leading-relaxed shadow-sm ${
+                          msg.role === 'user'
+                            ? 'bg-primary text-primary-foreground rounded-tr-none'
+                            : 'bg-slate-900 border border-white/5 rounded-tl-none'
+                        }`}>
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-white/5 gap-3 shrink-0">
+                    <button
+                      onClick={triggerVoiceSpeak}
+                      disabled={isSimulating}
+                      className={`p-3 rounded-full flex items-center justify-center transition-all ${
+                        voiceActive
+                          ? 'bg-red-500 text-white animate-pulse'
+                          : 'bg-slate-800 hover:bg-slate-700 text-primary'
+                      }`}
+                    >
+                      <Volume2 className="w-4 h-4" />
+                    </button>
+                    <div className="flex-1 text-[11px] text-slate-400 flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((bar) => (
+                          <div
+                            key={bar}
+                            className={`w-1 bg-primary rounded-full transition-all duration-300 ${
+                              voiceActive ? 'animate-bounce' : 'h-3'
+                            }`}
+                            style={{
+                              height: voiceActive ? undefined : `${4 + bar * 3}px`,
+                              animationDelay: `${bar * 150}ms`,
+                              animationDuration: '1s'
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span>{voiceActive ? '正在录音并传送音频给 Socrates AI...' : '点击麦克风模拟语音交互 (MiniMax TTS 驱动)'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 1: DAG Path */}
+              {activeTab === 1 && (
+                <div className="flex flex-col md:flex-row h-full gap-6">
+                  <div className="flex-1 border border-white/5 rounded-xl bg-slate-900/40 p-4 flex items-center justify-center">
+                    <svg className="w-full h-[250px]" viewBox="0 0 600 300">
+                      <line x1="80" y1="150" x2="200" y2="80" className={`stroke-2 transition-all duration-500 ${selectedNode === 1 ? 'stroke-primary' : 'stroke-zinc-700/60'}`} />
+                      <line x1="80" y1="150" x2="200" y2="220" className={`stroke-2 transition-all duration-500 ${selectedNode === 2 ? 'stroke-primary' : 'stroke-zinc-700/60'}`} />
+                      <line x1="200" y1="80" x2="350" y2="80" className={`stroke-2 transition-all duration-500 ${selectedNode === 3 ? 'stroke-primary' : 'stroke-zinc-700/60'}`} />
+                      <line x1="200" y1="220" x2="350" y2="220" className={`stroke-2 transition-all duration-500 ${selectedNode === 4 ? 'stroke-primary' : 'stroke-zinc-700/60'}`} />
+                      <line x1="350" y1="80" x2="480" y2="150" className={`stroke-2 transition-all duration-500 ${selectedNode === 5 ? 'stroke-primary' : 'stroke-zinc-700/60'}`} />
+                      <line x1="350" y1="220" x2="480" y2="150" className={`stroke-2 transition-all duration-500 ${selectedNode === 5 ? 'stroke-primary' : 'stroke-zinc-700/60'}`} />
+
+                      {[
+                        { id: 0, cx: 80, cy: 150, label: 'Python基础', title: '数据结构底座: Python 基础', status: '已通关', desc: '掌握变量、控制流、函数及基础OOP。耗时 6.4 小时。', color: 'fill-emerald-500/25 stroke-emerald-500' },
+                        { id: 1, cx: 200, cy: 80, label: '链表与栈', title: '线性结构通关: 链表与栈', status: '进行中', desc: '重点分析链表指针逻辑与栈的进出顺序，包含Monaco沙箱实操。', color: 'fill-primary/20 stroke-primary' },
+                        { id: 2, cx: 200, cy: 220, label: '树与二叉树', title: '非线性探索: 树与二叉树', status: '进行中', desc: '研究二叉树遍历算法与堆结构。前置依赖：Python基础。', color: 'fill-primary/20 stroke-primary' },
+                        { id: 3, cx: 350, cy: 80, label: '递归与分治', title: '算法核心: 递归与分治', status: '未解锁', desc: '深度探讨递归栈空间开销与大O复杂度优化。', color: 'fill-slate-800 stroke-zinc-700' },
+                        { id: 4, cx: 350, cy: 220, label: 'DFS/BFS', title: '经典算法: 深度优先搜索', status: '未解锁', desc: '学习图深度遍历与拓扑排序。前置依赖：树与二叉树。', color: 'fill-slate-800 stroke-zinc-700' },
+                        { id: 5, cx: 480, cy: 150, label: 'AI推理实践', title: '综合实践: AI推理智能体', status: '未解锁', desc: '整合自研算法，构建首个能进行问题拆解的智能体节点。', color: 'fill-slate-800 stroke-zinc-700' },
+                      ].map((node) => (
+                        <g
+                          key={node.id}
+                          className="cursor-pointer group"
+                          onClick={() => handleNodeClick(node.id, node.title, node.status, node.desc)}
+                        >
+                          <circle
+                            cx={node.cx}
+                            cy={node.cy}
+                            r="28"
+                            className={`transition-all duration-300 ${node.color} ${selectedNode === node.id ? 'stroke-2' : 'stroke-1 hover:stroke-2'}`}
+                          />
+                          <text
+                            x={node.cx}
+                            y={node.cy + 4}
+                            className="text-[9px] font-semibold fill-slate-200 pointer-events-none"
+                            textAnchor="middle"
+                          >
+                            {node.label}
+                          </text>
+                        </g>
+                      ))}
+                    </svg>
+                  </div>
+
+                  <div className="w-full md:w-64 border border-white/5 rounded-xl bg-slate-900/40 p-5 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between pb-2 border-b border-white/5 mb-3">
+                        <span className="font-bold text-xs">{nodeData.title}</span>
+                        <span className={`text-[9px] px-2 py-0.5 rounded font-semibold border ${
+                          nodeData.status === '已通关'
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                            : nodeData.status === '进行中'
+                            ? 'bg-primary/10 border-primary/20 text-primary'
+                            : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+                        }`}>{nodeData.status}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">{nodeData.desc}</p>
+                    </div>
+                    <div className="text-[9px] text-zinc-500 leading-relaxed border-t border-white/5 pt-3 mt-4">
+                      💡 提示: 双击图中的“进行中”节点，可以直接调取多智能体为您生成专项复习文档大纲。
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Resource Manager */}
+              {activeTab === 2 && (
+                <div className="flex h-full border border-white/5 rounded-xl overflow-hidden font-sans text-xs bg-slate-900/40">
+                  <div className="w-48 border-r border-white/5 flex flex-col bg-slate-950/40">
+                    <div className="p-3 border-b border-white/5 flex justify-between items-center bg-slate-900/20">
+                      <span className="font-bold text-[10px] text-slate-400">我的资源 (CRUD)</span>
+                      <button
+                        onClick={() => setShowNewModal(true)}
+                        disabled={isSimulating}
+                        className="px-2 py-1 rounded bg-primary text-primary-foreground text-[10px] font-bold hover:scale-102 transition-transform"
+                      >
+                        + 新建
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                      {simulatorResources.map((res) => (
+                        <div
+                          key={res.id}
+                          onClick={() => selectResource(res.id)}
+                          className={`group p-2 rounded-lg cursor-pointer flex items-center justify-between gap-2 transition-colors ${
+                            selectedResId === res.id ? 'bg-primary/20 text-primary font-medium' : 'hover:bg-slate-900 text-slate-400'
+                          }`}
+                        >
+                          <span className="truncate flex-1">📄 {res.title}</span>
+                          {!isSimulating && (
+                            <div className="opacity-0 group-hover:opacity-100 flex gap-1 shrink-0">
+                              <button onClick={(e) => { e.stopPropagation(); renameResource(res.id); }} className="hover:text-primary">
+                                <Edit className="w-3 h-3" />
+                              </button>
+                              <button onClick={(e) => { e.stopPropagation(); deleteResource(res.id); }} className="hover:text-red-400">
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 flex flex-col bg-slate-900/10">
+                    {(() => {
+                      const selected = simulatorResources.find(res => res.id === selectedResId);
+                      if (!selected) {
+                        return (
+                          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-2">
+                            <FileText className="w-8 h-8 opacity-40" />
+                            <span>请选择左侧资源或点击“新建”启动多智能体并发生成</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <>
+                          <div className="p-4 border-b border-white/5 flex justify-between items-center bg-slate-900/30">
+                            <div>
+                              <h4 className="font-bold text-slate-200">{selected.title}</h4>
+                              <div className="text-[9px] text-slate-500 mt-0.5">修改时间: {selected.date} | 文件大小: {selected.size}</div>
+                            </div>
+                            <Button
+                              onClick={() => exportResource(selected.title)}
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-3 border-white/10 hover:bg-slate-800 text-[10px] font-bold text-slate-300 flex items-center gap-1 shrink-0"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>导出讲义</span>
+                            </Button>
+                          </div>
+                          <pre className="flex-1 p-4 font-mono text-[10px] text-slate-300 overflow-auto whitespace-pre-wrap leading-relaxed select-text">
+                            {selected.content}
+                          </pre>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 3: Monaco Code Sandbox */}
+              {activeTab === 3 && (
+                <div className="flex flex-col h-full border border-white/5 rounded-xl bg-slate-950 font-mono text-[10px] leading-relaxed p-4 overflow-y-auto select-text text-slate-300">
+                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                    <span>deepseek_coder_agent.py</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-600">1 </span><span className="text-purple-400 font-semibold">class</span> <span className="text-yellow-400 font-bold">Node</span>:<br/>
+                    <span className="text-zinc-600">2 </span>&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-purple-400 font-semibold">def</span> <span className="text-blue-400">__init__</span>(self, val):<br/>
+                    <span className="text-zinc-600">3 </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.val = val<br/>
+                    <span className="text-zinc-600">4 </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.left = <span className="text-cyan-400">None</span><br/>
+                    <span className="text-zinc-600">5 </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.right = <span className="text-cyan-400">None</span><br/>
+                    <span className="text-zinc-600">6 </span><br/>
+                    <span className="text-zinc-600">7 </span><span className="text-zinc-500"># AI 提醒：递归计算树的深度</span><br/>
+                    <span className="text-zinc-600">8 </span><span className="text-purple-400 font-semibold">def</span> <span className="text-blue-400">maxDepth</span>(root: Node) -&gt; <span className="text-cyan-400">int</span>:<br/>
+                    <span className="text-zinc-600">9 </span>&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-purple-400 font-semibold">if</span> root <span className="text-purple-400">is</span> <span className="text-cyan-400">None</span>:<br/>
+                    <span className="text-zinc-600">10</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-purple-400 font-semibold">return</span> <span className="text-amber-500">0</span><br/>
+                    <span className="text-zinc-600">11</span>&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-zinc-500"># 此处如果出现深层大树可能导致递归栈溢出</span><br/>
+                    <span className="text-zinc-600">12</span>&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-purple-400 font-semibold">return</span> max(maxDepth(root.left), maxDepth(root.right)) + <span className="text-amber-500">1</span>
+                  </div>
+
+                  {/* Inline Code Review bubble */}
+                  <div className="mt-4 p-4 rounded-xl border border-primary/30 bg-primary/5 text-slate-200">
+                    <div className="flex items-center gap-2 pb-1.5 border-b border-primary/20 mb-2 font-sans font-bold text-xs text-primary">
+                      <span className="w-2 h-2 rounded-full bg-primary" />
+                      <span>DeepSeek Code Reviewer (Inline)</span>
+                    </div>
+                    <div className="text-[10.5px] leading-relaxed">
+                      第 12 行：此处采用朴素递归求最大深度，在大数据量或斜树下，最坏时间复杂度为 O(N)，且空间复杂度退化为 O(N)（栈开销）。<br />
+                      <strong>优化策略</strong>：可以考虑使用迭代法（广度优先搜索 BFS 借助队列）来限制内存栈的暴涨。
+                    </div>
+                    <div className="mt-2.5 font-mono text-[9.5px] bg-slate-900 border border-white/5 rounded-lg p-2.5 text-zinc-400 select-all">
+                      # BFS 迭代写法可以规避栈溢出风险
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 4: Evaluation Radar */}
+              {activeTab === 4 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center h-full">
+                  <div className="flex items-center justify-center">
+                    <div className="w-[200px] h-[200px] relative">
+                      <svg className="w-full h-full" viewBox="0 0 300 300">
+                        <polygon points="150,30 253,90 253,210 150,270 47,210 47,90" className="fill-none stroke-zinc-700/60 stroke-1" />
+                        <polygon points="150,70 219,110 219,190 150,230 81,190 81,110" className="fill-none stroke-zinc-700/40 stroke-1" />
+                        <polygon points="150,110 185,130 185,170 150,190 115,170 115,130" className="fill-none stroke-zinc-700/20 stroke-1" />
+                        
+                        <line x1="150" y1="150" x2="150" y2="30" className="stroke-zinc-700/40 stroke-1" />
+                        <line x1="150" y1="150" x2="253" y2="90" className="stroke-zinc-700/40 stroke-1" />
+                        <line x1="150" y1="150" x2="253" y2="210" className="stroke-zinc-700/40 stroke-1" />
+                        <line x1="150" y1="150" x2="150" y2="270" className="stroke-zinc-700/40 stroke-1" />
+                        <line x1="150" y1="150" x2="47" y2="210" className="stroke-zinc-700/40 stroke-1" />
+                        <line x1="150" y1="150" x2="47" y2="90" className="stroke-zinc-700/40 stroke-1" />
+
+                        <text x="150" y="20" className="text-[10px] font-bold text-center fill-slate-200" textAnchor="middle">理论基础 ({radarLevels[0]})</text>
+                        <text x="280" y="85" className="text-[10px] font-bold fill-slate-400" textAnchor="start">实操编写 ({radarLevels[1]})</text>
+                        <text x="280" y="225" className="text-[10px] font-bold fill-slate-400" textAnchor="start">问题拆解 ({radarLevels[2]})</text>
+                        <text x="150" y="290" className="text-[10px] font-bold text-center fill-slate-200" textAnchor="middle">逻辑推理 ({radarLevels[3]})</text>
+                        <text x="20" y="225" className="text-[10px] font-bold fill-slate-400" textAnchor="end">学习毅力 ({radarLevels[4]})</text>
+                        <text x="20" y="85" className="text-[10px] font-bold fill-slate-400" textAnchor="end">知识广度 ({radarLevels[5]})</text>
+
+                        <polygon points={computeRadarPoints(radarLevels)} className="fill-primary/25 stroke-primary stroke-2 transition-all duration-1000" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div className="font-sans text-xs flex flex-col justify-center gap-3">
+                    <h4 className="font-bold text-sm text-slate-100">AI 学情诊断分析报告</h4>
+                    <p className="text-[11px] text-slate-400">经过本周 {streakCount} 次 DAG 节点练习与 12 次沙箱测试，大模型生成了如下量化评级：</p>
+                    
+                    <div className="space-y-2">
+                      {[
+                        { label: '逻辑推理', val: radarLevels[3] },
+                        { label: '理论基础', val: radarLevels[0] },
+                        { label: '学习毅力', val: radarLevels[4] },
+                        { label: '问题拆解', val: radarLevels[2] },
+                        { label: '实操编写', val: radarLevels[1] },
+                        { label: '知识广度', val: radarLevels[5] },
+                      ].map((item, i) => (
+                        <div key={i} className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-semibold text-slate-300">
+                            <span>{item.label}</span>
+                            <span>{item.val}%</span>
+                          </div>
+                          <div className="h-1 bg-slate-900 border border-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${item.val}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-[10px] text-amber-400/90 leading-relaxed mt-2">
+                      <strong className="block text-amber-400 mb-0.5">⚠️ AI 教师提升建议：</strong>
+                      您在理论与逻辑上表现极佳，但在<span className="text-white font-semibold">代码编写实操</span>上得分较低。建议本周重点突破“树与二叉树”沙箱，编写二叉树的前中后序递归，增强手写代码肌肉记忆。
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 5: Logs */}
+              {activeTab === 5 && (
+                <div className="h-full border border-white/5 rounded-xl bg-slate-950 p-4 font-mono text-[10px] leading-relaxed overflow-y-auto space-y-2 select-text text-zinc-300 flex flex-col justify-start">
+                  {simulatorLogs.map((log, i) => (
+                    <div key={i} className="flex gap-2">
+                      <span className="text-zinc-600shrink-0">[{log.time}]</span>
+                      <span className={`px-1.5 py-0.2 rounded font-bold shrink-0 text-[8.5px] uppercase ${
+                        log.tag === 'profile'
+                          ? 'bg-violet-500/10 border border-violet-500/20 text-violet-400'
+                          : log.tag === 'planner'
+                          ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+                          : log.tag === 'resource'
+                          ? 'bg-pink-500/10 border border-pink-500/20 text-pink-400'
+                          : log.tag === 'coder'
+                          ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                          : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                      }`}>{log.tag}</span>
+                      <span className="text-slate-300">{log.msg}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 游戏化打卡与积分代币裂变 ─── */}
+      <section id="游戏化打卡" className="py-24 px-4 bg-muted/15 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 w-full">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-primary/10 text-primary border-primary/25 px-3 py-1 text-xs">GAME & TOKENS</Badge>
+            <h2 className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight">游戏化打卡与积分代币裂变</h2>
+            <p className="text-muted-foreground text-sm max-w-xl mx-auto leading-relaxed">
+              社交邀请获赠积分，每日签到翻倍奖励，控制大模型调用成本，激发主动学习热情。
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Calendar */}
+            <div className="lg:col-span-5 bg-card border border-border/85 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+              <div className="flex items-center justify-between pb-3 border-b border-border/20">
+                <div className="flex items-center gap-2 font-bold text-sm">
+                  <Calendar className="w-4 h-4 text-amber-500 fill-amber-500/10" />
+                  <span>每日打卡 Streak 体系</span>
+                </div>
+                <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 dark:text-amber-500 border-transparent">
+                  已连续签到 {streakCount} 天
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-7 gap-2 text-center text-xs">
+                {['一', '二', '三', '四', '五', '六', '日'].map(day => (
+                  <span key={day} className="text-muted-foreground font-medium py-1">{day}</span>
+                ))}
+                
+                {[12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].map(day => (
+                  <div key={day} className="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 font-semibold flex items-center justify-center border border-emerald-500/20 mx-auto">
+                    {day}
+                  </div>
+                ))}
+                
+                <button
+                  onClick={handleCheckin}
+                  disabled={streakChecked}
+                  className={`w-9 h-9 rounded-full font-bold flex items-center justify-center transition-all mx-auto ${
+                    streakChecked
+                      ? 'bg-emerald-500 text-white shadow-md'
+                      : 'bg-primary text-primary-foreground hover:scale-105 active:scale-95 animate-pulse shadow-md'
+                  }`}
+                >
+                  23
+                </button>
+                
+                {[24, 25].map(day => (
+                  <div key={day} className="w-9 h-9 rounded-full bg-muted text-muted-foreground flex items-center justify-center mx-auto">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-center text-xs text-muted-foreground mt-2">
+                {streakChecked ? (
+                  <span className="text-emerald-500 font-bold">✓ 签到成功！已获赠 +10 Tokens！连签加成已激活。</span>
+                ) : (
+                  <span>今日（23日）尚未打卡，点击对应日期完成签到，赚取今日积分！</span>
+                )}
+              </p>
+            </div>
+
+            {/* Token Rules */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="flex gap-4 p-4 border border-border bg-card rounded-xl shadow-sm items-center hover:shadow-md transition-shadow">
+                <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl">
+                  <Star className="w-5 h-5 fill-amber-500/10" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-sm">每日打卡签到</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">签到即获积分，连续签到将触发积分翻倍系数。</p>
+                </div>
+                <span className="font-bold text-sm text-amber-600 dark:text-amber-500 shrink-0">+10 Tokens</span>
+              </div>
+
+              <div className="flex gap-4 p-4 border border-border bg-card rounded-xl shadow-sm items-center hover:shadow-md transition-shadow">
+                <div className="p-3 bg-primary/10 text-primary rounded-xl">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-sm">邀请好友加入</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">新用户填写您的邀请码注册并绑定邮箱后，双方共享奖励。</p>
+                </div>
+                <span className="font-bold text-sm text-primary shrink-0">+100 Tokens</span>
+              </div>
+
+              <div className="flex gap-4 p-4 border border-border bg-card rounded-xl shadow-sm items-center hover:shadow-md transition-shadow">
+                <div className="p-3 bg-pink-500/10 text-pink-500 rounded-xl">
+                  <Code2 className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-sm">共享优秀代码/笔记</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">在社群内分享已被沙箱安全编译且获得 AI 精英标记的代码案例。</p>
+                </div>
+                <span className="font-bold text-sm text-pink-600 dark:text-pink-500 shrink-0">+50 Tokens</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       {/* ─── 竞品分析（雷达图） ─── */}
       <section id="竞品分析" className="py-24 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
@@ -1106,6 +1889,9 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
+
+
+
         </div>
       </section>
 
@@ -1132,6 +1918,8 @@ export default function LandingPage() {
           <ReviewCarousel />
         </div>
       </section>
+
+
 
       {/* ─── 会员计划 ─── */}
       <section id="会员计划" className="py-24 px-4 bg-muted/30">
@@ -1263,9 +2051,10 @@ export default function LandingPage() {
           {/* 电脑端三列布局 */}
           <div className="hidden md:grid grid-cols-3 gap-12 pb-10">
             {/* 左侧：品牌与描述 */}
+            {/* 左侧：品牌与描述 */}
             <div className="flex flex-col gap-4">
-              <span className="text-2xl font-extrabold text-violet-600 tracking-tight">Kowell AI</span>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <span className="text-2xl font-extrabold text-foreground tracking-tight">Kowell AI</span>
+              <p className="text-sm text-foreground leading-relaxed">
                 多智能体个性化学习系统
               </p>
             </div>
@@ -1307,7 +2096,7 @@ export default function LandingPage() {
               <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-md">
                 <GraduationCap className="w-4.5 h-4.5 text-primary-foreground" />
               </div>
-              <span className="text-base font-bold text-primary">Kowell AI</span>
+              <span className="text-base font-bold text-foreground">Kowell AI</span>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-[11px] text-muted-foreground text-center">
@@ -1332,6 +2121,61 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Modal Dialog for Resource Generation */}
+      {showNewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md bg-card border border-border rounded-2xl p-6 shadow-2xl relative text-foreground"
+          >
+            <div className="flex justify-between items-center pb-4 border-b border-border mb-4">
+              <h3 className="text-lg font-bold text-foreground">新建 AI 讲义大纲</h3>
+              <button onClick={() => setShowNewModal(false)} className="p-1 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">学科方向与章节主题</label>
+                <input
+                  type="text"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="w-full px-3.5 py-2 text-sm bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="例如：二叉排序树的插入与平衡调整"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">生成资源类型 (支持流式并行并发)</label>
+                <div className="grid grid-cols-2 gap-3 mt-1">
+                  <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
+                    <input type="checkbox" checked={newOpts.outline} onChange={(e) => setNewOpts({...newOpts, outline: e.target.checked})} className="rounded text-primary border-border focus:ring-0" />
+                    <span>讲义大纲 (Outline)</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
+                    <input type="checkbox" checked={newOpts.mindmap} onChange={(e) => setNewOpts({...newOpts, mindmap: e.target.checked})} className="rounded text-primary border-border focus:ring-0" />
+                    <span>SVG思维导图</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
+                    <input type="checkbox" checked={newOpts.exercises} onChange={(e) => setNewOpts({...newOpts, exercises: e.target.checked})} className="rounded text-primary border-border focus:ring-0" />
+                    <span>经典期末测试题</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
+                    <input type="checkbox" checked={newOpts.code} onChange={(e) => setNewOpts({...newOpts, code: e.target.checked})} className="rounded text-primary border-border focus:ring-0" />
+                    <span>示例沙箱源码</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
+              <Button variant="outline" size="sm" onClick={() => setShowNewModal(false)}>取消</Button>
+              <Button size="sm" onClick={createNewResourceSubmit}>启动多智能体生成</Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
