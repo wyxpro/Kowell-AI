@@ -28,7 +28,7 @@ const navGroups = [
     label: '学习中心',
     items: [
       { path: '/home', label: '首页', icon: Home },
-      { path: '/resources/generate', label: '资源中心', icon: BookOpen },
+      { path: '/resources/generate', label: 'AIGC资源', icon: BookOpen },
       { path: '/learning-path', label: '学习路径', icon: Route },
       { path: '/portrait', label: '画像构建', icon: Brain },
       { path: '/tutoring', label: '智能答疑', icon: MessageCircle },
