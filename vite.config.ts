@@ -29,6 +29,12 @@ export default defineConfig({
       "Pragma": "no-cache",
       "Expires": "0",
     },
+    proxy: {
+      "/api/innoreation/v1/proxy": {
+        target: "https://mangdream.com",
+        changeOrigin: true,
+      },
+    },
   },
   optimizeDeps: {
     include: [

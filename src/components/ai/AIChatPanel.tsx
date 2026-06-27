@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { streamChat } from '@/lib/ai';
 import {
   Send, Bot, User, Loader2, Square, ImageIcon, Mic, MicOff, Film, X,
-  Paperclip, GraduationCap,
+  Paperclip, GraduationCap, Brain
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -15,8 +15,33 @@ function MarkdownContent({ content, isUser }: { content: string; isUser: boolean
   if (isUser) {
     return <span className="whitespace-pre-wrap text-pretty">{content}</span>;
   }
-  const lines = content.split('\n');
+
+  let thinkContent = '';
+  let mainContent = content;
+  const thinkMatch = content.match(/<think>([\s\S]*?)(?:<\/think>|$)/i);
+  if (thinkMatch) {
+    thinkContent = thinkMatch[1].trim();
+    mainContent = content.replace(/<think>[\s\S]*?(?:<\/think>|$)/i, '').trim();
+  }
+
+  const lines = mainContent.split('\n');
   const elements: React.ReactNode[] = [];
+
+  if (thinkContent) {
+    elements.push(
+      <details key="think-block" className="group mb-3 border border-border/50 rounded-lg bg-muted/30 overflow-hidden">
+        <summary className="text-xs text-muted-foreground font-medium p-2 cursor-pointer select-none flex items-center gap-1.5 hover:bg-muted/50 transition-colors">
+          <Brain className="w-3.5 h-3.5" />
+          <span className="group-open:hidden">深度思考过程</span>
+          <span className="hidden group-open:inline">收起思考过程</span>
+        </summary>
+        <div className="p-3 pt-1 text-xs text-muted-foreground whitespace-pre-wrap border-t border-border/50 leading-relaxed">
+          {thinkContent}
+        </div>
+      </details>
+    );
+  }
+
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
@@ -163,6 +188,11 @@ export default function AIChatPanel({
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, streamingText]);
+
+  // 同步历史对话记录
+  useEffect(() => {
+    setMessages(initialMessages);
+  }, [initialMessages]);
 
   // 外部 pendingImage 兼容
   useEffect(() => {
@@ -402,7 +432,7 @@ export default function AIChatPanel({
 
       {/* 快捷问题 — 输入框上方 */}
       {suggestedQuestions && suggestedQuestions.length > 0 && (
-        <div className="flex gap-2 mb-2 overflow-x-auto pb-1 shrink-0">
+        <div className="flex gap-2 mb-2 overflow-x-auto pb-1 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {suggestedQuestions.map((q, i) => (
             <button
               key={i}

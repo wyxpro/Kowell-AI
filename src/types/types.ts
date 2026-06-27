@@ -43,14 +43,14 @@ export interface Resource {
   user_id: string;
   course_id: string | null;
   title: string;
-  resource_type: 'document' | 'mindmap' | 'exercise' | 'reading' | 'code';
-  content: Record<string, unknown>;
+  resource_type: 'document' | 'mindmap' | 'exercise' | 'reading' | 'code' | 'ppt' | 'video';
+  content: string | Record<string, unknown>;
   chapter: string | null;
   status: 'generating' | 'completed' | 'failed';
   is_read: boolean;
   is_edited: boolean;
   version: number;
-  original_content: Record<string, unknown> | null;
+  original_content: string | Record<string, unknown> | null;
   tags: string[];
   rating: number;
   rating_count: number;
@@ -220,19 +220,23 @@ export interface UserProgress {
 }
 
 export const RESOURCE_TYPE_LABELS: Record<string, string> = {
-  document: '课程文档',
+  document: '教学案例',
   mindmap: '思维导图',
-  exercise: '练习题库',
-  reading: '拓展阅读',
-  code: '代码案例',
+  exercise: '练习题',
+  reading: '动画演示',
+  code: '代码示例',
+  ppt: '课件PPT',
+  video: '教学短视频',
 };
 
 export const RESOURCE_TYPE_ICONS: Record<string, string> = {
   document: '📄',
   mindmap: '🧠',
   exercise: '✏️',
-  reading: '📖',
+  reading: '🎥',
   code: '💻',
+  ppt: '📊',
+  video: '🎬',
 };
 
 // 今日待办

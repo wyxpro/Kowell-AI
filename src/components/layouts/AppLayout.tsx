@@ -83,8 +83,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Logo */}
       <div className="p-4 flex items-center gap-3">
         <Link to="/" className="flex items-center gap-3 min-w-0 group" onClick={onNavigate}>
-          <div className="w-9 h-9 rounded-xl bg-sidebar-primary flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-            <GraduationCap className="w-5 h-5 text-sidebar-primary-foreground" />
+          <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+            <img src="/images/kowell.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <div className="min-w-0">
             <h1 className="text-base font-bold text-sidebar-foreground">Kowell AI</h1>
@@ -217,8 +217,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Menu className="w-5 h-5" />
             </Button>
           </SheetTrigger>
-          <div className="flex items-center gap-2 min-w-0">
-            <GraduationCap className="w-5 h-5 text-primary shrink-0" />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <img src="/images/kowell.png" alt="Logo" className="w-6 h-6 rounded-md object-cover shrink-0" />
             <span className="font-bold text-sm truncate">Kowell AI</span>
           </div>
           {user && (

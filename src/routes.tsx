@@ -7,10 +7,7 @@ const HomePage = lazy(() => import('./pages/HomePage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const PortraitPage = lazy(() => import('./pages/PortraitPage'));
-const ResourcesPage = lazy(() => import('./pages/ResourcesPage'));
 const ResourceGeneratePage = lazy(() => import('./pages/ResourceGeneratePage'));
-const ResourceDetailPage = lazy(() => import('./pages/ResourceDetailPage'));
-const ResourceEditPage = lazy(() => import('./pages/ResourceEditPage'));
 const LearningPathPage = lazy(() => import('./pages/LearningPathPage'));
 const TutoringPage = lazy(() => import('./pages/TutoringPage'));
 const EvaluationPage = lazy(() => import('./pages/EvaluationPage'));
@@ -62,10 +59,8 @@ export const routes: RouteConfig[] = [
   { name: '登录', path: '/login', element: wrap(<LoginPage />), public: true },
   { name: '个人中心', path: '/profile', element: wrap(<ProfilePage />) },
   { name: '学习画像', path: '/portrait', element: wrap(<PortraitPage />) },
-  { name: '资源中心', path: '/resources', element: wrap(<ResourcesPage />) },
+  { name: '资源中心', path: '/resources', element: wrap(<ResourceGeneratePage />) },
   { name: '生成资源', path: '/resources/generate', element: wrap(<ResourceGeneratePage />) },
-  { name: '资源详情', path: '/resources/:id', element: wrap(<ResourceDetailPage />) },
-  { name: '编辑资源', path: '/resources/:id/edit', element: wrap(<ResourceEditPage />) },
   { name: '学习路径', path: '/learning-path', element: wrap(<LearningPathPage />) },
   { name: '答疑中心', path: '/tutoring', element: wrap(<TutoringPage />) },
   { name: '学习评估', path: '/evaluation', element: wrap(<EvaluationPage />) },

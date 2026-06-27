@@ -2172,7 +2172,6 @@
         <a href="#submission-details" class="nav-link">大赛申报</a>
         <a href="#features" class="nav-link">核心特色</a>
         <a href="#accordion-features" class="nav-link">六大技术</a>
-        <a href="#gamification" class="nav-link">积分裂变</a>
         <a href="#simulator" class="nav-link">系统演示</a>
         <a href="#agent-orchestration" class="nav-link">协同机制</a>
         <a href="#competitive-matrix" class="nav-link">竞品分析</a>
@@ -2441,102 +2440,14 @@
     </div>
   </section>
 
-  <!-- Gamification / Streak & Tokens Section -->
-  <section id="gamification" class="showcase-section" style="background: rgba(0, 0, 0, 0.1);">
-    <div class="container">
-      <div class="section-title-wrap">
-        <span class="section-tag">GAME & TOKENS</span>
-        <h2 class="section-title">游戏化打卡与积分代币裂变</h2>
-        <p class="section-desc">社交邀请获赠积分，每日签到翻倍奖励，控制大模型调用成本，激发主动学习热情。</p>
-      </div>
 
-      <div class="game-tokens-layout">
-        <!-- Interactive Checkin Calendar -->
-        <div class="checkin-calendar">
-          <div class="calendar-header">
-            <div class="calendar-title">
-              <svg style="width:16px;height:16px;fill:var(--warning)" viewBox="0 0 24 24"><path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.9 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/></svg>
-              每日打卡 Streak 体系
-            </div>
-            <div class="streak-badge" id="streak-count">已连续签到 4 天</div>
-          </div>
-          <div class="calendar-grid">
-            <span class="calendar-day-label">一</span>
-            <span class="calendar-day-label">二</span>
-            <span class="calendar-day-label">三</span>
-            <span class="calendar-day-label">四</span>
-            <span class="calendar-day-label">五</span>
-            <span class="calendar-day-label">六</span>
-            <span class="calendar-day-label">日</span>
-            
-            <div class="calendar-day checked">12</div>
-            <div class="calendar-day checked">13</div>
-            <div class="calendar-day checked">14</div>
-            <div class="calendar-day checked">15</div>
-            <div class="calendar-day checked">16</div>
-            <div class="calendar-day checked">17</div>
-            <div class="calendar-day checked">18</div>
-            
-            <div class="calendar-day checked">19</div>
-            <div class="calendar-day checked">20</div>
-            <div class="calendar-day checked">21</div>
-            <div class="calendar-day checked">22</div>
-            <div class="calendar-day today" id="today-day" onclick="clickTodayCheckin()">23</div>
-            <div class="calendar-day">24</div>
-            <div class="calendar-day">25</div>
-          </div>
-          <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:1rem;" id="checkin-hint">
-            今日（23日）尚未打卡，点击对应日期完成签到，赚取今日积分！
-          </p>
-        </div>
-
-        <!-- Token Rules -->
-        <div>
-          <ul class="token-rules">
-            <li class="token-rule-card">
-              <div class="token-rule-icon">
-                <svg style="width:1.2rem;height:1.2rem;fill:currentColor" viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></svg>
-              </div>
-              <div class="token-rule-info">
-                <h5>每日打卡签到</h5>
-                <p>签到即获积分，连续签到将触发积分翻倍系数。</p>
-              </div>
-              <div class="token-rule-points">+10 Tokens</div>
-            </li>
-            
-            <li class="token-rule-card">
-              <div class="token-rule-icon" style="color:var(--primary); background:rgba(139,92,246,0.1); border-color:rgba(139,92,246,0.2);">
-                <svg style="width:1.2rem;height:1.2rem;fill:currentColor" viewBox="0 0 24 24"><path d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z"/></svg>
-              </div>
-              <div class="token-rule-info">
-                <h5>邀请好友加入</h5>
-                <p>新用户填写您的邀请码注册并绑定邮箱后，双方共享奖励。</p>
-              </div>
-              <div class="token-rule-points">+100 Tokens</div>
-            </li>
-
-            <li class="token-rule-card">
-              <div class="token-rule-icon" style="color:var(--accent); background:rgba(236,72,153,0.1); border-color:rgba(236,72,153,0.2);">
-                <svg style="width:1.2rem;height:1.2rem;fill:currentColor" viewBox="0 0 24 24"><path d="M12,3C7.58,3 4,4.79 4,7C4,9.21 7.58,11 12,11C16.42,11 20,9.21 20,7C20,4.79 16.42,3 12,3M4,9V12C4,14.21 7.58,16 12,16C16.42,16 20,14.21 20,12V9C20,11.21 16.42,13 12,13C7.58,13 4,11.21 4,9M4,14V17C4,19.21 7.58,21 12,21C16.42,21 20,19.21 20,17V14C20,16.21 16.42,18 12,18C7.58,18 4,16.21 4,14Z"/></svg>
-              </div>
-              <div class="token-rule-info">
-                <h5>共享优秀代码/笔记</h5>
-                <p>在社群内分享已被沙箱安全编译且获得 AI 精英标记的代码案例。</p>
-              </div>
-              <div class="token-rule-points">+50 Tokens</div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- Interactive System Simulator Section -->
   <section id="simulator" class="showcase-section" style="background: rgba(0, 0, 0, 0.2);">
     <div class="container">
       <div class="section-title-wrap">
         <span class="section-tag">INTERACTIVE SIMULATOR</span>
-        <h2 class="section-title">核心功能交互式工作流</h2>
+        <h2 class="section-title">多智能体协作交互工作流</h2>
         <p class="section-desc">点击下方 Tab 查看 Kowell AI 核心学习链条中各模块的交互模拟，体验多智能体协作细节。</p>
       </div>
 
@@ -3482,20 +3393,7 @@
       renderLogs();
     }
 
-    // Interactive Checkin Calendar
-    function clickTodayCheckin() {
-      if (state.streakChecked) return;
-      
-      const todayNode = document.getElementById("today-day");
-      todayNode.classList.add("checked");
-      state.streakChecked = true;
-      state.streakCount += 1;
-      
-      document.getElementById("streak-count").innerText = `已连续签到 ${state.streakCount} 天`;
-      document.getElementById("checkin-hint").innerHTML = `<span style="color:var(--success);font-weight:700">✓ 签到成功！已获赠 +10 Tokens！连签加成已激活。</span>`;
-      
-      addLog("eval", `触发打卡流水检测。写入 user_check_ins，获取打卡积分，当前 Streak: ${state.streakCount}天。`);
-    }
+
 
     // Radar Dynamic Shape Adjust
     function updateRadarShape() {

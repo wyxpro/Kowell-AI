@@ -9,10 +9,10 @@ import {
 
 // 资源生成页
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
-import { generateResource } from '@/lib/ai';
+import { deepseekService } from '@/services/ai/deepseek';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -190,24 +190,24 @@ function renderMarkdownBlocks(text: string): React.ReactNode {
   while (i < lines.length) {
     const line = lines[i];
     if (/^### /.test(line)) {
-      elements.push(<h3 key={i} className="text-sm font-bold mt-3 mb-1 text-foreground">{renderInline(line.replace(/^### /, ''))}</h3>);
+      elements.push(<h3 key={i} className="text-sm font-bold mt-3 mb-1 text-white">{renderInline(line.replace(/^### /, ''))}</h3>);
     } else if (/^## /.test(line)) {
-      elements.push(<h2 key={i} className="text-sm font-semibold mt-3 mb-1.5 text-primary border-b border-border/40 pb-1">{renderInline(line.replace(/^## /, ''))}</h2>);
+      elements.push(<h2 key={i} className="text-sm font-semibold mt-3 mb-1.5 text-primary border-b border-white/10 pb-1">{renderInline(line.replace(/^## /, ''))}</h2>);
     } else if (/^# /.test(line)) {
-      elements.push(<h1 key={i} className="text-base font-bold mt-3 mb-2 text-foreground">{renderInline(line.replace(/^# /, ''))}</h1>);
+      elements.push(<h1 key={i} className="text-base font-bold mt-3 mb-2 text-white">{renderInline(line.replace(/^# /, ''))}</h1>);
     } else if (/^\d+\. /.test(line.trimStart())) {
       const num = line.trimStart().match(/^(\d+)\./)?.[1];
       elements.push(
         <div key={i} className="flex gap-2 text-sm leading-relaxed">
           <span className="text-primary font-semibold shrink-0 min-w-[1.2rem]">{num}.</span>
-          <span className="text-pretty">{renderInline(line.trimStart().replace(/^\d+\. /, ''))}</span>
+          <span className="text-pretty text-white/90">{renderInline(line.trimStart().replace(/^\d+\. /, ''))}</span>
         </div>
       );
     } else if (/^[-*•] /.test(line.trimStart())) {
       elements.push(
         <div key={i} className="flex gap-2 text-sm leading-relaxed">
           <span className="text-primary shrink-0 mt-1">•</span>
-          <span className="text-pretty">{renderInline(line.trimStart().replace(/^[-*•] /, ''))}</span>
+          <span className="text-pretty text-white/90">{renderInline(line.trimStart().replace(/^[-*•] /, ''))}</span>
         </div>
       );
     } else if (/^```/.test(line)) {
@@ -216,19 +216,19 @@ function renderMarkdownBlocks(text: string): React.ReactNode {
       i++;
       while (i < lines.length && !lines[i].startsWith('```')) { codeLines.push(lines[i]); i++; }
       elements.push(
-        <div key={i} className="my-2 rounded-lg overflow-hidden border border-border/60">
-          {lang && <div className="px-3 py-1 bg-muted text-[10px] font-mono text-muted-foreground border-b border-border/40">{lang}</div>}
-          <pre className="px-3 py-2.5 text-xs font-mono leading-relaxed overflow-x-auto bg-muted/50 text-foreground"><code>{codeLines.join('\n')}</code></pre>
+        <div key={i} className="my-2 rounded-lg overflow-hidden border border-white/10">
+          {lang && <div className="px-3 py-1 bg-white/5 text-[10px] font-mono text-white/60 border-b border-white/10">{lang}</div>}
+          <pre className="px-3 py-2.5 text-xs font-mono leading-relaxed overflow-x-auto bg-white/5 text-white/90"><code>{codeLines.join('\n')}</code></pre>
         </div>
       );
     } else if (/^---+$/.test(line.trim())) {
-      elements.push(<hr key={i} className="my-3 border-border/40" />);
+      elements.push(<hr key={i} className="my-3 border-white/10" />);
     } else if (/^> /.test(line)) {
-      elements.push(<blockquote key={i} className="border-l-2 border-primary/50 pl-3 my-1.5 text-sm text-muted-foreground italic">{renderInline(line.replace(/^> /, ''))}</blockquote>);
+      elements.push(<blockquote key={i} className="border-l-2 border-primary/50 pl-3 my-1.5 text-sm text-white/70 italic">{renderInline(line.replace(/^> /, ''))}</blockquote>);
     } else if (line.trim() === '') {
       if (elements.length > 0) elements.push(<div key={i} className="h-1.5" />);
     } else {
-      elements.push(<p key={i} className="text-sm leading-relaxed text-pretty">{renderInline(line)}</p>);
+      elements.push(<p key={i} className="text-sm leading-relaxed text-pretty text-white/95">{renderInline(line)}</p>);
     }
     i++;
   }
@@ -241,13 +241,63 @@ function renderInline(text: string): React.ReactNode {
   let last = 0; let match: RegExpExecArray | null;
   while ((match = regex.exec(text)) !== null) {
     if (match.index > last) parts.push(text.slice(last, match.index));
-    if (match[2]) parts.push(<strong key={match.index} className="font-semibold text-foreground">{match[2]}</strong>);
-    else if (match[3]) parts.push(<code key={match.index} className="px-1 py-0.5 rounded bg-muted text-xs font-mono text-primary">{match[3]}</code>);
+    if (match[2]) parts.push(<strong key={match.index} className="font-semibold text-white">{match[2]}</strong>);
+    else if (match[3]) parts.push(<code key={match.index} className="px-1 py-0.5 rounded bg-white/10 text-xs font-mono text-primary">{match[3]}</code>);
     else if (match[4]) parts.push(<em key={match.index}>{match[4]}</em>);
     last = match.index + match[0].length;
   }
   if (last < text.length) parts.push(text.slice(last));
   return parts.length === 1 ? parts[0] : parts;
+}
+
+function renderProcessMarkdownBlocks(text: string): React.ReactNode {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^#### /.test(line)) {
+      elements.push(<h4 key={i} className="text-xs font-semibold mt-2 mb-1 text-emerald-600 dark:text-emerald-400">{renderInline(line.replace(/^#### /, ''))}</h4>);
+    } else if (/^### /.test(line)) {
+      elements.push(<h3 key={i} className="text-sm font-bold mt-3 mb-1 text-sky-600 dark:text-sky-400">{renderInline(line.replace(/^### /, ''))}</h3>);
+    } else if (/^## /.test(line)) {
+      elements.push(<h2 key={i} className="text-base font-bold mt-4 mb-1.5 text-indigo-500 border-b border-border/40 pb-1">{renderInline(line.replace(/^## /, ''))}</h2>);
+    } else if (/^# /.test(line)) {
+      elements.push(<h1 key={i} className="text-lg font-extrabold mt-5 mb-2 text-violet-600 dark:text-violet-400">{renderInline(line.replace(/^# /, ''))}</h1>);
+    } else if (/^\d+\. /.test(line.trimStart())) {
+      const num = line.trimStart().match(/^(\d+)\./)?.[1];
+      elements.push(
+        <div key={i} className="flex gap-2 text-xs leading-relaxed">
+          <span className="text-primary font-medium shrink-0 min-w-[1.2rem]">{num}.</span>
+          <span className="text-pretty text-muted-foreground">{renderInline(line.trimStart().replace(/^\d+\. /, ''))}</span>
+        </div>
+      );
+    } else if (/^[-*•] /.test(line.trimStart())) {
+      elements.push(
+        <div key={i} className="flex gap-2 text-xs leading-relaxed">
+          <span className="text-primary shrink-0 mt-0.5">•</span>
+          <span className="text-pretty text-muted-foreground">{renderInline(line.trimStart().replace(/^[-*•] /, ''))}</span>
+        </div>
+      );
+    } else if (/^```/.test(line)) {
+      const lang = line.replace(/^```/, '').trim();
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].startsWith('```')) { codeLines.push(lines[i]); i++; }
+      elements.push(
+        <div key={i} className="my-2 rounded-md overflow-hidden border border-border/50">
+          {lang && <div className="px-2 py-1 bg-muted/60 text-[9px] font-mono text-muted-foreground border-b border-border/40">{lang}</div>}
+          <pre className="px-2 py-2 text-[10px] font-mono leading-relaxed overflow-x-auto bg-muted/30 text-muted-foreground"><code>{codeLines.join('\n')}</code></pre>
+        </div>
+      );
+    } else if (line.trim() === '') {
+      if (elements.length > 0) elements.push(<div key={i} className="h-1" />);
+    } else {
+      elements.push(<p key={i} className="text-xs leading-relaxed text-pretty text-muted-foreground">{renderInline(line)}</p>);
+    }
+    i++;
+  }
+  return <div className="space-y-1">{elements}</div>;
 }
 
 
@@ -465,9 +515,95 @@ const resourceTypeOptions = [
   { value: 'video', label: '教学短视频', icon: Video, desc: '多模态动画讲解', color: 'text-indigo-500', available: true, tag: '' },
 ];
 
+const RESOURCE_PROMPTS = {
+  document: `你是一位资深的计算机/人工智能教授。请根据用户提供的主题，编写一个深入浅出的【教学案例】。
+内容必须包括以下部分：
+## 一、案例背景
+详细介绍该技术在实际工业界或学术界的应用背景。
+## 二、核心原理
+用清晰、通俗但精准的语言解释其核心的科学或工程原理，并说明其中的关键公式（若有）。
+## 三、算法流程与实现步骤
+列出一步步的技术实现流程，要求逻辑严密。
+## 四、应用场景
+列举2-3个真实场景案例讲解。
+
+要求：内容科学正确，格式排版整齐美观，多用 Markdown 的标题、粗体、列表、代码块、引用等元素进行结构化排版。`,
+
+  mindmap: `你是一位资深的计算机/人工智能教授。请根据用户提供的主题，生成一份【思维导图】结构的 Markdown 文本。
+要求使用 Markdown 的列表层级结构来表示思维导图：
+# [主题名称]
+* 核心知识结构
+  * 分支一
+    * 细分要点1
+    * 细分要点2
+  * 分支二
+    * 细分要点1
+
+要求层级结构清晰合理，至少有三级节点，文字凝练，能够直观地可视化知识结构。不要包含任何多余的解释、前言或后记，只输出 Markdown 列表结构。`,
+
+  exercise: `你是一位资深的计算机/人工智能教授。请根据用户提供的主题，设计一套【配套巩固练习题】。
+包含：
+## 一、基础选择题
+设计2-3道高质量选择题，带有A/B/C/D选项，并紧接着给出 **【答案解析】**。
+## 二、算法填空题或简答题
+设计1-2道核心算法填空题或综合简答题，并给出详细的参考答案与解析。
+
+要求：题目切中要害，考查深度适中，解析详尽易懂，使用 Markdown 排版。`,
+
+  reading: `你是一位资深的计算机动画设计师与教授。请根据用户提供的主题，设计一个【动画演示脚本及原理图解】。
+包含：
+## 一、动画演示设计思路
+说明如何用动画逐步展示该知识点的运行机制。
+## 二、逐帧画面状态与图解
+详细列出 4-6 个关键帧画面：
+- **画面帧 1**：[画面内容描述，如初始状态指针位置，节点颜色]
+- **画面帧 2**：[动画过渡状态，指针移动，值交换]
+...
+用生动的文字描述动态图解知识原理。使用 Markdown 排版，格式整齐。`,
+
+  code: `你是一位资深的软件工程师 and 计算机教授。请根据用户提供的主题，编写一个高质量、可运行的【代码示例】。
+如果是机器学习或深度学习相关主题，请首选 Python/PyTorch 实现。
+必须包含：
+- 完整的、逻辑自洽的代码，严禁包含未实现的 placeholder。
+- 详细的关键步骤中文注释，帮助学生阅读理解。
+- 代码前后使用标准的 \`\`\` 块包裹，并标明语言（如 \`\`\`python）。
+- 简短的代码运行说明。
+
+使用 Markdown 进行整齐的排版。`,
+
+  ppt: `你是一位精通微课和系统性教学设计的教授。请根据用户提供的主题，生成一份结构清晰的【课件PPT大纲与文字内容】。
+采用 Markdown 格式排版，必须包含 3-4 个幻灯片页面。
+每一页必须使用以下格式：
+## 第 X 页：[幻灯片标题]
+- [要点 1]：[简短描述]
+- [要点 2]：[简短描述]
+...
+
+要求：结构分明，每页幻灯片的文字简练、突出重点，非常适合自动生成和排版演示文稿。`,
+
+  video: `你是一位优秀的教学短视频编导与计算机教授。请根据用户提供的主题，撰写一份【教学短视频脚本与多模态讲解大纲】。
+包含：
+## 一、视频基本信息
+- 时长：3-5分钟
+- 风格：科技感、简洁明快
+## 二、分镜头脚本大纲
+- **镜头 1**：【画面】[描述画面内容] 【旁白】[解说词]
+- **镜头 2**：【画面】[描述画面内容] 【旁白】[解说词]
+...
+用多模态大纲生动解说该知识点的核心原理。格式排版整齐，适合配音和分镜描述。`
+};
+
 export default function ResourceGeneratePage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname === '/resources' || location.state?.showLibrary) {
+      setShowMyInterface(true);
+    }
+  }, [location]);
+
   const [topic, setTopic] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
@@ -477,6 +613,8 @@ export default function ResourceGeneratePage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const [result, setResult] = useState<string | null>(null);
+  const [activePreviewType, setActivePreviewType] = useState<string>('document');
+  const [generatedResults, setGeneratedResults] = useState<Record<string, string>>({});
   // 网页 URL 输入
   const [webUrl, setWebUrl] = useState('');
   const [webFetching, setWebFetching] = useState(false);
@@ -509,13 +647,65 @@ export default function ResourceGeneratePage() {
     type: 'document'
   });
 
+  const [dbCourses, setDbCourses] = useState<{ id: string; name: string }[]>([]);
+
+  const fetchDbCourses = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.from('courses').select('id, name');
+      if (error) throw error;
+      setDbCourses(data || []);
+    } catch (err) {
+      console.error('获取数据库课程失败:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDbCourses();
+  }, [fetchDbCourses]);
+
+  const getOrCreateCourseId = async (courseName: string): Promise<string | null> => {
+    if (!courseName.trim()) return null;
+    try {
+      const matched = dbCourses.find(c => c.name.trim() === courseName.trim());
+      if (matched) return matched.id;
+
+      const { data: existing, error: findError } = await supabase
+        .from('courses')
+        .select('id')
+        .eq('name', courseName.trim())
+        .maybeSingle();
+      
+      if (findError) throw findError;
+      if (existing) return existing.id;
+
+      const { data: newCourse, error: insertError } = await supabase
+        .from('courses')
+        .insert({
+          name: courseName.trim(),
+          major: profile?.major || '计算机科学',
+          description: `AI自动创建的${courseName}课程`,
+        })
+        .select('id')
+        .single();
+      
+      if (insertError) throw insertError;
+      if (newCourse) {
+        fetchDbCourses();
+        return newCourse.id;
+      }
+    } catch (e) {
+      console.error('getOrCreateCourseId failed:', e);
+    }
+    return null;
+  };
+
   const fetchUserResources = useCallback(async () => {
     if (!user) return;
     setLoadingResources(true);
     try {
       const { data, error } = await supabase
         .from('resources')
-        .select('*')
+        .select('*, courses(id, name)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -560,10 +750,10 @@ export default function ResourceGeneratePage() {
     setIsCreatingManual(false);
     setEditForm({
       title: res.title || '',
-      topic: res.topic || '',
-      course_name: res.course_name || '',
-      content: res.content || '',
-      type: res.type || 'document'
+      topic: res.chapter || (res.tags?.[0] || ''),
+      course_name: res.courses?.name || (res.tags?.[1] || ''),
+      content: typeof res.content === 'object' ? JSON.stringify(res.content) : (res.content || ''),
+      type: res.resource_type || 'document'
     });
   };
 
@@ -583,19 +773,21 @@ export default function ResourceGeneratePage() {
   const handleSaveResource = async () => {
     if (!editForm.title.trim()) { toast.error('请填写标题'); return; }
     try {
+      const courseId = await getOrCreateCourseId(editForm.course_name);
       if (isCreatingManual) {
         if (!user) return;
         const { error } = await supabase
           .from('resources')
           .insert({
             user_id: user.id,
+            course_id: courseId,
             title: editForm.title,
-            topic: editForm.topic,
-            course_name: editForm.course_name,
             content: editForm.content,
-            type: editForm.type,
             resource_type: editForm.type,
-            status: 'completed'
+            status: 'completed',
+            source: 'manual',
+            tags: [editForm.topic, editForm.course_name].filter(Boolean),
+            chapter: editForm.topic || null
           });
 
         if (error) throw error;
@@ -605,12 +797,12 @@ export default function ResourceGeneratePage() {
         const { error } = await supabase
           .from('resources')
           .update({
+            course_id: courseId,
             title: editForm.title,
-            topic: editForm.topic,
-            course_name: editForm.course_name,
             content: editForm.content,
-            type: editForm.type,
-            resource_type: editForm.type
+            resource_type: editForm.type,
+            tags: [editForm.topic, editForm.course_name].filter(Boolean),
+            chapter: editForm.topic || null
           })
           .eq('id', activeResource.id);
 
@@ -623,10 +815,10 @@ export default function ResourceGeneratePage() {
         setActiveResource((prev: any) => ({
           ...prev,
           title: editForm.title,
-          topic: editForm.topic,
-          course_name: editForm.course_name,
+          chapter: editForm.topic || null,
+          courses: { id: courseId, name: editForm.course_name },
           content: editForm.content,
-          type: editForm.type
+          resource_type: editForm.type
         }));
       }
     } catch (err) {
@@ -638,8 +830,8 @@ export default function ResourceGeneratePage() {
     const query = searchQuery.toLowerCase();
     return (
       (res.title || '').toLowerCase().includes(query) ||
-      (res.course_name || '').toLowerCase().includes(query) ||
-      (res.topic || '').toLowerCase().includes(query)
+      (res.courses?.name || '').toLowerCase().includes(query) ||
+      (res.chapter || '').toLowerCase().includes(query)
     );
   });
 
@@ -648,6 +840,8 @@ export default function ResourceGeneratePage() {
     setTopic(ex.exampleTopic);
     setResourceTypes([ex.type]);
     setResult(ex.content);
+    setGeneratedResults({ [ex.type]: ex.content });
+    setActivePreviewType(ex.type);
     setPreviewExample(null);
     toast.success(`已应用「${ex.title}」标准模板！已填充示例主题，可以直接在右侧预览或下载。`);
   };
@@ -736,8 +930,9 @@ export default function ResourceGeneratePage() {
     );
   };
 
+  const [thinkLog, setThinkLog] = useState('');
+
   const handleGenerate = async () => {
-    if (!topic.trim()) { toast.error('请填写资源主题'); return; }
     if (!user) { toast.error('请先登录'); return; }
     if (resourceTypes.length === 0) { toast.error('请至少选择一种资源类型'); return; }
 
@@ -745,7 +940,9 @@ export default function ResourceGeneratePage() {
     setProgress(0);
     setCurrentStep(0);
     setLogs([`开始生成 ${resourceTypes.length} 种资源...`]);
-    setResult(null);
+    setResult('');
+    setGeneratedResults({});
+    setThinkLog('');
 
     const stepInterval = setInterval(() => {
       setCurrentStep(prev => {
@@ -757,71 +954,159 @@ export default function ResourceGeneratePage() {
     }, 1200);
 
     try {
+      let activeWebContent = webContent;
+      if (webUrl.trim() && !activeWebContent) {
+        setLogs(l => [...l, `正在自动抓取网页参考: ${webUrl.trim()} ...`]);
+        try {
+          const fetched = await fetchWebContent(webUrl.trim());
+          activeWebContent = fetched;
+          setWebContent(fetched);
+          setLogs(l => [...l, `网页抓取成功，已提取 ${fetched.length} 字`]);
+        } catch (err) {
+          console.error('自动抓取网页失败:', err);
+          setLogs(l => [...l, `自动抓取网页失败，将直接生成`]);
+        }
+      }
+
+      let finalTopic = topic.trim();
+      if (!finalTopic) {
+        if (attachments.length > 0) {
+          finalTopic = attachments[0].name.replace(/\.[^/.]+$/, "");
+        } else if (activeWebContent) {
+          const cleanLines = activeWebContent.split('\n').map(l => l.trim().replace(/[#*`]/g, '')).filter(Boolean);
+          finalTopic = cleanLines[0]?.slice(0, 30) || '网页参考资源';
+        } else if (webUrl.trim()) {
+          try {
+            const parsed = new URL(webUrl);
+            finalTopic = parsed.hostname + ' 网页资源';
+          } catch {
+            finalTopic = '网页参考资源';
+          }
+        } else {
+          clearInterval(stepInterval);
+          toast.error('请填写资源主题，或提供网页抓取/上传参考资料');
+          setGenerating(false);
+          return;
+        }
+        setTopic(finalTopic);
+      }
+
       const results: { type: string; content: string }[] = [];
-      // 如有网页内容，注入到 topic 提示词中
-      const enrichedTopic = webContent
-        ? `${topic}\n\n【参考资料】\n${webContent.slice(0, 2000)}`
-        : topic;
+      const enrichedTopic = activeWebContent
+        ? `${finalTopic}\n\n【参考资料】\n${activeWebContent.slice(0, 2000)}`
+        : finalTopic;
 
       for (let i = 0; i < resourceTypes.length; i++) {
         const rType = resourceTypes[i];
         const typeLabel = resourceTypeOptions.find(t => t.value === rType)?.label || rType;
         setLogs(l => [...l, `正在生成「${typeLabel}」（${i + 1}/${resourceTypes.length}）...`]);
+        setActivePreviewType(rType);
+        setResult('');
 
-        // 视频类型走 kling，不调 ai-generate
-        if (rType === 'video') {
-          setLogs(l => [...l, '启动 Kling 视频生成任务...']);
-          try {
-            const taskId = await createVideoTask(`教学动画视频：${enrichedTopic}，画面清晰、专业风格`);
-            const url = await pollVideoTask(taskId);
-            setVideoUrl(url);
-            results.push({ type: 'video', content: url });
-            await supabase.from('resources').insert({
-              user_id: user.id, title: `${topic} 教学视频`,
-              description: '由可灵AI生成的教学视频', type: 'video',
-              content: url, status: 'completed',
-              course_name: selectedCourse, topic, resource_type: 'video',
-            });
-          } catch (e) {
-            setLogs(l => [...l, `视频生成失败：${(e as Error).message}`]);
-            toast.error('视频生成失败：' + (e as Error).message);
-          }
-          setProgress(Math.round(((i + 1) / resourceTypes.length) * 100));
-          continue;
-        }
+        const systemPrompt = RESOURCE_PROMPTS[rType as keyof typeof RESOURCE_PROMPTS] || "You are a helpful assistant.";
+        const userPrompt = `课程名称：${selectedCourse}\n主要专业：${profile?.major || '计算机科学'}\n学历层次：${profile?.education || '本科'}\n生成主题：${enrichedTopic}`;
+        const messages = [
+          { role: 'system' as const, content: systemPrompt },
+          { role: 'user' as const, content: userPrompt }
+        ];
 
-        const data = await generateResource({
-          course_name: selectedCourse,
-          topic: enrichedTopic,
-          resource_type: rType,
-          major: profile?.major,
-          education: profile?.education,
+        let contentBuffer = '';
+        let thinkBuffer = '';
+        let isThinking = false;
+
+        await new Promise<void>((resolve, reject) => {
+          deepseekService.streamChat(
+            messages,
+            {
+              onChunk: (chunk) => {
+                let currentChunk = chunk;
+                if (!isThinking && currentChunk.includes('<think>')) {
+                  isThinking = true;
+                  const parts = currentChunk.split('<think>');
+                  contentBuffer += parts[0];
+                  currentChunk = parts[1] || '';
+                }
+                
+                if (isThinking) {
+                  if (currentChunk.includes('</think>')) {
+                    isThinking = false;
+                    const parts = currentChunk.split('</think>');
+                    thinkBuffer += parts[0];
+                    contentBuffer += parts[1] || '';
+                  } else {
+                    thinkBuffer += currentChunk;
+                  }
+                  setThinkLog(prev => prev + currentChunk.replace('</think>', ''));
+                } else {
+                  contentBuffer += currentChunk;
+                }
+
+                setResult(contentBuffer);
+                setGeneratedResults(prev => ({
+                  ...prev,
+                  [rType]: contentBuffer
+                }));
+              },
+              onDone: () => {
+                results.push({ type: rType, content: contentBuffer });
+                resolve();
+              },
+              onError: (err) => {
+                reject(new Error(err));
+              }
+            },
+            {
+              temperature: 0.7
+            }
+          );
         });
-
-        results.push({ type: rType, content: data.content });
 
         // PPT 类型：客户端生成 .pptx 文件
         if (rType === 'ppt') {
           setLogs(l => [...l, '正在生成 PPT 文件...']);
           try {
-            await downloadAsPptx(topic, data.content);
+            await downloadAsPptx(finalTopic, contentBuffer);
             toast.success('PPT 已自动下载！');
           } catch {
             toast.error('PPT 下载失败，内容已展示在预览区');
           }
         }
 
-        await supabase.from('resources').insert({
+        // Save to Supabase
+        const courseId = await getOrCreateCourseId(selectedCourse);
+        const { error: insertError } = await supabase.from('resources').insert({
           user_id: user.id,
-          title: `${topic} ${typeLabel}`,
-          description: `基于AI生成的${typeLabel}资源`,
-          type: rType,
-          content: data.content,
+          course_id: courseId,
+          title: `${finalTopic} ${typeLabel}`,
+          content: contentBuffer,
           status: 'completed',
-          course_name: selectedCourse,
-          topic,
           resource_type: rType,
+          source: 'ai',
+          tags: [finalTopic, selectedCourse].filter(Boolean),
+          chapter: finalTopic || null,
         });
+
+        if (insertError) {
+          console.error('保存生成资源失败:', insertError);
+          setLogs(l => [...l, `保存「${typeLabel}」到数据库失败: ${insertError.message}`]);
+        } else {
+          setLogs(l => [...l, `保存「${typeLabel}」成功`]);
+        }
+
+        // If 'video' is selected, trigger Kling video task in background
+        if (rType === 'video') {
+          setLogs(l => [...l, '启动 Kling 视频生成任务...']);
+          (async () => {
+            try {
+              const taskId = await createVideoTask(`教学动画视频：${enrichedTopic}，画面清晰、专业风格`);
+              const url = await pollVideoTask(taskId);
+              setVideoUrl(url);
+              toast.success('视频文件生成完成！');
+            } catch (e) {
+              toast.error('可灵视频生成失败：' + (e as Error).message);
+            }
+          })();
+        }
 
         setProgress(Math.round(((i + 1) / resourceTypes.length) * 100));
       }
@@ -830,8 +1115,12 @@ export default function ResourceGeneratePage() {
       setProgress(100);
       setCurrentStep(agentSteps.length - 1);
       setLogs(prev => [...prev, `全部 ${resourceTypes.length} 种资源生成完成！`]);
-      // 展示第一种资源的结果
-      setResult(results[0]?.content || null);
+      
+      // Auto select the first resource tab to show after complete
+      if (resourceTypes.length > 0) {
+        setActivePreviewType(resourceTypes[0]);
+        setResult(results[0]?.content || '');
+      }
       toast.success(resourceTypes.length > 1 ? `成功生成 ${resourceTypes.length} 种资源！` : '资源生成成功！');
     } catch (err) {
       clearInterval(stepInterval);
@@ -1056,7 +1345,7 @@ export default function ResourceGeneratePage() {
                 {/* 开始生成按钮，紧靠资源类型 label 下方显示 */}
                 <Button
                   onClick={handleGenerate}
-                  disabled={generating || !topic.trim() || resourceTypes.length === 0}
+                  disabled={generating || (!topic.trim() && !webUrl.trim() && attachments.length === 0) || resourceTypes.length === 0}
                   className="w-full mt-4 mb-5 shadow-lg shadow-indigo-500/20 font-semibold py-5 text-sm bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white border-0 transition-all duration-300 hover:scale-[1.01]"
                 >
                   {generating ? (
@@ -1173,18 +1462,30 @@ export default function ResourceGeneratePage() {
                       })}
                     </div>
 
-                    {/* 日志 */}
-                    <div className="flex-1 min-h-0 overflow-y-auto bg-muted/30 rounded-lg p-3 space-y-1.5">
-                      {logs.map((log, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          {i === logs.length - 1 && generating ? (
-                            <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                          ) : (
-                            <CheckCircle className="w-3 h-3 text-muted-foreground" />
-                          )}
-                          <span className="text-xs text-muted-foreground">{log}</span>
+                    {/* 日志与思考过程 */}
+                    <div className="flex-1 min-h-0 overflow-y-auto bg-muted/30 rounded-lg p-3 space-y-3">
+                      <div className="space-y-1.5">
+                        {logs.map((log, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            {i === logs.length - 1 && generating && !thinkLog ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                            ) : (
+                              <CheckCircle className="w-3 h-3 text-muted-foreground" />
+                            )}
+                            <span className="text-xs text-muted-foreground">{log}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {thinkLog && (
+                        <div className="pt-2 border-t border-border/50">
+                          <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-muted-foreground">
+                            {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" /> : <Brain className="w-3.5 h-3.5" />}
+                            AI 深度思考过程...
+                          </div>
+                          {renderProcessMarkdownBlocks(thinkLog)}
                         </div>
-                      ))}
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -1195,9 +1496,30 @@ export default function ResourceGeneratePage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="flex-1 flex flex-col min-h-0"
                   >
+                    {/* Mini Progress Bar during Generation */}
+                    {generating && (
+                      <div className="mb-3 shrink-0">
+                        <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                          <span>正在生成第 {resourceTypes.indexOf(activePreviewType) + 1}/{resourceTypes.length} 种资源</span>
+                          <span>{Math.round(progress)}%</span>
+                        </div>
+                        <Progress value={progress} className="h-1" />
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                       <Badge className="bg-primary/10 text-primary border-0">
-                        <CheckCircle className="w-3 h-3 mr-1" />生成完成
+                        {generating ? (
+                          <>
+                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            正在生成「{resourceTypeOptions.find(o => o.value === activePreviewType)?.label || activePreviewType}」...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            生成完成
+                          </>
+                        )}
                       </Badge>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {/* DOCX 下载 */}
@@ -1221,12 +1543,40 @@ export default function ResourceGeneratePage() {
                           {videoGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
                           视频
                         </Button>
-                        <Button variant="outline" size="sm" className="h-7 text-xs gap-1"
-                          onClick={() => navigate('/resources')}>
-                          <ArrowRight className="w-3 h-3" />查看资源
-                        </Button>
                       </div>
                     </div>
+
+                    {/* Tab Switcher for Multiple Resource Types */}
+                    {resourceTypes.length > 1 && (
+                      <div className="flex gap-1.5 mb-3 border-b border-border/40 pb-2 overflow-x-auto shrink-0 scrollbar-none">
+                        {resourceTypes.map(rType => {
+                          const opt = resourceTypeOptions.find(o => o.value === rType);
+                          const isSelected = activePreviewType === rType;
+                          const hasContent = !!generatedResults[rType];
+                          return (
+                            <button
+                              key={rType}
+                              type="button"
+                              onClick={() => {
+                                setActivePreviewType(rType);
+                                setResult(generatedResults[rType] || '');
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-all shrink-0 ${
+                                isSelected
+                                  ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                                  : 'border-border/60 bg-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                              }`}
+                            >
+                              {opt && <opt.icon className={`w-3.5 h-3.5 ${opt.color}`} />}
+                              <span>{opt?.label || rType}</span>
+                              {hasContent && !generating && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
 
                     {/* 生成的图片 */}
                     {generatedImages.length > 0 && (
@@ -1369,21 +1719,23 @@ export default function ResourceGeneratePage() {
                   <Layers className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <DialogTitle className="text-base font-bold text-white leading-tight">
-                    我的资源库
-                  </DialogTitle>
-                  <DialogDescription className="text-[11px] text-white/65 mt-0.5">
+                  <div className="flex items-center gap-3">
+                    <DialogTitle className="text-base font-bold text-white leading-tight">
+                      我的资源库
+                    </DialogTitle>
+                    <button
+                      onClick={startCreateManual}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/25 hover:border-white/50 transition-all duration-200 backdrop-blur-sm hover:scale-105 shadow-lg shrink-0"
+                    >
+                      <Plus className="w-3 h-3" />
+                      新建资源
+                    </button>
+                  </div>
+                  <DialogDescription className="text-[11px] text-white/80 mt-0.5">
                     管理您所有 AI 生成与手动创建的教学资源
                   </DialogDescription>
                 </div>
               </div>
-              <button
-                onClick={startCreateManual}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white/20 hover:bg-white/30 text-white border border-white/25 hover:border-white/50 transition-all duration-200 backdrop-blur-sm hover:scale-105 shadow-lg"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                新建资源
-              </button>
             </div>
           </div>
 
@@ -1401,7 +1753,7 @@ export default function ResourceGeneratePage() {
                     placeholder="搜索资源标题、课程..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ background: 'rgba(255,255,255,0.06)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.12)' }}
+                    style={{ background: 'rgba(255,255,255,0.06)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.2)' }}
                     className="w-full pl-8 pr-3 py-2 text-xs rounded-lg focus:outline-none transition-all"
                   />
                 </div>
@@ -1409,7 +1761,7 @@ export default function ResourceGeneratePage() {
 
               {/* 计数 */}
               <div className="px-3 py-2 flex items-center justify-between">
-                <span className="text-[10px] text-white/35 font-medium">
+                <span className="text-[10px] text-white/60 font-medium">
                   {filteredResources.length} 个资源
                 </span>
                 <button onClick={fetchUserResources} className="text-white/30 hover:text-primary transition-colors">
@@ -1433,7 +1785,7 @@ export default function ResourceGeneratePage() {
                   </div>
                 ) : (
                   filteredResources.map((res) => {
-                    const opt = resourceTypeOptions.find(o => o.value === res.type);
+                    const opt = resourceTypeOptions.find(o => o.value === res.resource_type);
                     const isSelected = activeResource?.id === res.id;
                     return (
                       <div
@@ -1451,19 +1803,19 @@ export default function ResourceGeneratePage() {
                             {opt ? <opt.icon className={`w-3.5 h-3.5 ${opt.color}`} /> : <FileText className="w-3.5 h-3.5 text-white/40" />}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className={`text-xs font-semibold truncate ${isSelected ? 'text-primary' : 'text-white/80'}`}>
+                            <p className={`text-xs font-semibold truncate ${isSelected ? 'text-primary font-bold' : 'text-white'}`}>
                               {res.title || '无标题'}
                             </p>
-                            {(res.course_name || res.topic) && (
-                              <p className="text-[10px] text-white/35 truncate mt-0.5">
-                                {[res.course_name, res.topic].filter(Boolean).join(' · ')}
+                            {(res.courses?.name || res.chapter) && (
+                              <p className="text-[10px] text-white/65 truncate mt-0.5">
+                                {[res.courses?.name, res.chapter].filter(Boolean).join(' · ')}
                               </p>
                             )}
                             <div className="flex items-center gap-1 mt-1.5">
-                              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${isSelected ? 'bg-primary/20 text-primary' : 'bg-white/8 text-white/35'}`}>
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${isSelected ? 'bg-primary/20 text-primary' : 'bg-white/12 text-white/70'}`}>
                                 {opt?.label || '文档'}
                               </span>
-                              <span className="text-[9px] text-white/25">
+                              <span className="text-[9px] text-white/50">
                                 {res.created_at ? new Date(res.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }) : ''}
                               </span>
                             </div>
@@ -1569,30 +1921,60 @@ export default function ResourceGeneratePage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           {(() => {
-                            const opt = resourceTypeOptions.find(o => o.value === activeResource.type);
+                            const opt = resourceTypeOptions.find(o => o.value === activeResource.resource_type);
                             return opt ? (
                               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/8 ${opt.color}`}>
                                 <opt.icon className="w-3 h-3" />{opt.label}
                               </span>
                             ) : null;
                           })()}
-                          <span className="text-[10px] text-white/30">
+                          <span className="text-[10px] text-white/50">
                             {activeResource.created_at ? new Date(activeResource.created_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                           </span>
                         </div>
                         <h3 className="text-base font-bold text-white leading-tight truncate">
                           {activeResource.title}
                         </h3>
-                        {(activeResource.course_name || activeResource.topic) && (
-                          <p className="text-[11px] text-white/40 mt-1">
-                            {[activeResource.course_name, activeResource.topic].filter(Boolean).join(' · ')}
+                        {(activeResource.courses?.name || activeResource.chapter) && (
+                          <p className="text-[11px] text-white/70 mt-1">
+                            {[activeResource.courses?.name, activeResource.chapter].filter(Boolean).join(' · ')}
                           </p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
+                        {/* 导出/生成功能 */}
+                        <button
+                          onClick={() => downloadAsDocx(activeResource.title || '资源', activeResource.content || '').catch(() => toast.error('DOCX 下载失败'))}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/80 hover:text-white bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 hover:border-blue-500/40 transition-all"
+                        >
+                          <FileDown className="w-3.5 h-3.5" />Word
+                        </button>
+                        <button
+                          onClick={() => {
+                            setTopic(activeResource.title || '');
+                            handleGenerateImage();
+                            setShowMyInterface(false);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/80 hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 transition-all"
+                        >
+                          <ImageIcon2 className="w-3.5 h-3.5" />配图
+                        </button>
+                        <button
+                          onClick={() => {
+                            setTopic(activeResource.title || '');
+                            handleGenerateVideo();
+                            setShowMyInterface(false);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/80 hover:text-white bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20 hover:border-pink-500/40 transition-all"
+                        >
+                          <Film className="w-3.5 h-3.5" />视频
+                        </button>
+                        
+                        <div className="w-px h-4 bg-white/10 mx-1"></div>
+
                         <button
                           onClick={() => startEditResource(activeResource)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white bg-white/6 hover:bg-white/12 border border-white/10 hover:border-white/20 transition-all"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/80 hover:text-white bg-white/6 hover:bg-white/12 border border-white/10 hover:border-white/20 transition-all"
                         >
                           <Edit className="w-3.5 h-3.5" />编辑
                         </button>
@@ -1608,8 +1990,8 @@ export default function ResourceGeneratePage() {
 
                   {/* Markdown 内容 */}
                   <div className="flex-1 overflow-y-auto p-6">
-                    <div className="max-w-3xl mx-auto bg-white/3 border border-white/8 rounded-2xl p-6 shadow-xl">
-                      <div className="prose prose-invert prose-sm max-w-none">
+                    <div className="max-w-3xl mx-auto bg-white/5 border border-white/12 rounded-2xl p-6 shadow-xl text-slate-100">
+                      <div className="prose prose-invert prose-sm max-w-none text-slate-100 dark:text-slate-100">
                         {renderMarkdownBlocks(activeResource.content || '')}
                       </div>
                     </div>

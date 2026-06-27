@@ -1,5 +1,26 @@
 import { supabase } from '@/db/supabase';
 import { createParser } from 'eventsource-parser';
+import { deepseekService } from '@/services/ai/deepseek';
+
+
+const PORTRAIT_SYSTEM_PROMPT = `你是一位专业的AI学业规划师和学习画像构建助手。
+你的任务是通过与用户的多轮问答对话，帮助用户构建个性化的学习画像。学习画像包含以下6个维度，每个维度需要依次询问并获取用户的真实回答：
+1. 专业方向 (主要学科领域)
+2. 知识基础 (已掌握的核心课程和技能)
+3. 认知风格 (偏好的学习方式和理解模式)
+4. 易错点偏好 (容易出错的知识点类型)
+5. 学习节奏 (学习时间和节奏偏好)
+6. 学习目标 (短期和长期学业目标)
+
+请注意：
+- 每次对话只提一个问题，并且要态度亲和、鼓励性强。
+- 根据用户前面的回答，引导并提出下一个维度的问题。
+- 当用户已经回答完所有问题或画像已完整时，进行友好总结。
+- 请直接输出你的回答，千万不要包含任何 <think> 或 </think> 标签，也不要输出思考过程。`;
+
+const TUTORING_SYSTEM_PROMPT = `你是一位耐心的AI助教，专门为学生解答学科疑问、辅导功课。
+请直接回答用户的问题，提供清晰的解释和示例，条理分明。
+请直接输出你的回答，千万不要包含任何 <think> 或 </think> 标签，也不要输出思考过程。`;
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -19,66 +40,35 @@ export async function streamChat(
   signal?: AbortSignal,
   systemPrompt?: string
 ) {
-  try {
-    const response = await supabase.functions.invoke<ReadableStream>('ai-chat', {
-      method: 'POST',
-      body: { messages, prompt_type: promptType, system_prompt: systemPrompt },
-    });
-
-    if (response.error) {
-      const errorMsg = await response.error?.context?.text?.() || response.error.message;
-      callbacks.onError(errorMsg);
-      return;
-    }
-
-    // 由于 Supabase functions.invoke 返回的是 parsed data，我们改用 fetch 直接调用
-  } catch {
-    // 回退到直接 fetch
+  let finalSystemPrompt = systemPrompt;
+  if (!finalSystemPrompt) {
+    if (promptType === 'portrait') finalSystemPrompt = PORTRAIT_SYSTEM_PROMPT;
+    else if (promptType === 'tutoring') finalSystemPrompt = TUTORING_SYSTEM_PROMPT;
   }
 
-  // 直接 fetch 调用 Edge Function 获取 SSE 流
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({ messages, prompt_type: promptType, system_prompt: systemPrompt }),
-    signal,
-  });
-
-  if (!resp.ok || !resp.body) {
-    callbacks.onError(`请求失败: ${resp.status}`);
-    return;
+  const formattedMessages: any[] = [];
+  if (finalSystemPrompt) {
+    formattedMessages.push({ role: 'system', content: finalSystemPrompt });
   }
+  formattedMessages.push(...messages);
 
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder('utf8');
-  const parser = createParser({
-    onEvent: (event) => {
-      if (!event.data || event.data === '[DONE]') return;
-      try {
-        const chunk = JSON.parse(event.data);
-        const content = chunk.choices?.[0]?.delta?.content ?? '';
-        if (content) callbacks.onChunk(content);
-      } catch {
-        // skip malformed
+  await deepseekService.streamChat(
+    formattedMessages,
+    {
+      onChunk: (chunk) => {
+        callbacks.onChunk(chunk);
+      },
+      onDone: () => {
+        callbacks.onDone();
+      },
+      onError: (err) => {
+        callbacks.onError(err);
       }
     },
-  });
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      parser.feed(decoder.decode(value, { stream: true }));
+    {
+      signal
     }
-    callbacks.onDone();
-  } catch (err) {
-    if ((err as Error).name === 'AbortError') return;
-    callbacks.onError((err as Error).message);
-  }
+  );
 }
 
 export async function generateResource(

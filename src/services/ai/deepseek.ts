@@ -12,6 +12,17 @@ export interface StreamCallbacks {
   onError: (error: string) => void;
 }
 
+function cleanMessages(messages: ChatMessage[]): ChatMessage[] {
+  return messages.map(m => {
+    let content = m.content;
+    if (typeof content === 'string') {
+      // 移除大模型不支持的 markdown 格式 Base64 图片，防止触发 413 Payload Too Large
+      content = content.replace(/!\[(?:图片|上传图片)\]\(data:image\/[^)]+\)/g, '[图片]');
+    }
+    return { ...m, content };
+  });
+}
+
 export const deepseekService = {
   /**
    * 非流式对话调用 (Non-streaming Chat)
@@ -27,12 +38,11 @@ export const deepseekService = {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       'X-Proxy-Key': AI_CONFIG.apiKey,
-      'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
     };
 
     const body: Record<string, any> = {
       model: AI_CONFIG.modelName,
-      messages,
+      messages: cleanMessages(messages),
       temperature: options?.temperature ?? 0.7,
       stream: false,
     };
@@ -75,12 +85,11 @@ export const deepseekService = {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       'X-Proxy-Key': AI_CONFIG.apiKey,
-      'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
     };
 
     const body = {
       model: AI_CONFIG.modelName,
-      messages,
+      messages: cleanMessages(messages),
       temperature: options?.temperature ?? 0.7,
       stream: true,
     };

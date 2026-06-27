@@ -165,9 +165,9 @@ export default function LoginPage() {
         <div className="relative z-10 px-12 py-16 max-w-xl">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
             <Link to="/" className="flex items-center gap-4 mb-12">
-              <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.6 }}
-                className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-xl">
-                <GraduationCap className="w-7 h-7 text-primary-foreground" />
+              <motion.div whileHover={{ scale: 1.08, rotate: 2 }} transition={{ duration: 0.3 }}
+                className="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center shadow-xl">
+                <img src="/images/kowell.png" alt="Logo" className="w-full h-full object-cover" />
               </motion.div>
               <div>
                 <div className="text-white font-bold text-2xl">Kowell AI</div>
@@ -222,8 +222,8 @@ export default function LoginPage() {
         </div>
         <div className="relative z-10 w-full max-w-md mx-auto lg:-translate-x-6">
           <Link to="/" className="lg:hidden flex items-center gap-2.5 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
-              <GraduationCap className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg">
+              <img src="/images/kowell.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <div className="font-bold">Kowell AI</div>

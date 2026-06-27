@@ -1,10 +1,56 @@
 # 🎨 Kowell AI — 15页专业路演 PPT 视觉设计及 AI 绘图提示词指南 (ppts.md)
 
-本指南专为 **Kowell AI（多智能体自适应智能学习平台）** 的路演、融资及答辩 PPT 视觉设计而定制。为了确保整套 PPT 具有极高的一致性、科技质感与视觉冲击力，全套设计方案采用**暗色未来科技风 (Dark Futuristic Tech)**，以深空蓝/灰为背景，点缀霓虹紫、极光蓝、翡翠绿与亮金色，展现出 120fps 拟物毛玻璃与多智能体协同的“高级质感”。
+## 🚀 3D 真实人物版 App 宣传海报与 PPT 封面设计（含完整排版与数据）
+
+以下是结合 **Kowell AI — 基于多智能体的资源生成与个性化学习系统** 项目核心参数定制的超高清宣传海报及 PPT 封面提示词。该版面主体为**真实 3D 中文女生招手形象**，并按照 A3 宣传海报的高端标准整合了电脑/手机样机、二维码占位、核心痛点（含具体量化数据）、用户画像和亮点特色等模块。
+
+### 📌 海报版面与文字排版规范 (A3 Poster Content & Layout Blueprint)
+1. **产品标题区**：
+   - 🏷️ **产品名称**：`Kowell AI` 🎓 (配以学位帽表情)
+   - 📝 **副标题**：`基于多智能体的资源生成与个性化学习系统` 🧠 (配以脑图表情)
+   - 🌐 **上线链接**：`e.playe.top` 💻 (配以电脑样机与地球表情)
+2. **核心痛点区（项目量化数据）**：
+   - 😩 **备课繁重 (300倍效率差)** ➔ 人工编写讲义、导图和题库耗时 **4+ 小时** ⏳ ➔ Kowell AI 流式并发生成仅需 **45 秒** ⚡！
+   - 📉 **知行割裂 (实操无门路)** ➔ 传统理工科缺乏代码编译纠错环境 ➔ 自学备考复习时长平均**缩短 42%** 📉，难点知识掌握度**提升 89%** 📈，试点满意度达 **94.8%** 🏆！
+3. **用户画像区**：
+   - 🐣 **备考冲刺生 (小张/21岁)** ➔ 错题特训与画像雷达定位，快速消灭考前盲区。
+   - 👨‍💻 **转行自学者 (小李/25岁)** ➔ 跟着 DAG 自适应路线图闯关，Monaco 沙箱 8 语言实操。
+   - 👩‍🏫 **高校骨干教师 (王老师/38岁)** ➔ 一键流式并发生成多套课件包，支持 Word/PPT 二次编辑。
+4. **特色亮点区**：
+   - ⚡ **120fps 原生 flex 拟物手风琴面板** ➔ 极速硬件加速，贝塞尔丝滑展开。
+   - 🗂️ **高保真磨砂毛玻璃一站式 CRUD 抽屉** ➔ 双栏暗色面板，版本无缝沉淀。
+   - 💻 **Deno Edge & Monaco 8语言沙箱编译** ➔ 即开即写，DeepSeek-Coder 改错气泡。
+   - 🕸️ **WebGL 3D 力导向知识图谱网** ➔ 三维立体依存网络，双击节点直接跳转。
+5. **样机显示区域 (Devices Layout)**：
+   - 💻 **1个笔记本电脑样机 (Laptop Mockup)** ➔ 展示系统的在线代码编辑与多智能体工作流监控台。
+   - 📱 **4个智能手机样机 (Smartphone Mockups)** ➔ 分别展示：① 6维能力雷达图；② SVG 树形学习路径；③ 带有 DeepSeek 改错气泡的 Monaco 沙箱；④ 提分折线图与评估报告。
+6. **底部操作区 (QR Code Placeholders)**：
+   - 📥 **“在线体验”二维码区域** (带有 QR code placeholder，标识为“在线体验” 📱)。
+   - 🛠️ **“开源文档”二维码区域** (带有 QR code placeholder，标识为“开源文档” 📂)。
+
+---
+
+### 🖼️ 1. A3 推广宣传海报提示词 (A3 App Promo Poster Prompts)
+* **设计意图**：A3 竖版比例（使用 3:4 构图）。画面前部是一名极具亲和力的**真实 3D 中国大学女生人物（非卡通，质感真实）**向镜头微笑招手，右侧放置展示 `e.playe.top` 的笔记本电脑，四周环绕着 4 个手机样机屏幕（显示画像、路径、沙箱、报告）。底部专门空出两个 QR Code 纯净白盒。
+* **🤖 Midjourney Prompt**:
+  > A high-end 3D app promotional poster for "Kowell AI: Multi-Agent Resource Generation & Personalized Learning System", vertical A3 ratio 3:4. In the foreground, a beautiful realistic 3D Chinese female student (21 years old, wearing casual academic clothes) is waving and smiling warmly towards the camera. Next to her, a sleek laptop mockup displays the web coding workspace at 'e.playe.top'. Around her, four floating smartphone app mockups display colorful UI interfaces (an interactive 6-dimensional competency radar chart, an SVG DAG learning path map, a code editor sandbox, and dynamic metrics charts). At the bottom of the poster, there are two clean, labeled square placeholders for QR codes: "在线体验" (Online Experience) and "开源文档" (Open Source Docs). The background is a clean, dark indigo space with glowing violet and cyan lines, symbolizing multi-agent networks and digital classrooms. Hyper-realistic, octane render, clean typography layout, studio lighting, 8k --ar 3:4 --style raw --v 6.0
+* **🤖 DALL-E 3 Prompt**:
+  > A professional vertical app promotional poster background for "Kowell AI". In the center, a beautiful realistic 3D Chinese college student girl is waving and smiling warmly. Next to her is a modern laptop mockup showing the 'e.playe.top' workspace, and four smartphone mockups displaying mobile app interfaces (competency radar chart, SVG learning path, Monaco sandbox, and report metrics). At the bottom, two blank square areas are labeled for QR codes: "在线体验" and "开源文档". Deep dark indigo background with glowing purple and cyan tech lights. Clean layout, octane render, photorealistic, higher education style.
+
+---
+
+### 🖼️ 2. PPT 封面宣传图提示词 (PPT Cover Image Prompts)
+* **设计意图**：16:9 横版比例。右侧展示 3D 招手真实女生与电脑/手机样机集群，左侧 60% 为深色高透毛玻璃留白，便于叠放大标题字样。
+* **🤖 Midjourney Prompt**:
+  > A premium cinematic dark-mode educational technology presentation cover, 16:9 ratio. In the right side, a beautiful realistic 3D Chinese female student is waving and smiling warmly. Next to her is a sleek laptop mockup displaying 'Kowell AI' coding interface. Around her float four smartphone mockups displaying mobile UI dashboards (learning path, radar chart, code compiler, and statistics). Glowing neon violet and cyan light rings loop around. The left 60% of the image is a clean, dark space with a soft frosted glass texture and subtle grid lines, leaving ample copyspace for title text overlay. High-end software product design, 8k resolution, octane render, studio lighting --ar 16:9 --style raw --v 6.0
+* **🤖 DALL-E 3 Prompt**:
+  > A high-end tech presentation cover, 16:9 ratio. In the right side, a beautiful realistic 3D Chinese student girl is waving and smiling. Next to her is a laptop mockup showing 'Kowell AI' platform, and four floating smartphone mockups showing app screens. The left side is a clean, dark blue gradient space covered by a semi-transparent frosted glass sheet for title text overlay. Glowing violet and cyan neon lights, professional 3D rendering style, higher education style.
 
 ---
 
 ## 🎨 全局视觉规范 (Global Design System)
+
+本指南专为 **Kowell AI（多智能体自适应智能学习平台）** 的路演、融资及答辩 PPT 视觉设计而定制。为了确保整套 PPT 具有极高的一致性、科技质感与视觉冲击力，全套设计方案采用**暗色未来科技风 (Dark Futuristic Tech)**，以深空蓝/灰为背景，点缀霓虹紫、极光蓝、翡翠绿与亮金色，展现出 120fps 拟物毛玻璃与多智能体协同的“高级质感”。
 
 * **主色调**：深空蓝 `#0B0F19`（背景）、科技蓝 `#3B82F6`（核心）、霓虹紫 `#C084FC`（特色/Agent）
 * **辅助色**：翡翠绿 `#10B981`（方案/数据提升）、胭脂红 `#EF4444`（痛点/警示）、亮金色 `#F59E0B`（亮点/尊享）
