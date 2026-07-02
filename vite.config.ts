@@ -52,6 +52,28 @@ export default defineConfig(({ mode }) => {
             proxyReq.setHeader("Authorization", `Bearer ${apiKey}`);
           });
         }
+      },
+      "/api/stepfun": {
+        target: "https://api.stepfun.com/step_plan/v1",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/stepfun/, ""),
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq) => {
+            const apiKey = env.STEP_API_KEY || "4EDctG0RQZrjTwF9UmDsXr56OmZOeLbrBKq7JKlrXyRZ4P2gd7sFWPboQvzaJ3J6W";
+            proxyReq.setHeader("Authorization", `Bearer ${apiKey}`);
+          });
+        }
+      },
+      "/api/gmicloud": {
+        target: "https://console.gmicloud.ai",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/gmicloud/, ""),
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq) => {
+            const apiKey = env.SEEDANCE_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE5OTJmOGNlLTg0NDAtNDA2MC1hN2YwLTdjNzExMzY2MDA3YyIsInNjb3BlIjoiaWVfbW9kZWwiLCJjbGllbnRJZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCJ9.IWRZ1LbtdXPx0XxHeGEYtlSZ1z1RD-6ZWmZxhpKT6bc";
+            proxyReq.setHeader("Authorization", `Bearer ${apiKey}`);
+          });
+        }
       }
     },
   },

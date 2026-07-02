@@ -12,7 +12,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
-import { textAIService } from '@/services/ai';
+import { textAIService, visionAIService, videoAIService } from '@/services/ai';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -106,21 +106,7 @@ async function downloadAsDocx(topic: string, content: string) {
    图片生成（image-generations Edge Function）
 ────────────────────────────────────────────────────────────── */
 async function generateImage(prompt: string): Promise<string[]> {
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-generations`;
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({ prompt, aspect_ratio: '16:9', n: 1 }),
-  });
-  if (!resp.ok) throw new Error(await resp.text());
-  const data = await resp.json();
-  // 返回 urls 数组
-  return (data.data ?? []).map((item: { url?: string; b64_json?: string }) =>
-    item.url ?? (item.b64_json ? `data:image/png;base64,${item.b64_json}` : '')
-  ).filter(Boolean);
+  return visionAIService.generateImage(prompt, { size: '1024x1024', n: 1 });
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -142,44 +128,20 @@ async function fetchWebContent(webUrl: string): Promise<string> {
 }
 
 /* ──────────────────────────────────────────────────────────────
-   视频生成（kling-video-create + kling-video-query）
+   视频生成（Seedance 2.0 API）
 ────────────────────────────────────────────────────────────── */
 async function createVideoTask(prompt: string): Promise<string> {
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kling-video-create`;
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({ prompt, duration: 5, aspect_ratio: '16:9' }),
+  const data = await videoAIService.submitVideoGeneration({
+    prompt,
+    duration: 5,
+    resolution: '720p',
+    ratio: '16:9'
   });
-  if (!resp.ok) throw new Error(await resp.text());
-  const data = await resp.json();
-  return data.data?.task_id ?? data.task_id ?? '';
+  return data.request_id;
 }
 
-async function pollVideoTask(taskId: string, maxAttempts = 60): Promise<string> {
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kling-video-query`;
-  for (let i = 0; i < maxAttempts; i++) {
-    await new Promise(r => setTimeout(r, 5000));
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ task_id: taskId }),
-    });
-    if (!resp.ok) continue;
-    const data = await resp.json();
-    const status = data.data?.task_status ?? data.task_status;
-    if (status === 'succeed') {
-      return data.data?.task_result?.videos?.[0]?.url ?? '';
-    }
-    if (status === 'failed') throw new Error('视频生成失败');
-  }
-  throw new Error('视频生成超时，请稍后重试');
+async function pollVideoTask(taskId: string): Promise<string> {
+  return videoAIService.pollVideoResult(taskId);
 }
 
 /* ─── Markdown 块渲染（AI生成内容用） ─── */

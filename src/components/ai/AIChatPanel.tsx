@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { textAIService } from '@/services/ai';
+import { textAIService, visionAIService } from '@/services/ai';
 import { stepAudioService } from '@/services/ai';
 import {
   Send, Bot, User, Loader2, Square, ImageIcon, Mic, MicOff, Film, X,
@@ -340,7 +340,15 @@ export default function AIChatPanel({
       },
     };
 
-    if (sessionType === 'portrait') {
+    const hasImage = history.some(m => m.content.includes('![图片](') || m.content.includes('![上传图片]('));
+
+    if (hasImage) {
+      await visionAIService.streamOCRAnalysis(
+        history,
+        chatCallbacks,
+        abortRef.current.signal
+      );
+    } else if (sessionType === 'portrait') {
       await textAIService.streamPortraitChat(
         history,
         chatCallbacks,
