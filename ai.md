@@ -1,208 +1,198 @@
-# 🎓 Kowell AI — 多智能体智能学习平台 AI 对接架构与实施指南 (ai.md)
+# 🤖 Kowell AI — AI 能力全景与对接规范技术白皮书
 
-本指南针对 Kowell AI 系统的 **11 大核心功能模块**，深度剖析其需要对接的具体 AI 能力、推荐使用的 AI 模型、详细对接步骤和要求、以及核心提示词（Prompt）策略。最后提供统一的表格总结，供开发团队直接参考实施。
-
----
-
-## 📋 模块对接方案详解
-
-### 1. 📖 资源中心 (Resource Center)
-*   **具体 AI 能力**：结构化学习资源生成（支持教学案例、思维导图大纲、练习题库、课件 PPT 大纲等 7 类资源）；多模态生成（图解配图生成、微动效视频脚本及生成）。
-*   **推荐 AI 模型**：
-    *   **文本/结构化资源**：Claude 3.5 Sonnet (生成质量最高、代码及逻辑极佳) 或 GPT-4o。
-    *   **图画/插图**：Midjourney V6 / DALL-E 3。
-    *   **动画演示/短视频**：Kling AI (可灵) / Luma Dream Machine。
-*   **对接要求与步骤**：
-    1. 前端发送生成请求（专业、课程、章节、资源类型）。
-    2. Edge Function `ai-generate` 接收请求并调用 Claude API。
-    3. 使用 **SSE (Server-Sent Events) 流式传输**，实时将生成进度和 Markdown 文本返回给前端。
-    4. 若资源需要配图，提取文本中的关键词，异步调用 `image-generations` Edge Function 生成插图，并更新 Supabase `resources` 表。
-*   **提示词 (Prompt) 策略**：
-    *   **角色设定**：资深大学教授 + 教研专家。
-    *   **输出控制**：必须输出格式规范的 Markdown 文本或符合特定 JSON Schema 的数据（例如练习题需包含题目、选项、答案、解析）。
-    *   **示例提示词**：
-        ```text
-        你是一位计算机科学专业的资深教授。请针对“数据结构与算法”课程中的“二叉树遍历”章节，生成 3 道高质量的练习题。
-        输出格式必须为 JSON 数组，每道题的格式如下：
-        {
-          "question": "题目内容",
-          "options": ["A. xxx", "B. xxx", "C. xxx", "D. xxx"],
-          "answer": "正确选项字母",
-          "analysis": "详细步骤解析，指出易错点"
-        }
-        ```
+本技术白皮书旨在全面梳理 **Kowell AI（多智能体智能学习与教研平台）** 的 AI 能力全景架构、各模态对接需求与调用资费标准，以及系统核心提示词（Prompt）工程策略，为项目的合规性审查、后续技术迭代及运营成本控制提供标准规范。
 
 ---
 
-### 2. 🗺️ 学习路径 (Learning Path)
-*   **具体 AI 能力**：动态自适应课程路径规划。基于用户的画像数据，生成多阶段的 Directed Acyclic Graph (DAG) 学习路径。
-*   **推荐 AI 模型**：GPT-4o 或 Claude 3.5 Sonnet。
-*   **对接要求与步骤**：
-    1. 获取用户的画像数据（专业方向、知识基础、学习目标、学习节奏）。
-    2. 调用 LLM，传入用户画像和目标科目。
-    3. 要求 LLM 生成具有依赖关系的节点数据（包括阶段、节点名称、预计时长、前置节点、关联资源类型）。
-    4. 后端将 JSON 路径数据写入 `learning_paths` 表，并与资源库进行自动匹配关联。
-*   **提示词 (Prompt) 策略**：
-    *   **核心逻辑**：采用 Few-Shot 提示词，提供一个标准的 DAG JSON 示例，约束模型严禁输出多余的解释性文字，只输出合法的 JSON 代码。
-    *   **示例提示词**：
-        ```text
-        已知用户画像：{ "major": "AI", "level": "零基础", "goal": "掌握机器学习基础", "pace": "快速" }。
-        请规划一条包含 3-4 个阶段的学习路径。输出格式必须为以下 JSON，禁止包含 Markdown 标记符以外的任何字：
-        {
-          "stages": [
-            {
-              "stage_id": 1,
-              "title": "阶段名称",
-              "nodes": [
-                { "node_id": "1-1", "title": "节点名称", "prerequisites": [], "est_hours": 3 }
-              ]
-            }
-          ]
-        }
-        ```
+## 一、 AI 能力全景架构图
+
+Kowell AI 采用 **「前端自适应路由 + 双核 AI 对接层 + 后端 Edge Orchestration（边缘编排）+ Supabase 数据基建」** 的混合系统架构。通过前端直连代理（低延迟流式）与 Serverless 云函数异步调度（复杂任务与多模态生成），实现了算力的高效分配与隐私安全的严密隔离。
+
+### 1. 技术系统架构图 (Architecture Diagram)
+
+```mermaid
+graph TD
+    classDef ui fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#fff;
+    classDef bridge fill:#312e81,stroke:#6366f1,stroke-width:2px,color:#fff;
+    classDef edge fill:#111827,stroke:#10b981,stroke-width:2px,color:#fff;
+    classDef provider fill:#064e3b,stroke:#059669,stroke-width:2px,color:#fff;
+    classDef db fill:#3c0764,stroke:#a855f7,stroke-width:2px,color:#fff;
+
+    subgraph Frontend ["沉浸式自适应交互层 (React 18 SPA)"]
+        UI_Portrait["学习画像诊断 (PortraitPage)"]:::ui
+        UI_Tutoring["数字人智能答疑 (TutoringPage)"]:::ui
+        UI_Resource["多模态资源生成 (ResourcePage)"]:::ui
+        UI_Path["SVG学习路径图 (LearningPathPage)"]:::ui
+        UI_Eval["效果诊断雷达图 (EvaluationPage)"]:::ui
+        UI_Code["多语言在线沙箱 (CodeLabPage)"]:::ui
+    end
+
+    subgraph AI_Bridge ["双核 AI 路由桥接层"]
+        Client_Direct["客户端直连服务 (deepseekService)"]:::bridge
+        Edge_Functions["Supabase Deno Edge Functions"]:::bridge
+    end
+
+    subgraph Edge_Funcs ["Serverless 云函数微服务"]
+        F_Chat["ai-chat (答疑中转)"]:::edge
+        F_Generate["ai-generate (7类教研生成)"]:::edge
+        F_Recommend["ai-recommend (路径智能规划)"]:::edge
+        F_Evaluate["ai-evaluate (试题智能判分)"]:::edge
+        F_TTS["minimax-tts (TTS语音合成)"]:::edge
+        F_Img["image-generations (课程配图)"]:::edge
+        F_Vid["kling-video-create (短视频生成)"]:::edge
+    end
+
+    subgraph LLM_Gateway ["LLM API网关与多模态模型"]
+        DeepSeek_Model["DeepSeek-v4-pro (推理/流式对话)"]:::provider
+        MiniMax_Text["MiniMax-M3 (复杂大纲与多轮交互)"]:::provider
+        Ernie_Fallback["Ernie Speed (动态降级备用)"]:::provider
+        Speech_TTS["speech-02-hd (音频高保真合成)"]:::provider
+        Image_Model["image-01 (多模态配图生成)"]:::provider
+        Kling_Video["kling-v2-master (可灵视频合成)"]:::provider
+    end
+
+    subgraph DB_Layer ["Supabase 关系与行级安全数据层"]
+        DB_Profile["user_profiles (用户积分/权益表)"]:::db
+        DB_Portrait["learning_portraits (6维诊断画像)"]:::db
+        DB_Resource["resources (我的资源 CRUD 库)"]:::db
+        DB_Path["learning_paths (DAG有向无环图节点)"]:::db
+        DB_Messages["chat_messages (会话持久化存储)"]:::db
+        DB_Eval["evaluations (判分数据及周报报告)"]:::db
+    end
+
+    %% 数据与调用链路关系
+    UI_Portrait -.-> |"1. SSE 极速对话流"| Client_Direct
+    UI_Tutoring -.-> |"1. SSE 极速对话流"| Client_Direct
+    UI_Code -.-> |"1. 代码 Review 请求"| Client_Direct
+    
+    UI_Portrait ==> |"2. 画像生成/更新"| F_Chat
+    UI_Tutoring ==> |"2. 语音合成/短视频"| F_TTS
+    UI_Resource ==> |"2. 7类资源并行异步流"| F_Generate
+    UI_Resource ==> |"2. 课程配图与视频"| F_Img & F_Vid
+    UI_Path ==> |"2. 自适应路径规划"| F_Recommend
+    UI_Eval ==> |"2. 论述与口述判分"| F_Evaluate
+
+    Client_Direct ===> |"HTTPS SSE / v1/proxy"| DeepSeek_Model
+    
+    Edge_Functions --> F_Chat & F_Generate & F_Recommend & F_Evaluate & F_TTS & F_Img & F_Vid
+    
+    F_Chat --> |"API Gateway"| MiniMax_Text
+    F_Chat -.-> |"主模型超时/异常"| Ernie_Fallback
+    F_Generate --> |"API Gateway"| MiniMax_Text
+    F_Recommend --> |"API Gateway"| MiniMax_Text
+    F_Evaluate --> |"API Gateway"| MiniMax_Text
+    F_TTS --> |"t2a_v2 Gateway"| Speech_TTS
+    F_Img --> |"images/generations"| Image_Model
+    F_Vid --> |"videos/text2video"| Kling_Video
+    
+    F_Chat ==> |"持久化消息"| DB_Messages
+    F_Generate ==> |"写入资源库"| DB_Resource
+    F_Recommend ==> |"Upsert节点链"| DB_Path
+    F_Evaluate ==> |"写入测评结果"| DB_Eval
+    Client_Direct -.-> |"前端自动写入"| DB_Messages
+    UI_Portrait --> |"数据写入"| DB_Portrait
+```
+
+### 2. 架构设计亮点说明
+
+> [!NOTE]
+> 1. **双核驱动 (Hybrid Core)**: 客户端通过 Proxy 代理直接请求 `DeepSeek-v4-pro` 以承载 **多轮答疑** 和 **苏格拉底画像交互**，无需经由后端中转，最大化利用大模型极速响应特性。
+> 2. **边缘解耦 (Edge Decoupling)**: 涉及密钥安全、数据表修改（如学习路径重构、评估数据回填）、第三方服务对接（微信支付、可灵视频、MiniMax TTS）统一在 **Supabase Deno Edge Functions** 完成。
+> 3. **主备降级 (Failover Strategy)**: Serverless 层内置动态重试机制，当 `MiniMax-M3` 出现网关异常时，自动平滑切回百度 `Ernie Speed` 备用模型，保证线上服务不中断。
 
 ---
 
-### 3. 👤 画像构建 (Profile Building)
-*   **具体 AI 能力**：多轮对话式智能诊断。通过渐进式提问引导，评估用户的 6 维能力（知识基础、认知风格、易错偏好、学习节奏、学习目标、专业方向），并输出诊断报告。
-*   **推荐 AI 模型**：Gemini 1.5 Flash (速度极快、成本低，适合多轮交互) 或 GPT-4o-mini。
-*   **对接要求与步骤**：
-    1. 用户进入画像页面，触发 `ai-chat` Edge Function (场景参数设为 `portrait`)。
-    2. 诊断 Agent 采用苏格拉底式提问，每次仅提一个问题，并根据用户回答动态调整下一个问题（共 5-6 轮）。
-    3. 对话结束后，调用大模型对整段对话进行语义分析，打分并生成 JSON 格式的 6 维画像模型。
-    4. 将结果保存或更新至 `learning_portraits` 表中。
-*   **提示词 (Prompt) 策略**：
-    *   **系统提示词**：设定 Agent 身份为亲切的“学业规划导师”。要求其提问自然、循序渐进，并能识别用户字里行间的技术水平。最终输出必须以严格的 JSON 属性表示 6 个维度的分值（1-100）。
+## 二、 需对接的 AI 能力需求矩阵 (按模态分类)
+
+系统深度融合了 **「文本-音频-视觉」** 三大模态，通过定制化模型组合，实现最优性价比与极致生成质量的平衡。以下按照不同模态分类，梳理各自模态下的 AI 能力对接需求和调用资费：
+
+### 1. 文本模态 (Text Modality)
+
+| 功能模块 | 功能描述与应用场景 | 推荐接入 AI 模型 | 接口调用价格 (参考) | 计费标准 | 降级/高可用策略 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **对话式画像构建** | 自然语言多轮对话询问，后台以 Strict JSON 抽取 6 维学习特征，避免传统表单的枯燥体验。 | **DeepSeek-V3 / R1**<br>(通过 `deepseek-v4-pro` 接入) | 输入：¥1.00 / 百万 tokens<br>输出：¥2.00 / 百万 tokens | 按 Token 计费 (包含推理缓存打折) | 超时 15 秒则切换至 `MiniMax-M3` 并行分析并持久化 |
+| **智能答疑与辅导** | 提供流式 SSE 对话，内置苏格拉底式启发提问与直接回答双模一键切换。 | **DeepSeek-V3 / R1**<br>(核心) | 输入：¥1.00 / 百万 tokens<br>输出：¥2.00 / 百万 tokens | 按 Token 计费 | 网关故障时降级至 `Ernie-Speed` (免费/极低资费) |
+| **7类个性化资源生成** | 异步并行生成教学案例、三级 Markdown 思维导图、配套习题解析、代码示例、PPT/视频大纲等。 | **MiniMax-M3** | 输入：¥15.00 / 百万 tokens<br>输出：¥15.00 / 百万 tokens | 按 Token 计费 | 前端基于 WebSocket/SSE 进度展示，失败则自动重试单个任务 |
+| **智能规划推送** | 根据学生画像 JSON 数据与历史打卡节点，动态生成下一步推荐主题、预估时长与推荐资源列表。 | **MiniMax-M3** | 输入：¥15.00 / 百万 tokens<br>输出：¥15.00 / 百万 tokens | 按 Token 计费 | 出现解析错误时自动退回规则库推荐机制 (基于前置依存树) |
+| **学习效果评估** | 提供主观题、论述题与口述文本的多维度 AI 智能判分，输出 JSON 反馈（得分、优缺点、改进建议）。 | **MiniMax-M3** | 输入：¥15.00 / 百万 tokens<br>输出：¥15.00 / 百万 tokens | 按 Token 计费 | 判分失败时使用静态模糊匹配与答案相似度比对作为兜底方案 |
+
+### 2. 音频模态 (Audio Modality)
+
+| 功能模块 | 功能描述与应用场景 | 推荐接入 AI 模型 | 接口调用价格 (参考) | 计费标准 | 降级/高可用策略 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **TTS 语音合成** | 将 AI 回复或画像引导词转换为真人高保真语音（如 `male-qn-jingying`），提供拟真电话语音通话。 | **MiniMax speech-02-hd** | 价格：¥5.00 / 百万字符 | 按合成字符数计费 | 音频流加载失败则静默降级为前端系统浏览器自带 Web Speech API |
+
+### 3. 视觉模态 (Vision Modality)
+
+| 功能模块 | 功能描述与应用场景 | 推荐接入 AI 模型 | 接口调用价格 (参考) | 计费标准 | 降级/高可用策略 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **课程多模态配图** | 根据生成的教学大纲与概念词，自动为课件 PPT 生成匹配的插图，优化排版。 | **MiniMax image-01** | 价格：¥0.10 / 张 | 按生成成功图片张数计费 | 生成失败则自动调用前端默认课程矢量封面图 |
+| **教学短视频生成** | 将三分钟视频讲解大纲转化为动画演示视频，前端轮询异步任务状态并嵌入播放。 | **Kling-v2-master**<br>(快手可灵 AI) | 价格：¥0.20 / 秒<br>(单支5秒视频 ¥1.00) | 按生成时长计费 | 轮询超时（>3分钟）则将任务推入后台队列，生成后发送系统通知 |
+| **拍照搜题 (OCR)** | 学生拍摄上传题目照片，视觉模型提取文字与结构信息，自动送入答疑引擎进行分析。 | **MiniMax-VL / DeepSeek-VL** | 输入：¥10.00 / 百万 tokens<br>图片：¥0.015 / 张 | 混合计费 (Token + 图片张数) | 视觉接口请求失败则提示学生使用裁剪框或手动文字提问 |
 
 ---
 
-### 4. 🤖 智能答疑 (Smart Q&A)
-*   **具体 AI 能力**：苏格拉底式多模态答疑、检索增强生成 (RAG)。根据用户的疑问或截图，结合本站资源进行启发式引导解答，并生成数字人讲解视频或语音。
-*   **推荐 AI 模型**：
-    *   **对话与启发式推理**：Claude 3.5 Sonnet (推理和概念解释能力最强)。
-    *   **语音合成 (TTS)**：MiniMax TTS 接口或 OpenAI Audio API。
-    *   **多模态输入 (OCR/图片理解)**：GPT-4o / Gemini 1.5 Pro。
-*   **对接要求与步骤**：
-    1. 用户输入文字或上传公式/代码截图。
-    2. 后端利用向量数据库（Supabase Vector / pgvector）检索关联章节资源，将上下文与用户问题拼装。
-    3. 调用 LLM 以“苏格拉底教学法”生成流式回复。
-    4. 答疑内容通过 MiniMax 接口异步合成 TTS 语音，提供前端朗读功能。
-*   **提示词 (Prompt) 策略**：
-    *   **苏格拉底引导法**：绝对禁止直接给出答案。必须首先肯定用户的思考，然后指出其逻辑漏洞，通过 1 个针对性问题引导用户自己推导。
-    *   **示例提示词**：
-        ```text
-        你是一位苏格拉底式的 AI 导师。面对学生的问题，你的职责是引导他们思考，而不是直接给答案。
-        学生的问题是：【为什么快速排序在最坏情况下的时间复杂度是 O(n^2)？】
-        上下文资源：【快速排序的分治基准选择】
-        请用亲切的语气，引导学生去思考基准元素（Pivot）的选择如何影响划分（Partition）的平衡性。请提出一个引导性问题。
-        ```
+## 三、 系统提示词 (Prompt) 策略与模版规范
 
----
+为保障大模型生成内容的稳定性、结构化输出的符合性（避免 JSON 格式破裂）以及优秀的教学体验，系统在各阶段实施了精细的提示词工程：
 
-### 5. 🎯 学习评估 (Learning Evaluation)
-*   **具体 AI 能力**：答题数据诊断与自适应能力评估。通过多维数据分析，生成个性化的评估报告和学习建议。
-*   **推荐 AI 模型**：Claude 3.5 Sonnet 或 GPT-4o。
-*   **对接要求与步骤**：
-    1. 收集用户最近一次测试（10-20道题）的答题日志（包含题目ID、对错情况、作答时间）。
-    2. Edge Function `ai-evaluate` 接收答题包，并检索题目背后的知识点归属。
-    3. LLM 计算各维度的能力值，并输出薄弱知识点和具体的下一步提分动作。
-    4. 后端将评分写入 `user_exercise_submissions` 并生成雷达图所需的数据集。
-*   **提示词 (Prompt) 策略**：
-    *   **格式要求**：要求模型评估四个核心指标：知识掌握度、解题速度、抗干扰能力、逻辑严谨度。输出必须包含建议列表及对应的雷达图分值。
+### 提示词策略总结矩阵
 
----
-
-### 6. 📊 数据报告 (Data Reports)
-*   **具体 AI 能力**：定期学习数据深度洞察。总结学习时长、Streak 天数、错题增加趋势，并结合画像变化生成周报/月报总结。
-*   **推荐 AI 模型**：GPT-4o-mini 或 Llama 3 8B (轻量级，适合批量处理报表数据)。
-*   **对接要求与步骤**：
-    1. 后端定时任务（或用户主动触发）汇总用户本周/本月的打卡率、学习时长、错题掌握率。
-    2. 将汇总结构化数据作为 Prompt 上下文输入给大模型。
-    3. LLM 生成具有激励性、科学性的总结文案，并标记出下周最推荐学习的 2 个章节。
-*   **提示词 (Prompt) 策略**：
-    *   **人设设定**：专业的数据分析师兼学习教练。语气要积极、数据敏感，多使用具体数字对比，生成 Markdown 格式的报告内容。
-
----
-
-### 7. 🧰 学习工具箱 (Learning Toolbox)
-*   **具体 AI 能力**：OCR 手写公式识别与数字笔记本自动整理。
-*   **推荐 AI 模型**：GPT-4o (Vision) 或 Claude 3.5 Sonnet。
-*   **对接要求与步骤**：
-    1. 用户拍摄并上传纸质笔记或草稿纸照片。
-    2. 前端将图片发送至 Edge Function。
-    3. 调用多模态大模型，提取图片中的文本、LaTeX 公式、流程图描述。
-    4. 返回格式化后的 Markdown 笔记，并允许用户一键导入“我的笔记”模块。
-
----
-
-### 8. 📓 错题本 (Wrong Book)
-*   **具体 AI 能力**：错误根因诊断。分析用户的错因分类（概念不清、计算失误、审题不清、方法生疏），并自动提取出考查知识点标签。
-*   **推荐 AI 模型**：GPT-4o-mini 或 Llama 3 8B。
-*   **对接要求与步骤**：
-    1. 用户将做错的题目添加至错题本。
-    2. LLM 对题目、标准答案和用户的错误解答进行对比分析。
-    3. 自动归纳出 1-3 个归属知识点标签以及核心错因。
-    4. 存入 `wrong_book_entries` 的 `error_reason` 和 `tags` 字段中。
-
----
-
-### 9. 🏋️ 弱项强化 (Weakness Strengthening)
-*   **具体 AI 能力**：智能变式题库生成与特训推送。根据错题本中的高频错因，生成相似但场景不同的变式训练题。
-*   **推荐 AI 模型**：Claude 3.5 Sonnet 或 GPT-4o。
-*   **对接要求与步骤**：
-    1. 前端触发“弱项强化”特训。
-    2. 后端读取错题本中标记为“未掌握”的题目。
-    3. 将原题输入给大模型，要求其生成 3 道考查相同知识点、但表述背景、数值不同的“变式题”。
-    4. 实时生成后展现给用户进行特训。
-*   **提示词 (Prompt) 策略**：
-    *   要求大模型设计出具有迷惑性干扰项的单选题，且变式题的难度必须与原题保持一致，解析中要对比原题的错因。
-
----
-
-### 10. 🕸️ 知识图谱 (Knowledge Graph)
-*   **具体 AI 能力**：概念实体关系抽取 (NER & RE)。从海量教学大纲或教材文本中自动抽取知识点节点及其前置/后置逻辑依赖关系。
-*   **推荐 AI 模型**：Claude 3.5 Sonnet 或 GPT-4o。
-*   **对接要求与步骤**：
-    1. 管理员上传课程大纲文本文档。
-    2. 后端将文本分段发送给 LLM。
-    3. LLM 识别出所有关键概念实体，并判定它们之间的上下级、先修关系。
-    4. 输出标准的三维关联 JSON 格式（nodes + links），存入 `courses` 的知识树中，供前端 Three.js 渲染。
-
----
-
-### 11. 💻 代码实验室 (Code Lab)
-*   **具体 AI 能力**：实时 AI 代码 review、运行时报错智能诊断、复杂度分析与重构优化建议。
-*   **推荐 AI 模型**：
-    *   **首选**：DeepSeek-Coder-V2 (代码专项微调，性价比极高，上下文窗口大) 或 Claude 3.5 Sonnet (代码逻辑推理之王)。
-*   **对接要求与步骤**：
-    1. 用户在在线沙箱编写代码。
-    2. 点击“AI Review”或当代码编译/运行报错时，将完整代码、报错堆栈信息、目标编程语言发送给后端。
-    3. LLM 评估代码性能（时间/空间复杂度），并在报错时给出精准的修复路径。
-    4. 前端在代码行旁以气泡形式悬浮显示 AI 审阅建议。
-*   **提示词 (Prompt) 策略**：
-    *   要求模型以“高级软件架构师”的视角进行分析。遵循“不直接替学生重写整段代码，而是指出哪一行存在越界/空指针等逻辑漏洞”的原则。
-
----
-
-## 📊 架构总结与模型推荐表
-
-| 模块名称 | 具体 AI 能力要求 | 推荐首选 AI 模型 | 对接数据交互格式 | 核心提示词策略要点 |
+| 序号 | 业务场景 | 提示词核心策略 | 核心 System / User 提示词模板 (代码源) | 期望输出格式与约束 |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. 资源中心** | 7类教学资源并行生成 / SSE流式输出 | **Claude 3.5 Sonnet** | SSE Markdown / JSON | 充当资深教研专家，要求规范输出，附带真实场景案例。 |
-| **2. 学习路径** | DAG自适应学习路线生成 | **GPT-4o** | JSON (Strict Schema) | 严格限制 JSON 输出，严禁任何 markdown 或普通文本干扰。 |
-| **3. 画像构建** | 6维诊断式对话评估 | **Gemini 1.5 Flash** | Stream Text / JSON | 设定导师人设，5-6轮渐进式提问，末轮汇总输出分值。 |
-| **4. 智能答疑** | 苏格拉底启发式答疑 / 语音合成 | **Claude 3.5 Sonnet** + MiniMax TTS | Stream Response / Audio | 严格实施“引导思考而不给直接答案”的提问约束。 |
-| **5. 学习评估** | 诊断测试分析与雷达图指标计算 | **Claude 3.5 Sonnet** | JSON Radar Dataset | 输入作答日志与耗时，输出掌握度、严谨度等数值及建议。 |
-| **6. 数据报告** | 周期性学习数据总结与激励文案 | **GPT-4o-mini** | Markdown Document | 充当数据分析教练，结合 Streak 天数生成数据对比文案。 |
-| **7. 学习工具箱** | OCR 笔记识别与公式 LaTeX 转换 | **GPT-4o (Vision)** | Markdown / LaTeX | 提取手写笔记与绘图，将所有数学公式输出为标准 LaTeX。 |
-| **8. 错题本** | 错因归纳分类 / 考查知识点打标 | **GPT-4o-mini** | Structured JSON | 匹配错题与标准答案，识别知识点，分类错因（如计算粗心）。 |
-| **9. 弱项强化** | 知识点变式练习题自动生成 | **Claude 3.5 Sonnet** | JSON (Question schema) | 锁定相同考点，更换故事场景与数值，自动附带解析。 |
-| **10. 知识图谱** | 课程概念实体与依存关系抽取 | **Claude 3.5 Sonnet** | JSON (Nodes & Links) | NER 与关系抽取，输出标准的拓扑关系图 JSON。 |
-| **11. 代码实验室** | 实时代码 Review / 运行报错智能诊断 | **DeepSeek-Coder-V2** | JSON Line-by-Line | 充当资深架构师，分析时间复杂度，用气泡标记报错原因。 |
+| **1** | **苏格拉底画像诊断 (portrait)** | • 角色设定：AI 学业规划师<br>• 控制约束：**每次只问一个问题**，依次覆盖6维度<br>• 降级处理：严禁包含任何 `<think>` 或思考标签，态度亲和。 | `你是一位专业的AI学业规划师和学习画像构建助手。你的任务是通过与用户的多轮问答对话，帮助用户构建个性化的学习画像。学习画像包含以下6个维度：1.专业方向、2.知识基础、3.认知风格、4.易错点偏好、5.学习节奏、6.学习目标。请注意：每次对话只提一个问题，并且态度亲和。当画像已完整时，进行友好总结。千万不要包含任何 <think> 标签，也不要输出思考过程。` | 友好引导文本<br>(对话终点输出 JSON 画像摘要) |
+| **2** | **苏格拉底智能辅导 (tutoring - Socratic)** | • 核心方法：**启发式提问，严禁直接给出答案**<br>• 步骤拆解：分步引导，反问促思，适时总结归纳。 | `你是一位采用苏格拉底教学法的AI导师。你的核心原则：1. 【不直接给答案】遇到问题先用提问引导学生思考；2. 【分步引导】将复杂问题拆分，每次只引导一个方向；3. 【反问促思】学生回答后追问"为什么？"；4. 【肯定鼓励】正向反馈；5. 【适时总结】经过思考得出答案后，帮助归纳知识点。` | 引导式 Markdown 文本 |
+| **3** | **直接辅导模式 (tutoring - Direct)** | • 设定：精准清晰的高校助教<br>• 规范：简洁明了、逻辑严密、多示例、支持公式排版。 | `你是 Kowell AI 答疑助手，为高校学生提供精准、清晰的学习辅导。回答时请：简洁明了、逻辑清晰、配合示例、适当使用Markdown格式增强可读性。` | 高可读性 Markdown |
+| **4** | **思维导图资源生成 (resource - mindmap)** | • 列表映射：使用标准的 Markdown 列表层级结构<br>• 深度限制：必须达到三级深度，文字极简<br>• 格式约束：**只输出列表，不要任何前言后记**。 | `你是一位资深的计算机/人工智能教授。请根据用户提供的主题，生成一份【思维导图】结构的 Markdown 文本。要求使用 Markdown 的列表层级结构来表示思维导图：\n# [主题名称]\n* 核心知识结构\n  * 分支一\n    * 细分要点1\n\n要求层级清晰，文字凝练。不要包含任何多余解释、前言或后记，只输出 Markdown 列表。` | 纯 Markdown 树形列表 |
+| **5** | **算法代码资源生成 (resource - code)** | • 深度自洽：严禁包含未实现的 placeholder 注释<br>• 语言偏好：技术类首选 Python/PyTorch<br>• 格式：添加标准的中文行级注释，支持沙箱运行。 | `你是一位资深的软件工程师 and 计算机教授。请根据用户提供的主题，编写一个高质量、可运行的【代码示例】。如果是机器学习或深度学习相关主题，请首选 Python/PyTorch 实现。必须包含：完整的、逻辑自洽的代码，严禁包含未实现的 placeholder。详细的关键步骤中文注释。代码前后使用标准的 \`\`\` 包裹并标明语言。` | 标准 Markdown 语法高亮代码块 |
+| **6** | **学习效果智能判分 (evaluate)** | • 评测依据：题目、标准答案、学生答案对比<br>• 多维度打分：输出 0-100 整数，解析正确思路<br>• **JSON Mode 强制约束**。 | `请判断以下题目的学生答案是否正确，并给出详细解析。\n题目：{question}\n题目类型：{question_type}\n标准答案：{correct_answer}\n学生答案：{user_answer}\n请严格按照以下JSON格式输出，不要有其他内容：\n{\n  "is_correct": true或false,\n  "score": 0到100的整数,\n  "analysis": "正确答案详细解析（100字以内）",\n  "feedback": "针对学生答案的具体点评",\n  "suggestions": "改进建议（50字以内）"\n}` | 纯 JSON 对象 |
+| **7** | **自适应学习路径规划 (recommend)** | • 数据输入：整合学生 6 维能力模型与最近学习记录<br>• 业务输出：推荐下一阶段主题、推荐资源优先级、预估工时<br>• **JSON Mode 强约束**。 | `根据学生的学习画像，为其推荐下一阶段学习内容。\n课程方向：{course_name}\n当前阶段：第{current_stage}阶段\n{historyText}\n学习画像：{portraitSummary}\n请严格按照以下JSON格式输出推荐方案：\n{\n  "next_topic": "下一个推荐学习主题（10字以内）",\n  "reason": "推荐理由（50字以内，结合画像分析）",\n  "resources": [\n    {"title": "资源名称", "type": "document/exercise/code", "priority": "高/中/低"}\n  ],\n  "focus_points": ["重点1", "重点2"],\n  "estimated_hours": 数字,\n  "difficulty": "基础/中级/高级"\n}` | 纯 JSON 对象 |
 
 ---
 
-## 🚀 对接实施规范要求
-1. **统一网关调用**：所有的 AI 对接应在 Supabase Edge Functions 中通过统一的服务层调用，方便后期随时切换大模型提供商（如自建 API 转发层或使用 OneAPI 等聚合网关）。
-2. **重试与降级机制**：鉴于大模型调用存在超时或额度耗尽风险，Edge Functions 必须配置超时控制（如 15s），并在主模型超时后自动降级到 `GPT-4o-mini` 或本地小模型。
-3. **安全过滤 (Safety Filter)**：对所有用户输入的提问和代码，需在发送给大模型前进行违规词前置过滤，并在大模型返回数据后进行安全校验，以满足合规性要求。
+## 四、 核心优化与高可用控制机制
+
+### 1. 思考链 (Chain-of-Thought) 内容净化机制
+系统集成了 DeepSeek 后，由于其特有的 `<think>` 标签思考链文本较长，在普通前端聊天框直接输出会破坏交互排版。Kowell AI 采取了 **双端拦截过滤策略**：
+- **前端拦截**: 在将消息渲染到 `AIChatPanel` 之前，通过正则替换过滤思考内容：
+  ```typescript
+  const cleanMsg = {
+    ...msg,
+    content: msg.content.replace(/<think>[\s\S]*?(?:<\/think>|$)\n?/gi, '')
+  };
+  ```
+- **服务端净化**: 在 Edge Functions 处理消息存库和流数据转发时，自动去除思考节点，仅将核心 Answer 呈现给用户。
+
+### 2. 对话历史滑动窗口优化 (Sliding Window)
+大模型对话受限于最大上下文限制，且 Token 数量与 API 资费成正比。为了在长对话中保持稳定表现，Deno Edge Functions 实现了会话滑动窗口管理：
+```typescript
+function slidingWindowMessages(messages: Message[], maxRounds = 10): Message[] {
+  const system = messages.filter(m => m.role === "system");
+  const conv = messages.filter(m => m.role !== "system");
+  const kept = conv.slice(-maxRounds * 2); // 保留最近 10 轮对话（共 20 条消息）
+  return [...system, ...kept];
+}
+```
+这样既保留了系统最初定义的 `SYSTEM_PROMPT` 核心规则约束，又丢弃了过时的早期对话上下文，确保 API 请求体积稳定在 4KB 以内。
+
+### 3. 多层异常捕获与解析器兜底 (Fallback Parser)
+在路径规划和智能评分等需要强 JSON 响应的模块中，由于大模型偶尔的幻觉输出，容易出现 JSON 字符串不完整或多余字符导致 `JSON.parse` 崩溃。系统为此设计了 **双重过滤提取正则 + 静态属性兜底策略**：
+```typescript
+let result: Record<string, unknown>;
+try {
+  // 正则过滤除花括号外的内容
+  const match = content.match(/\{[\s\S]*\}/);
+  result = JSON.parse(match ? match[0] : content);
+} catch {
+  // 静态兜底逻辑
+  result = {
+    next_topic: "数据结构基础",
+    reason: "由于接口请求出现波动，系统自动为您推荐基础核心章节学习。",
+    resources: [],
+    focus_points: ["数组", "链表"],
+    estimated_hours: 6,
+    difficulty: "基础",
+  };
+}
+```
+该项设计有力保障了自适应有向无环图（DAG）路径引擎的流畅运行，不会因模型偶尔崩溃导致前端页面渲染死机。

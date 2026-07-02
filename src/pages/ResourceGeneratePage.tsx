@@ -12,7 +12,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
-import { deepseekService } from '@/services/ai/deepseek';
+import { textAIService } from '@/services/ai';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -1015,37 +1015,26 @@ export default function ResourceGeneratePage() {
         let isThinking = false;
 
         await new Promise<void>((resolve, reject) => {
-          deepseekService.streamChat(
-            messages,
+          textAIService.streamResourceGeneration(
+            {
+              courseName: selectedCourse,
+              topic: enrichedTopic,
+              resourceType: rType,
+              major: profile?.major || '计算机科学',
+              education: profile?.education || '本科'
+            },
             {
               onChunk: (chunk) => {
-                let currentChunk = chunk;
-                if (!isThinking && currentChunk.includes('<think>')) {
-                  isThinking = true;
-                  const parts = currentChunk.split('<think>');
-                  contentBuffer += parts[0];
-                  currentChunk = parts[1] || '';
-                }
-                
-                if (isThinking) {
-                  if (currentChunk.includes('</think>')) {
-                    isThinking = false;
-                    const parts = currentChunk.split('</think>');
-                    thinkBuffer += parts[0];
-                    contentBuffer += parts[1] || '';
-                  } else {
-                    thinkBuffer += currentChunk;
-                  }
-                  setThinkLog(prev => prev + currentChunk.replace('</think>', ''));
-                } else {
-                  contentBuffer += currentChunk;
-                }
-
+                contentBuffer += chunk;
                 setResult(contentBuffer);
                 setGeneratedResults(prev => ({
                   ...prev,
                   [rType]: contentBuffer
                 }));
+              },
+              onThink: (thinkText) => {
+                thinkBuffer += thinkText;
+                setThinkLog(prev => prev + thinkText);
               },
               onDone: () => {
                 results.push({ type: rType, content: contentBuffer });
@@ -1055,9 +1044,7 @@ export default function ResourceGeneratePage() {
                 reject(new Error(err));
               }
             },
-            {
-              temperature: 0.7
-            }
+            abortRef.current?.signal
           );
         });
 

@@ -1,11 +1,13 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import { miaodaDevPlugin } from "miaoda-sc-plugin";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import path from "path";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  return {
   plugins: [
     react(),
     miaodaDevPlugin(),
@@ -33,7 +35,24 @@ export default defineConfig({
       "/api/innoreation/v1/proxy": {
         target: "https://mangdream.com",
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq) => {
+            const apiKey = env.DEEPSEEK_API_KEY || "sk-02260d10c28c4bb4b65bace15ba5f754";
+            proxyReq.setHeader("X-Proxy-Key", apiKey);
+          });
+        }
       },
+      "/api/stepaudio": {
+        target: "https://api.stepfun.com/step_plan/v1",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/stepaudio/, ""),
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq) => {
+            const apiKey = env.STEP_API_KEY || "4EDctG0RQZrjTwF9UmDsXr56OmZOeLbrBKq7JKlrXyRZ4P2gd7sFWPboQvzaJ3J6W";
+            proxyReq.setHeader("Authorization", `Bearer ${apiKey}`);
+          });
+        }
+      }
     },
   },
   optimizeDeps: {
@@ -83,4 +102,5 @@ export default defineConfig({
       "@supabase/supabase-js",
     ],
   },
+ };
 });

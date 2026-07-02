@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
+import { textAIService } from '@/services/ai';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -138,20 +139,12 @@ export default function EvaluationPage() {
 
     try {
       // 调用 AI 判分
-      const { data, error } = await supabase.functions.invoke('ai-evaluate', {
-        method: 'POST',
-        body: {
-          question: exercise.question,
-          options: exercise.options,
-          correct_answer: exercise.answer,
-          user_answer: state.selectedAnswer,
-          question_type: exercise.options?.length ? 'single' : 'subjective',
-        },
+      const aiResult = await textAIService.evaluateAnswer({
+        question: exercise.question,
+        questionType: exercise.options?.length ? 'single' : 'subjective',
+        correctAnswer: exercise.answer,
+        userAnswer: state.selectedAnswer
       });
-
-      if (error) throw new Error(await error?.context?.text() || error.message);
-
-      const aiResult = data as { is_correct: boolean; score: number; feedback: string; analysis: string; suggestions: string };
 
       // 存储提交记录
       await supabase.from('user_exercise_submissions').insert({
@@ -534,19 +527,13 @@ export default function EvaluationPage() {
                   onClick={async () => {
                     if (!oralTopic.trim()) { toast.error('请填写评估主题'); return; }
                     if (!oralText.trim()) { toast.error('请输入口述内容'); return; }
-                    setOralLoading(true);
                     try {
-                      const { data, error } = await supabase.functions.invoke('ai-evaluate', {
-                        method: 'POST',
-                        body: {
-                          question: `请评估以下关于「${oralTopic}」的口述表达：\n\n${oralText}`,
-                          question_type: 'oral',
-                          user_answer: oralText,
-                          correct_answer: '',
-                          options: [],
-                        },
+                      const data = await textAIService.evaluateAnswer({
+                        question: `请评估以下关于「${oralTopic}」的口述表达：\n\n${oralText}`,
+                        questionType: 'oral',
+                        correctAnswer: '',
+                        userAnswer: oralText,
                       });
-                      if (error) throw new Error(await error?.context?.text() || error.message);
                       setOralResult({
                         score: data?.score ?? Math.floor(Math.random() * 25 + 70),
                         feedback: data?.feedback ?? '表达较为流畅，知识点覆盖基本完整。建议在关键概念处给出更具体的示例，以增强说服力。',
@@ -653,19 +640,13 @@ export default function EvaluationPage() {
                   onClick={async () => {
                     if (!essayTopic.trim()) { toast.error('请填写论述题目'); return; }
                     if (essayContent.trim().length < 50) { toast.error('论述内容至少50字'); return; }
-                    setEssayLoading(true);
                     try {
-                      const { data, error } = await supabase.functions.invoke('ai-evaluate', {
-                        method: 'POST',
-                        body: {
-                          question: `请对以下关于「${essayTopic}」的综合论述进行多维度评估：\n\n${essayContent}`,
-                          question_type: 'essay',
-                          user_answer: essayContent,
-                          correct_answer: '',
-                          options: [],
-                        },
+                      const data = await textAIService.evaluateAnswer({
+                        question: `请对以下关于「${essayTopic}」的综合论述进行多维度评估：\n\n${essayContent}`,
+                        questionType: 'essay',
+                        correctAnswer: '',
+                        userAnswer: essayContent,
                       });
-                      if (error) throw new Error(await error?.context?.text() || error.message);
                       setEssayResult({
                         score: data?.score ?? Math.floor(Math.random() * 20 + 74),
                         feedback: data?.feedback ?? '论述结构完整，论点清晰。知识准确性高，建议加强论据的多样性。',

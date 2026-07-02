@@ -37,7 +37,7 @@ export const deepseekService = {
     const url = `${AI_CONFIG.baseUrl}/chat/completions`;
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      'X-Proxy-Key': AI_CONFIG.apiKey,
+      ...(AI_CONFIG.apiKey ? { 'X-Proxy-Key': AI_CONFIG.apiKey } : {}),
     };
 
     const body: Record<string, any> = {
@@ -84,7 +84,7 @@ export const deepseekService = {
     const url = `${AI_CONFIG.baseUrl}/chat/completions`;
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      'X-Proxy-Key': AI_CONFIG.apiKey,
+      ...(AI_CONFIG.apiKey ? { 'X-Proxy-Key': AI_CONFIG.apiKey } : {}),
     };
 
     const body = {

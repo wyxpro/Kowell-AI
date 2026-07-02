@@ -1,6 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, PhoneOff, Video, VideoOff } from 'lucide-react';
+import { toast } from 'sonner';
+import { stepAudioService } from '@/services/ai';
+import { deepseekService } from '@/services/ai/deepseek';
 
 // 老师头像 — 使用真实 Unsplash 教师形象
 const TEACHER_AVATAR = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&auto=format';
@@ -8,6 +11,7 @@ const TEACHER_NAME = '智学助教';
 const TEACHER_NUM = '10086';
 
 type CallPhase = 'idle' | 'ringing' | 'connected';
+type VoiceStatus = 'idle' | 'ai-speaking' | 'user-listening' | 'ai-thinking';
 
 interface VoiceCallModalProps {
   open: boolean;
@@ -16,38 +20,318 @@ interface VoiceCallModalProps {
 
 export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
   const [phase, setPhase] = useState<CallPhase>('idle');
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle');
   const [muted, setMuted] = useState(false);
   const [camOn, setCamOn] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [subtitles, setSubtitles] = useState('');
+  const [audioVolume, setAudioVolume] = useState(0);
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const ringTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // 打开时重置并开始拨号
+  // 语音会话状态
+  const conversationHistory = useRef<Array<{ role: 'user' | 'assistant' | 'system'; content: string }>>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const activeStreamRef = useRef<MediaStream | null>(null);
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // 停止全部媒体资源
+  const stopAllMedia = useCallback(() => {
+    // 停止摄像头
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) videoRef.current.srcObject = null;
+
+    // 停止麦克风
+    if (activeStreamRef.current) {
+      activeStreamRef.current.getTracks().forEach(t => t.stop());
+      activeStreamRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (e) {
+        // ignore
+      }
+    }
+    
+    // 停止播放 TTS
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause();
+      ttsAudioRef.current = null;
+    }
+
+    // 关闭 Web Audio API
+    if (audioContextRef.current) {
+      try {
+        audioContextRef.current.close();
+      } catch (e) {
+        // ignore
+      }
+      audioContextRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    analyserRef.current = null;
+    setAudioVolume(0);
+  }, []);
+
+  // 语音合成播放逻辑
+  const playTTS = useCallback(async (text: string) => {
+    if (phase === 'idle') return;
+    try {
+      setVoiceStatus('ai-speaking');
+      setSubtitles(text);
+
+      const audioBlob = await stepAudioService.textToSpeech({
+        text,
+        voice: 'cixingnansheng',
+        instruction: '语气温柔，语速适中'
+      });
+
+      if (phase === 'idle') return;
+      const url = URL.createObjectURL(audioBlob);
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+      }
+      
+      const audio = new Audio(url);
+      ttsAudioRef.current = audio;
+
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        // AI 播放完毕后开启听取
+        startListening();
+      };
+
+      audio.onerror = (e) => {
+        console.error('Audio play error:', e);
+        URL.revokeObjectURL(url);
+        // 异常降级：等待3秒后启动录音，防止卡死
+        setTimeout(() => {
+          startListening();
+        }, 3000);
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.error('TTS synthesis failed:', err);
+      // 降级：若失败则直接进入听取状态
+      setTimeout(() => {
+        startListening();
+      }, 3000);
+    }
+  }, [phase]);
+
+  // 开始录制学生声音并分析音量 (VAD 逻辑)
+  const startListening = useCallback(async () => {
+    // 确保清理以前的录音
+    if (activeStreamRef.current) {
+      activeStreamRef.current.getTracks().forEach(t => t.stop());
+      activeStreamRef.current = null;
+    }
+    if (audioContextRef.current) {
+      try { audioContextRef.current.close(); } catch (e) {}
+      audioContextRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    setVoiceStatus('user-listening');
+    setAudioVolume(0);
+
+    if (muted) {
+      setSubtitles('🎙️ 您当前处于静音状态');
+      return;
+    }
+
+    setSubtitles('');
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      activeStreamRef.current = stream;
+
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const rawBlob = new Blob(chunks, { type: 'audio/webm' });
+        // 开启 ASR -> LLM -> TTS 处理流
+        processUserSpeech(rawBlob);
+      };
+
+      recorder.start();
+
+      // 设置 Web Audio 分析器以获得音量大小并检测沉默 (VAD)
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const audioCtx = new AudioCtx();
+        audioContextRef.current = audioCtx;
+        const source = audioCtx.createMediaStreamSource(stream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        analyserRef.current = analyser;
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        let lastVoiceTime = Date.now();
+
+        const checkVAD = () => {
+          if (!analyserRef.current || recorder.state === 'inactive') return;
+
+          analyser.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+          }
+          const average = sum / dataArray.length;
+          setAudioVolume(average);
+
+          // 判定是否有说话声 (音量阈值设为 8)
+          if (average > 8) {
+            lastVoiceTime = Date.now();
+          } else {
+            // 如果连续沉默超过 3.5 秒，自动截断发送
+            if (Date.now() - lastVoiceTime > 3500) {
+              if (recorder.state === 'recording') {
+                recorder.stop();
+                return;
+              }
+            }
+          }
+          animationFrameRef.current = requestAnimationFrame(checkVAD);
+        };
+        animationFrameRef.current = requestAnimationFrame(checkVAD);
+      }
+
+    } catch (err) {
+      console.error('Failed to access microphone:', err);
+      setSubtitles('❌ 无法访问麦克风');
+    }
+  }, [muted]);
+
+  // 处理学生录音
+  const processUserSpeech = useCallback(async (audioBlob: Blob) => {
+    setVoiceStatus('ai-thinking');
+    setAudioVolume(0);
+
+    try {
+      // 1. 调用 StepAudio-2.5-ASR 语音转写
+      const text = await stepAudioService.transcribeBlob(audioBlob);
+      if (!text || !text.trim()) {
+        await playTTS('同学，我刚才没有听清楚，请您再说一遍。');
+        return;
+      }
+
+      // 保存记录
+      conversationHistory.current.push({ role: 'user', content: text });
+
+      // 2. 调用 DeepSeek 模型回复
+      const systemPrompt = {
+        role: 'system' as const,
+        content: '你是一位耐心的AI学业助教。你正在和学生进行实时语音通话。请用极其简短、亲切、口语化的中文口头回答。绝对不能包含任何Markdown符号（如加粗、标题、列表等），字数严格控制在3句话、70字以内。不要包含任何思考过程或标签。'
+      };
+
+      // 保留最近 3 轮对话，防历史过多
+      const recentHistory = conversationHistory.current.slice(-6);
+      const messages = [systemPrompt, ...recentHistory];
+
+      const reply = await deepseekService.chat(messages);
+      conversationHistory.current.push({ role: 'assistant', content: reply });
+
+      // 3. 播放 AI TTS 回复
+      await playTTS(reply);
+
+    } catch (err) {
+      console.error('Error processing speech loop:', err);
+      await playTTS('网络好似有点开小差，请您再试一次。');
+    }
+  }, [playTTS]);
+
+  // 手动点击 "说完了，发送"
+  const handleFinishSpeaking = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+  }, []);
+
+  // 打开时初始化
   useEffect(() => {
     if (open) {
       setPhase('ringing');
       setElapsed(0);
       setMuted(false);
       setCamOn(false);
-      ringTimeoutRef.current = setTimeout(() => setPhase('connected'), 2500);
+      setSubtitles('');
+      setVoiceStatus('idle');
+      conversationHistory.current = [];
+
+      ringTimeoutRef.current = setTimeout(() => {
+        setPhase('connected');
+        // 通话连接成功，播报欢迎词
+        playTTS('同学你好！我是你的 AI 智学助教。今天有什么学业难题需要我解答吗？');
+      }, 2500);
     } else {
       setPhase('idle');
+      setVoiceStatus('idle');
       clearTimers();
-      stopCamera();
+      stopAllMedia();
     }
-    return () => { clearTimers(); stopCamera(); };
-  }, [open]);
+    return () => {
+      clearTimers();
+      stopAllMedia();
+    };
+  }, [open, playTTS, stopAllMedia]);
 
   // 计时器
   useEffect(() => {
     if (phase === 'connected') {
       timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
     } else {
-      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     }
   }, [phase]);
+
+  // 监听静音变更
+  useEffect(() => {
+    if (phase !== 'connected') return;
+
+    if (muted) {
+      // 停止当前的录音
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      setVoiceStatus('user-listening');
+      setSubtitles('🎙️ 您当前处于静音状态');
+    } else {
+      // 恢复录音
+      if (voiceStatus === 'user-listening') {
+        startListening();
+      }
+    }
+  }, [muted, phase, startListening, voiceStatus]);
 
   // 摄像头开关
   useEffect(() => {
@@ -62,17 +346,13 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
         })
         .catch(() => setCamOn(false));
     } else {
-      stopCamera();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) videoRef.current.srcObject = null;
     }
   }, [camOn]);
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) videoRef.current.srcObject = null;
-  };
 
   const clearTimers = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -81,7 +361,7 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
 
   const handleHangup = () => {
     clearTimers();
-    stopCamera();
+    stopAllMedia();
     onClose();
   };
 
@@ -174,7 +454,7 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
                       alt="老师画面"
                       className="w-full h-full object-cover object-top"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/70" />
 
                     {/* 右上角：自己摄像头小画面 */}
                     <motion.div
@@ -199,11 +479,71 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
                     </motion.div>
 
                     {/* 通话时长 */}
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2">
+                    <div className="absolute top-4 left-4">
                       <span className="text-white/80 text-sm font-mono bg-black/30 rounded-full px-3 py-1 backdrop-blur-sm">
                         {formatTime(elapsed)}
                       </span>
                     </div>
+
+                    {/* 🎙️ 实时语音字幕 & 状态面板 */}
+                    <div className="absolute top-32 left-4 right-4 bg-black/60 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-white flex flex-col gap-2 max-h-[160px] overflow-y-auto">
+                      {voiceStatus === 'ai-speaking' && (
+                        <div className="flex gap-2 items-start">
+                          <div className="w-5 h-5 rounded-full bg-sky-500 flex items-center justify-center text-[10px] shrink-0 font-bold">助</div>
+                          <p className="text-xs text-sky-200 leading-relaxed font-medium">{subtitles}</p>
+                        </div>
+                      )}
+                      {voiceStatus === 'user-listening' && (
+                        <div className="flex flex-col gap-1.5 w-full">
+                          <div className="flex gap-2 items-start">
+                            <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] shrink-0 font-bold">你</div>
+                            <p className="text-xs text-emerald-200 leading-relaxed font-medium">
+                              {subtitles || <span className="text-white/40 italic">助教正在聆听您的提问... 请直接说话</span>}
+                            </p>
+                          </div>
+                          {/* 实时音量波形动画 */}
+                          {!muted && (
+                            <div className="flex items-center gap-0.5 justify-start pl-7 mt-1 h-3">
+                              {[1, 2, 3, 4, 5, 6, 7, 8].map((idx) => {
+                                const scale = 0.5 + (audioVolume / 255) * 2.5 * (Math.sin(idx * 0.8 + Date.now() * 0.05) * 0.5 + 0.5);
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="w-[3px] bg-emerald-400 rounded-full transition-all duration-75"
+                                    style={{
+                                      height: `${Math.max(3, 12 * scale)}px`,
+                                    }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {voiceStatus === 'ai-thinking' && (
+                        <div className="flex gap-2 items-center">
+                          <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-[10px] shrink-0 font-bold">助</div>
+                          <p className="text-xs text-amber-200 animate-pulse font-medium">正在识别并分析回答，请稍候...</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 我已说完 悬浮提交按钮 */}
+                    {voiceStatus === 'user-listening' && !muted && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute bottom-28 left-1/2 -translate-x-1/2"
+                      >
+                        <button
+                          onClick={handleFinishSpeaking}
+                          className="px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-emerald-500/30 flex items-center gap-1.5 transition-all"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                          说完了，发送
+                        </button>
+                      </motion.div>
+                    )}
 
                     {/* 底部控制栏：静音 + 摄像头 + 挂断 （3个按钮）*/}
                     <div className="absolute bottom-0 left-0 right-0 px-8 pb-7 pt-8">

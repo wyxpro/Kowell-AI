@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { streamChat } from '@/lib/ai';
+import { textAIService } from '@/services/ai';
+import { stepAudioService } from '@/services/ai';
 import {
   Send, Bot, User, Loader2, Square, ImageIcon, Mic, MicOff, Film, X,
   Paperclip, GraduationCap, Brain
@@ -247,10 +248,25 @@ export default function AIChatPanel({
       const recorder = new MediaRecorder(stream);
       audioChunksRef.current = [];
       recorder.ondataavailable = e => audioChunksRef.current.push(e.data);
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(blob);
-        setAttachedMedia(prev => [...prev, { type: 'audio', url, name: '语音消息.webm' }]);
+        
+        const toastId = toast.loading('正在通过 StepAudio-2.5-ASR 识别语音...');
+        try {
+          const text = await stepAudioService.transcribeBlob(blob);
+          if (text.trim()) {
+            setInput(prev => prev ? prev + ' ' + text : text);
+            toast.success('语音识别成功', { id: toastId });
+          } else {
+            toast.warning('未能识别到有效的语音内容', { id: toastId });
+          }
+        } catch (e) {
+          console.error(e);
+          toast.error('语音识别失败，已添加音频附件', { id: toastId });
+        }
+
+        setAttachedMedia(prev => [...prev, { type: 'audio', url, name: '语音消息.wav' }]);
         stream.getTracks().forEach(t => t.stop());
       };
       recorder.start();
@@ -302,31 +318,42 @@ export default function AIChatPanel({
 
     const history = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
     let fullReply = '';
-
-    await streamChat(
-      history,
-      {
-        onChunk: (chunk) => { fullReply += chunk; setStreamingText(fullReply); },
-        onDone: () => {
-          if (fullReply) {
-            const assistantMsg: ChatMsg = { id: `a-${Date.now()}`, role: 'assistant', content: fullReply };
-            setMessages(prev => [...prev, assistantMsg]);
-            onReplyReceived?.(assistantMsg);
-          }
-          setLoading(false);
-          setStreamingText('');
-        },
-        onError: (err) => {
-          const errorMsg: ChatMsg = { id: `e-${Date.now()}`, role: 'assistant', content: `抱歉，请求出错：${err}` };
-          setMessages(prev => [...prev, errorMsg]);
-          setLoading(false);
-          setStreamingText('');
-        },
+    const chatCallbacks = {
+      onChunk: (chunk: string) => {
+        fullReply += chunk;
+        setStreamingText(fullReply);
       },
-      sessionType,
-      abortRef.current.signal,
-      systemPrompt
-    );
+      onDone: () => {
+        if (fullReply) {
+          const assistantMsg: ChatMsg = { id: `a-${Date.now()}`, role: 'assistant', content: fullReply };
+          setMessages(prev => [...prev, assistantMsg]);
+          onReplyReceived?.(assistantMsg);
+        }
+        setLoading(false);
+        setStreamingText('');
+      },
+      onError: (err: string) => {
+        const errorMsg: ChatMsg = { id: `e-${Date.now()}`, role: 'assistant', content: `抱歉，请求出错：${err}` };
+        setMessages(prev => [...prev, errorMsg]);
+        setLoading(false);
+        setStreamingText('');
+      },
+    };
+
+    if (sessionType === 'portrait') {
+      await textAIService.streamPortraitChat(
+        history,
+        chatCallbacks,
+        abortRef.current.signal
+      );
+    } else {
+      await textAIService.streamTutoringChat(
+        history,
+        'socratic',
+        chatCallbacks,
+        abortRef.current.signal
+      );
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

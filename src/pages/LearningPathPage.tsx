@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
+import { textAIService } from '@/services/ai';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -301,15 +302,76 @@ export default function LearningPathPage() {
 
   // ── AI 推荐 ──
   const fetchAIRecommendation = async () => {
-    if (!profile) { toast.error('请先完善个人信息'); return; }
+    if (!profile || !user) { toast.error('请先完善个人信息'); return; }
     setAiLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-recommend', { method: 'POST', body: { user_id: profile.id } });
-      if (error) throw new Error(await error?.context?.text() || error.message);
-      setRecommendation(data as AIRecommendation);
+      // 1. Fetch latest learning portrait
+      const { data: portraitData } = await supabase
+        .from('learning_portraits')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // 2. Fetch completed exercises to get learning history
+      const { data: historyData } = await supabase
+        .from('user_exercise_submissions')
+        .select('created_at, is_correct, exercises(question)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      const portraitSummary = portraitData 
+        ? `学习方向：${portraitData.major || '未设定'}。已掌握维度：${Object.entries(portraitData)
+            .filter(([k, v]) => typeof v === 'number' || typeof v === 'string')
+            .map(([k, v]) => `${k}:${v}`).join('，')}`
+        : '暂无详细画像，用户是初学者。';
+
+      const historyText = historyData && historyData.length > 0
+        ? `最近学习答题：${historyData.map((h: any) => `${h.exercises?.question?.slice(0, 15)}...(${h.is_correct ? '正确' : '错误'})`).join('、')}`
+        : '暂无学习记录。';
+
+      // 3. Call textAIService.recommendPath
+      const result = await textAIService.recommendPath({
+        courseName: path?.title || '计算机科学与AI人工智能',
+        currentStage: path?.current_stage || 0,
+        historyText,
+        portraitSummary
+      });
+
+      // 4. Map the recommendation JSON to AIRecommendation interface
+      const stages: PathStage[] = (result.resources && result.resources.length > 0)
+        ? result.resources.map((res: any, i: number) => ({
+            id: `ai-stage-${Date.now()}-${i}`,
+            title: res.title || `强化: ${result.next_topic}`,
+            description: `推荐类型：${res.type === 'document' ? '课程文档' : res.type === 'exercise' ? '练习题' : '代码示例'}。建议重点：${(result.focus_points || []).join('、')}。优先级：${res.priority || '高'}。`,
+            order: i + 1,
+            resources: [res.type || 'document'],
+            completed: false
+          }))
+        : (result.focus_points || ['核心原理', '案例实践', '巩固练习']).map((fp: string, i: number) => ({
+            id: `ai-stage-${Date.now()}-${i}`,
+            title: fp,
+            description: `针对核心考点「${fp}」进行深入学习。难度：${result.difficulty || '中级'}。建议学时：${result.estimated_hours || 4}小时。`,
+            order: i + 1,
+            resources: ['document'],
+            completed: false
+          }));
+
+      setRecommendation({
+        title: `${result.next_topic}推荐路径`,
+        reasoning: result.reason,
+        stages
+      });
+
       toast.success('AI 推荐路径已生成！');
-    } catch (err) { toast.error(`推荐失败：${(err as Error).message}`); }
-    finally { setAiLoading(false); }
+    } catch (err) {
+      console.error(err);
+      toast.error(`推荐失败：${(err as Error).message}`);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const applyRecommendation = async () => {

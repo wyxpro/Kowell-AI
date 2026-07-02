@@ -9,6 +9,7 @@ import DigitalTeacher from '@/components/tutoring/DigitalTeacher';
 import VoiceCallModal from '@/components/voice/VoiceCallModal';
 import PhotoSearchModal from '@/components/tutoring/PhotoSearchModal';
 import { toast } from 'sonner';
+import { stepAudioService } from '@/services/ai';
 import {
   MessageCircle, Bot, Sparkles, BookOpen, Lightbulb, Download,
   Brain, Zap, FileText, Phone, Camera, Volume2, VolumeX, Loader2,
@@ -60,45 +61,86 @@ export default function TutoringPage() {
   const [ttsLoading, setTtsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Web Speech API 降级播放
+  const fallbackWebSpeech = useCallback((text: string) => {
+    if (!window.speechSynthesis) {
+      toast.error('语音播放失败，您的浏览器不支持语音合成');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.9;
+    utterance.onend = () => setTtsPlaying(false);
+    utterance.onerror = () => {
+      setTtsPlaying(false);
+      toast.error('本地语音播放失败');
+    };
+    setTtsPlaying(true);
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
   const handleTTS = useCallback(async () => {
     if (!lastAIMsg) { toast.error('暂无可朗读的内容'); return; }
     if (ttsPlaying) {
+      if (window.speechSynthesis?.speaking) {
+        window.speechSynthesis.cancel();
+      }
       audioRef.current?.pause();
       setTtsPlaying(false);
       return;
     }
     setTtsLoading(true);
+    const cleanText = lastAIMsg.replace(/[#*`>_~\[\]]/g, '').slice(0, 1000);
     try {
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/minimax-tts`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            text: lastAIMsg.replace(/[#*`>_~\[\]]/g, '').slice(0, 1000),
-            voice_id: 'male-qn-jingying',
-            speed: 1.0,
-          }),
-        }
-      );
-      if (!resp.ok) throw new Error(await resp.text());
-      const blob = await resp.blob();
+      let blob: Blob;
+      try {
+        // 🚀 优先调用 StepAudio-2.5-TTS 语音合成 (高保真表现力)
+        blob = await stepAudioService.textToSpeech({
+          text: cleanText,
+          voice: 'cixingnansheng',
+          instruction: '语气温柔，语速偏慢'
+        });
+        console.log('StepAudio TTS synthesized successfully.');
+      } catch (stepErr) {
+        console.warn('StepAudio TTS failed, falling back to MiniMax TTS:', stepErr);
+        // 🔄 第一级降级：使用 MiniMax TTS
+        const resp = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/minimax-tts`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              text: cleanText,
+              voice_id: 'male-qn-jingying',
+              speed: 1.0,
+            }),
+          }
+        );
+        if (!resp.ok) throw new Error(await resp.text());
+        blob = await resp.blob();
+      }
+
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audioRef.current = audio;
       audio.onended = () => { setTtsPlaying(false); URL.revokeObjectURL(url); };
-      audio.onerror = () => { setTtsPlaying(false); toast.error('音频播放失败'); };
+      audio.onerror = () => {
+        console.warn('Audio playback failed, falling back to Web Speech API');
+        fallbackWebSpeech(cleanText);
+      };
       await audio.play();
       setTtsPlaying(true);
     } catch (e) {
-      toast.error('语音合成失败：' + (e as Error).message);
+      console.warn('All cloud TTS failed, falling back to Web Speech API:', e);
+      fallbackWebSpeech(cleanText);
     } finally {
       setTtsLoading(false);
     }
-  }, [lastAIMsg, ttsPlaying]);
+  }, [lastAIMsg, ttsPlaying, fallbackWebSpeech]);
 
   const loadSessions = useCallback(async (selectId?: string) => {
     if (!user) return;
