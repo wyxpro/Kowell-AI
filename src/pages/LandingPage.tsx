@@ -232,10 +232,10 @@ const userProfiles = [
 ];
 
 const stats = [
-  { value: '50,000+', label: '活跃学习者' },
-  { value: '98%', label: '用户满意度' },
-  { value: '2.5x', label: '平均学习效率提升' },
-  { value: '8', label: '支持编程语言' },
+  { value: '689', label: '活跃学习者', icon: Users, color: 'text-violet-500 bg-violet-500/10' },
+  { value: '98%', label: '用户满意度', icon: Star, color: 'text-amber-500 bg-amber-500/10' },
+  { value: '2.5x', label: '平均学习效率提升', icon: Zap, color: 'text-emerald-500 bg-emerald-500/10' },
+  { value: '8', label: '支持编程语言', icon: Code2, color: 'text-sky-500 bg-sky-500/10' },
 ];
 
 /* ─────────────────────── 交互式多智能体玻璃态 Hero 背景 ─────────────────────── */
@@ -523,9 +523,9 @@ function HeroInteractiveVisual() {
   }, []);
 
   const steps = [
-    { 
-      id: 1, 
-      title: '01 变量与内存模型', 
+    {
+      id: 1,
+      title: '01 变量与内存模型',
       file: 'memory_model.py',
       statusText: '✓ 状态正常',
       statusColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
@@ -540,9 +540,9 @@ function HeroInteractiveVisual() {
         </>
       )
     },
-    { 
-      id: 2, 
-      title: '02 双指针与二分搜索', 
+    {
+      id: 2,
+      title: '02 双指针与二分搜索',
       file: 'socrates_practice.py',
       statusText: '✓ 运行通过',
       statusColor: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
@@ -556,9 +556,9 @@ function HeroInteractiveVisual() {
         </>
       )
     },
-    { 
-      id: 3, 
-      title: '03 动态规划专项强化', 
+    {
+      id: 3,
+      title: '03 动态规划专项强化',
       file: 'knapsack_problem.py',
       statusText: '⚡ AI正在诊断',
       statusColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
@@ -578,7 +578,7 @@ function HeroInteractiveVisual() {
 
   return (
     <div className="relative w-full max-w-[550px] aspect-[1.05/1] flex items-center justify-center select-none py-6">
-      
+
       {/* 科技霓虹发光背板 */}
       <div className="absolute -top-10 -left-10 w-80 h-80 rounded-full bg-primary/10 blur-[80px] pointer-events-none" />
       <div className="absolute -bottom-10 -right-10 w-80 h-80 rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none" />
@@ -586,12 +586,12 @@ function HeroInteractiveVisual() {
       {/* Layer 1: Core Dashboard (主学区面板) */}
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ 
-          opacity: 1, 
-          y: [0, -6, 0], 
-          scale: 1 
+        animate={{
+          opacity: 1,
+          y: [0, -6, 0],
+          scale: 1
         }}
-        transition={{ 
+        transition={{
           opacity: { duration: 0.8 },
           scale: { duration: 0.8 },
           y: {
@@ -633,21 +633,19 @@ function HeroInteractiveVisual() {
                   <div
                     key={s.id}
                     onClick={() => setActiveStep(s.id)}
-                    className={`p-2.5 rounded-xl border text-[12px] flex items-center gap-2.5 cursor-pointer transition-all duration-300 ${
-                      isActive
-                        ? 'bg-primary/10 border-primary/35 text-primary font-bold shadow-sm scale-102'
-                        : isCompleted
+                    className={`p-2.5 rounded-xl border text-[12px] flex items-center gap-2.5 cursor-pointer transition-all duration-300 ${isActive
+                      ? 'bg-primary/10 border-primary/35 text-primary font-bold shadow-sm scale-102'
+                      : isCompleted
                         ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                         : 'bg-zinc-500/5 border-transparent text-muted-foreground opacity-55 hover:opacity-80'
-                    }`}
+                      }`}
                   >
-                    <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0 font-bold ${
-                      isActive
-                        ? 'bg-primary text-primary-foreground animate-pulse'
-                        : isCompleted
+                    <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0 font-bold ${isActive
+                      ? 'bg-primary text-primary-foreground animate-pulse'
+                      : isCompleted
                         ? 'bg-emerald-500 text-white'
                         : 'bg-zinc-800 text-zinc-400'
-                    }`}>
+                      }`}>
                       {isCompleted ? '✓' : s.id}
                     </div>
                     <span className="truncate">{s.title}</span>
@@ -665,7 +663,7 @@ function HeroInteractiveVisual() {
                 {currentStep.statusText}
               </span>
             </div>
-            <motion.div 
+            <motion.div
               key={activeStep}
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -728,24 +726,24 @@ export default function LandingPage() {
     desc: '系统诊断推荐学习节点。研究二叉树的递归与非递归遍历。双击此节点将自动并发生成相关讲义大纲。'
   });
   const [simulatorResources, setSimulatorResources] = useState([
-    { 
-      id: 1, 
-      title: "二叉树深度遍历讲义.md", 
-      date: "2026-06-18 10:12", 
+    {
+      id: 1,
+      title: "二叉树深度遍历讲义.md",
+      date: "2026-06-18 10:12",
       size: "4.2 KB",
       content: "### 二叉树的三种深度遍历算法\n\n二叉树是以递归方式定义的数据结构，因此遍历也主要以递归实现为主。\n\n1. **先序遍历 (Pre-order)**: 根 -> 左 -> 右\n2. **中序遍历 (In-order)**: 左 -> 根 -> 右 (对于二叉搜索树，中序遍历结果即为有序序列)\n3. **后序遍历 (Post-order)**: 左 -> 右 -> 根\n\n```python\ndef inorderTraversal(root):\n    if not root:\n        return []\n    return inorderTraversal(root.left) + [root.val] + inorderTraversal(root.right)\n```"
     },
-    { 
-      id: 2, 
-      title: "双向循环链表实操代码.cpp", 
-      date: "2026-06-19 09:45", 
+    {
+      id: 2,
+      title: "双向循环链表实操代码.cpp",
+      date: "2026-06-19 09:45",
       size: "8.5 KB",
       content: "/* 双向循环链表的插入与删除 */\n#include <iostream>\nusing namespace std;\n\nstruct Node {\n    int data;\n    Node* prev;\n    Node* next;\n    Node(int val) : data(val), prev(nullptr), next(nullptr) {}\n};\n\nvoid insertAtHead(Node*& head, int val) {\n    Node* newNode = new Node(val);\n    if(!head) {\n        head = newNode;\n        head->next = head;\n        head->prev = head;\n        return;\n    }\n    Node* tail = head->prev;\n    newNode->next = head;\n    newNode->prev = tail;\n    tail->next = newNode;\n    head->prev = newNode;\n    head = newNode;\n}"
     },
-    { 
-      id: 3, 
-      title: "阶段性画像诊断报告.json", 
-      date: "2026-06-19 12:00", 
+    {
+      id: 3,
+      title: "阶段性画像诊断报告.json",
+      date: "2026-06-19 12:00",
       size: "1.2 KB",
       content: "{\n  \"portrait_id\": \"port_8832a\",\n  \"user_id\": \"usr_admin\",\n  \"dimensions\": {\n    \"theory_foundation\": 85,\n    \"practical_coding\": 62,\n    \"problem_deconstruction\": 74,\n    \"logic_inference\": 90,\n    \"learning_grit\": 88,\n    \"knowledge_breadth\": 55\n  },\n  \"dominant_learning_style\": \"逻辑主导型 / 动手欠缺者\",\n  \"custom_adjustments\": \"建议缩短理论视频时长，增加Monaco沙箱编码与变式纠错训练。\"\n}"
     }
@@ -778,30 +776,30 @@ export default function LandingPage() {
       setVoiceActive(false);
 
       setSocratesChat(prev => [...prev, { role: 'user', content: '我想先学二叉树的深度遍历，因为明天有一场算法小测。' }]);
-      addSimulatorLog("profile", "收到用户语音指令，识别文本：'我想先学二叉树深度遍历...'" );
+      addSimulatorLog("profile", "收到用户语音指令，识别文本：'我想先学二叉树深度遍历...'");
 
       setTimeout(() => {
         setSocratesChat(prev => [...prev, {
           role: 'ai',
           content: '明天的测验确实很关键！那我们直接锁定二叉树深度递归。你知道二叉树中序遍历的递归终止条件为什么是 if root is None 吗？如果我们在底层不加这一句限制，程序在运行时会出现什么内存问题？'
         }]);
-        addSimulatorLog("profile", "苏格拉底AI生成启发性应答，激活语音合成（MiniMax TTS）并发回前端。" );
+        addSimulatorLog("profile", "苏格拉底AI生成启发性应答，激活语音合成（MiniMax TTS）并发回前端。");
       }, 1500);
     } else {
       setVoiceActive(true);
-      addSimulatorLog("profile", "语音引擎启动，开始监听输入音频..." );
+      addSimulatorLog("profile", "语音引擎启动，开始监听输入音频...");
       const timer = setTimeout(() => {
         setVoiceActive(false);
         setSpeechTimer(null);
         setSocratesChat(prev => [...prev, { role: 'user', content: '我想先学二叉树的深度遍历，因为明天有一场算法小测。' }]);
-        addSimulatorLog("profile", "收到用户语音指令，识别文本：'我想先学二叉树深度遍历...'" );
+        addSimulatorLog("profile", "收到用户语音指令，识别文本：'我想先学二叉树深度遍历...'");
 
         setTimeout(() => {
           setSocratesChat(prev => [...prev, {
             role: 'ai',
             content: '明天的测验确实很关键！那我们直接锁定二叉树深度递归。你知道二叉树中序遍历的递归终止条件为什么是 if root is None 吗？如果我们在底层不加这一句限制，程序在运行时会出现什么内存问题？'
           }]);
-          addSimulatorLog("profile", "苏格拉底AI生成启发性应答，激活语音合成（MiniMax TTS）并发回前端。" );
+          addSimulatorLog("profile", "苏格拉底AI生成启发性应答，激活语音合成（MiniMax TTS）并发回前端。");
         }, 1500);
       }, 3000);
       setSpeechTimer(timer);
@@ -871,15 +869,15 @@ export default function LandingPage() {
     addSimulatorLog("resource", `触发并发资源生成引擎。参数：主题='${title}', 讲义=${newOpts.outline}, 思维导图=${newOpts.mindmap}, 测验题=${newOpts.exercises}`);
 
     let progress = 0;
-    const streamText = `### ${title}\n\n[多智能体协作：Claude-3.5 流式回传中]\n\n` + 
-                       `#### 一、核心概念定义\n` +
-                       `二叉平衡树 (AVL Tree) 是一种自平衡二叉搜索树。任意节点的左右两个子树的高度差（平衡因子）最大为 1。\n\n` + 
-                       `#### 二、单向旋转调整 (LL / RR)\n` +
-                       `当插入新节点导致不平衡时，需对受影响节点进行单向旋转复位，使得左右高度差归零。\n\n` +
-                       `#### 三、精选随堂练习\n` +
-                       `* 练习 1：若AVL树高度为 4，最少包含多少个节点？（答案：7）\n` +
-                       `* 练习 2：简述左右双旋 (LR) 调整的两个阶段操作。`;
-    
+    const streamText = `### ${title}\n\n[多智能体协作：Claude-3.5 流式回传中]\n\n` +
+      `#### 一、核心概念定义\n` +
+      `二叉平衡树 (AVL Tree) 是一种自平衡二叉搜索树。任意节点的左右两个子树的高度差（平衡因子）最大为 1。\n\n` +
+      `#### 二、单向旋转调整 (LL / RR)\n` +
+      `当插入新节点导致不平衡时，需对受影响节点进行单向旋转复位，使得左右高度差归零。\n\n` +
+      `#### 三、精选随堂练习\n` +
+      `* 练习 1：若AVL树高度为 4，最少包含多少个节点？（答案：7）\n` +
+      `* 练习 2：简述左右双旋 (LR) 调整的两个阶段操作。`;
+
     const interval = setInterval(() => {
       setSimulatorResources(prev => {
         const exists = prev.find(r => r.id === newId);
@@ -911,20 +909,20 @@ export default function LandingPage() {
   const simulateFullWorkflow = () => {
     if (isSimulating) return;
     setIsSimulating(true);
-    
+
     setActiveTab(0);
     setCollabStatus("运行中：Socrates Image画像诊断智能体正在处理用户历史问答...");
     addSimulatorLog("profile", "🤖 开始运行画像诊断多轮协作...");
-    
+
     setTimeout(() => {
       setActiveTab(1);
       setCollabStatus("运行中：Planner Agent依据画像评估，动态规划有向无环依赖图 (DAG)...");
       handleNodeClick(2, '非线性探索: 树与二叉树', '进行中', '因先前Python沙箱表现不佳，规划器在此推荐学习递归二叉树。');
-      
+
       setTimeout(() => {
         setActiveTab(2);
         setCollabStatus("运行中：Resource Agent拉起 Claude-3.5-Sonnet 并发流式生成平衡旋转教讲...");
-        
+
         const customTitle = "二叉平衡树的核心旋转原理";
         const newId = 99;
         setSimulatorResources(prev => [
@@ -959,7 +957,7 @@ export default function LandingPage() {
               setActiveTab(4);
               setCollabStatus("运行中：Evaluation Agent收集所有行为指标，由 Claude 生成学业周报大盘...");
               addSimulatorLog("eval", "综合收集：4轮问答、AVL树资源学习时间、Monaco代码改错耗时。启动雷达核验...");
-              
+
               setRadarLevels([92, 70, 78, 93, 90, 60]);
               addSimulatorLog("eval", "学业雷达指标已全面回传，已完成画像分值动态自适应进化！");
 
@@ -979,14 +977,14 @@ export default function LandingPage() {
     const r = 120;
     const cos30 = 0.866;
     const sin30 = 0.5;
-    
+
     const p0 = [150, 150 - r * (levels[0] / 100)];
     const p1 = [150 + r * cos30 * (levels[1] / 100), 150 - r * sin30 * (levels[1] / 100)];
     const p2 = [150 + r * cos30 * (levels[2] / 100), 150 + r * sin30 * (levels[2] / 100)];
     const p3 = [150, 150 + r * (levels[3] / 100)];
     const p4 = [150 - r * cos30 * (levels[4] / 100), 150 + r * sin30 * (levels[4] / 100)];
     const p5 = [150 - r * cos30 * (levels[5] / 100), 150 - r * sin30 * (levels[5] / 100)];
-    
+
     return `${p0[0]},${p0[1]} ${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p3[0]},${p3[1]} ${p4[0]},${p4[1]} ${p5[0]},${p5[1]}`;
   };
 
@@ -1007,9 +1005,8 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* ─── 顶部导航 ─── */}
       <motion.header
-        className={`fixed top-0 left-0 right-0 z-50 py-4 backdrop-blur-md transition-all duration-300 ${
-          scrolled ? 'bg-background/40 border-b border-border/20 shadow-sm' : 'bg-transparent'
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 py-4 backdrop-blur-md transition-all duration-300 ${scrolled ? 'bg-background/40 border-b border-border/20 shadow-sm' : 'bg-transparent'
+          }`}
       >
         <div className="max-w-7xl mx-auto w-full px-4 md:px-8 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group pl-2 md:pl-8">
@@ -1049,41 +1046,34 @@ export default function LandingPage() {
       {/* ─── Hero Section ─── */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-28 pb-16 lg:pb-0">
         <HeroBackground />
-        
+
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
+
             {/* Left Column: Text & Buttons */}
             <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left">
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-              >
-                <Badge className="mb-8 px-6 py-2.5 text-base gap-2.5 bg-primary/15 text-primary border-primary/30 shadow-md">
-                  <Sparkles className="w-4 h-4 animate-pulse" />
-                  多智能体个性化学习系统
-                </Badge>
-              </motion.div>
+
 
               <motion.h1
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.9, delay: 0.1 }}
-                className="text-2xl sm:text-3.5xl md:text-4.5xl lg:text-5.8xl xl:text-6.5xl font-extrabold mb-8 leading-tight tracking-tight whitespace-nowrap"
+                className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-6 tracking-tight leading-[1.15] text-foreground"
               >
-                <span className="bg-clip-text text-transparent"
-                  style={{ backgroundImage: 'linear-gradient(135deg, hsl(162,63%,38%), hsl(180,55%,42%), hsl(220,60%,55%))' }}>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-600 via-indigo-500 to-cyan-500 dark:from-violet-400 dark:via-indigo-300 dark:to-cyan-400">
                   基于多智能体大模型
                 </span>
-                <span className="text-foreground ml-3">AIGC资源生成学习助手</span>
+                <br />
+                <span className="relative inline-block mt-2">
+                  AIGC资源生成学习助手
+                </span>
               </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl lg:mx-0 mx-auto leading-relaxed text-pretty"
+                className="text-lg md:text-xl text-muted-foreground/90 mb-10 max-w-2xl lg:mx-0 mx-auto leading-relaxed text-pretty"
               >
                 基于苏格拉底式AI辅导、知识图谱可视化与弱项精准强化，
                 为每位学习者构建专属的个性化学业提升路径。
@@ -1093,16 +1083,16 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start items-center w-full sm:w-auto"
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center w-full sm:w-auto"
               >
-                <Button size="lg" asChild className="w-full sm:w-56 shadow-xl h-14 text-lg">
+                <Button size="lg" asChild className="w-full sm:w-56 shadow-lg shadow-pink-500/25 hover:shadow-pink-500/35 h-14 text-base font-bold transition-all duration-300 hover:scale-105 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white border-0">
                   <Link to="/login">
-                    <Zap className="w-5 h-5 mr-2" />立即开始使用
+                    <Zap className="w-4.5 h-4.5 mr-2" />立即开始使用
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="w-full sm:w-44 h-14 text-lg bg-background/10 backdrop-blur-sm">
-                  <a href="#特色功能">
-                    了解更多<ArrowRight className="w-4 h-4 ml-2" />
+                <Button size="lg" variant="outline" asChild className="w-full sm:w-44 h-14 text-base font-bold transition-all duration-300 hover:scale-105 rounded-xl bg-background/30 backdrop-blur-md border border-border/80 hover:bg-muted/50">
+                  <a href="https://my.feishu.cn/wiki/O58IwTq07inkjTkWiyrcgHCrn7e?from=from_copylink" target="_blank" rel="noopener noreferrer">
+                    了解更多<ArrowRight className="w-4 h-4 ml-1.5" />
                   </a>
                 </Button>
               </motion.div>
@@ -1112,24 +1102,38 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
-                className="grid grid-cols-2 sm:grid-cols-4 gap-5 mt-20 w-full max-w-3xl"
+                className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-16 w-full max-w-3xl"
               >
                 {stats.map((s, i) => (
                   <motion.div
                     key={i}
-                    whileHover={{ scale: 1.05 }}
-                    className="p-6 rounded-2xl bg-background/60 backdrop-blur-md border border-border/50 text-center shadow-lg"
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    className="relative overflow-hidden p-5 rounded-2xl bg-card/45 backdrop-blur-md border border-border/60 shadow-lg transition-all duration-300 hover:border-primary/30"
                   >
-                    <div className="text-3xl sm:text-4xl font-extrabold text-primary">{s.value}</div>
-                    <div className="text-sm sm:text-base text-muted-foreground mt-1.5">{s.label}</div>
+                    <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-violet-500 to-cyan-500 opacity-0 hover:opacity-100 transition-opacity" />
+                    <div className="flex items-center gap-3 mb-2.5">
+                      <div className={`p-2 rounded-xl ${s.color} shrink-0`}>
+                        <s.icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs text-muted-foreground font-medium">{s.label}</span>
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">{s.value}</div>
                   </motion.div>
                 ))}
               </motion.div>
             </div>
 
-            {/* Right Column: Interactive Visual */}
+            {/* Right Column: Visual Mockup */}
             <div className="lg:col-span-5 relative w-full flex items-center justify-center mt-12 lg:mt-0">
-              <HeroInteractiveVisual />
+              <motion.div
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                whileHover={{ scale: 1.02, y: -4 }}
+                className="relative w-full max-w-[500px]"
+              >
+                <img src="/images/person.png" alt="Multi-agent Personalized Learning System" className="w-full h-auto object-contain" />
+              </motion.div>
             </div>
 
           </div>
@@ -1192,13 +1196,13 @@ export default function LandingPage() {
                         <span className="text-3xl md:text-5xl font-light text-white/90 tracking-tight font-mono mb-2">
                           {String(idx + 1).padStart(2, '0')}
                         </span>
-                        
+
                         <h3 className="text-lg md:text-2xl font-bold text-white tracking-tight leading-snug break-words">
                           {f.title}
                         </h3>
 
                         {/* Collapsible details container */}
-                        <div 
+                        <div
                           className="transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden flex flex-col"
                           style={{
                             maxHeight: isActive ? "180px" : "0px",
@@ -1222,7 +1226,7 @@ export default function LandingPage() {
                       </div>
 
                       {/* Floating mockup in glass frame displayed only when card is expanded */}
-                      <div 
+                      <div
                         className="hidden md:flex items-center justify-center transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)]"
                         style={{
                           flex: isActive ? 1 : 0,
@@ -1366,7 +1370,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-{/* ─── 竞品分析（雷达图） ─── */}
+      {/* ─── 竞品分析（雷达图） ─── */}
       <section id="竞品分析" className="py-24 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -1477,7 +1481,7 @@ export default function LandingPage() {
             <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
               {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
               <span className="ml-2 font-medium text-foreground">5.0</span>
-              <span className="ml-1 text-muted-foreground">/ 5.0 · 来自 50,000+ 用户</span>
+              <span className="ml-1 text-muted-foreground">/ 5.0 · 来自 689 用户</span>
             </div>
           </motion.div>
         </div>
@@ -1514,11 +1518,10 @@ export default function LandingPage() {
                 whileHover={{ y: -6 }}
                 className="h-full"
               >
-                <div className={`relative h-full rounded-2xl flex flex-col overflow-hidden transition-all duration-300 ${
-                  plan.highlight
-                    ? 'border-2 border-primary shadow-2xl ring-4 ring-primary/10'
-                    : 'border border-border/60 shadow-lg hover:shadow-xl'
-                }`}>
+                <div className={`relative h-full rounded-2xl flex flex-col overflow-hidden transition-all duration-300 ${plan.highlight
+                  ? 'border-2 border-primary shadow-2xl ring-4 ring-primary/10'
+                  : 'border border-border/60 shadow-lg hover:shadow-xl'
+                  }`}>
                   {/* 顶部彩色渐变头 */}
                   <div className={`p-4 sm:p-7 bg-gradient-to-br ${plan.color} text-white relative overflow-hidden`}>
                     {/* 装饰光晕 */}
@@ -1544,9 +1547,8 @@ export default function LandingPage() {
                     <ul className="space-y-2.5 flex-1 mb-4 sm:mb-6">
                       {plan.features.map((feat, j) => (
                         <li key={j} className="flex items-start gap-1.5 sm:gap-2.5">
-                          <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                            plan.highlight ? 'bg-primary/10' : 'bg-muted'
-                          }`}>
+                          <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${plan.highlight ? 'bg-primary/10' : 'bg-muted'
+                            }`}>
                             <CheckCircle2 className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${plan.highlight ? 'text-primary' : 'text-muted-foreground'}`} />
                           </div>
                           <span className="text-[11px] sm:text-sm text-foreground/80 leading-relaxed">{feat}</span>
@@ -1584,17 +1586,17 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-3xl md:text-5xl font-extrabold mb-6 text-foreground tracking-tight leading-tight">
-              准备好开启你的 <span className="bg-gradient-to-r from-violet-600 via-primary to-amber-500 bg-clip-text text-transparent">智能学习之旅</span> 了吗？
+              准备好开启你的 <span className="text-emerald-500 dark:text-emerald-400">智能学习之旅</span> 了吗？
             </h2>
             <p className="text-muted-foreground mb-10 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-              加入 50,000+ 用户，体验全新的智能辅导。让 Kowell AI 成为你学业提升的得力助手。
+              加入 689位 用户，体验全新的智能辅导。让 Kowell AI 成为你学业提升的得力助手。
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {/* 立即开始按钮 */}
               <Link
                 to="/login"
-                className="relative flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-base shadow-lg shadow-violet-500/25 transition-all hover:scale-102 active:scale-98 min-w-[160px]"
+                className="relative flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold text-base shadow-lg shadow-pink-500/25 transition-all hover:scale-102 active:scale-98 min-w-[160px]"
               >
                 <span>立即开始</span>
                 <ArrowRight className="w-4.5 h-4.5" />
@@ -1602,7 +1604,9 @@ export default function LandingPage() {
 
               {/* 了解更多按钮 */}
               <a
-                href="#六大核心特色功能"
+                href="https://my.feishu.cn/wiki/O58IwTq07inkjTkWiyrcgHCrn7e?from=from_copylink"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-background border border-border/80 text-foreground hover:bg-muted/40 font-bold text-base transition-all hover:scale-102 active:scale-98 min-w-[160px]"
               >
                 <BookOpen className="w-4.5 h-4.5 text-muted-foreground" />
@@ -1649,11 +1653,11 @@ export default function LandingPage() {
               <div className="flex flex-col gap-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2">
                   <MessageCircle className="w-4 h-4 text-emerald-500 fill-emerald-500/10" />
-                  <span>zhixueba2026</span>
+                  <span>wyx200265</span>
                 </span>
                 <span className="flex items-center gap-2">
                   <Globe className="w-4 h-4 text-muted-foreground/80" />
-                  <span>support@zhixueba.ai</span>
+                  <span>wyxcode@qq.com</span>
                 </span>
                 <span className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-muted-foreground/80" />
@@ -1678,12 +1682,12 @@ export default function LandingPage() {
               <Link to="/tutoring" className="hover:text-primary transition-colors">智能答疑</Link>
               <Link to="/learning-path" className="hover:text-primary transition-colors">学习路径</Link>
               <Link to="/report" className="hover:text-primary transition-colors">数据报告</Link>
-              
+
               <span className="text-border/60 mx-1">|</span>
 
               <span className="font-semibold text-foreground">联系我们</span>
-              <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-emerald-500" />微信：zhixueba2026</span>
-              <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />support@zhixueba.ai</span>
+              <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-emerald-500" />微信：wyx200265</span>
+              <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />wyxcode@qq.com</span>
               <span>中国 · 互联网教育</span>
             </div>
           </div>
@@ -1724,19 +1728,19 @@ export default function LandingPage() {
                 <label className="text-xs font-semibold text-muted-foreground">生成资源类型 (支持流式并行并发)</label>
                 <div className="grid grid-cols-2 gap-3 mt-1">
                   <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
-                    <input type="checkbox" checked={newOpts.outline} onChange={(e) => setNewOpts({...newOpts, outline: e.target.checked})} className="rounded text-primary border-border focus:ring-0" />
+                    <input type="checkbox" checked={newOpts.outline} onChange={(e) => setNewOpts({ ...newOpts, outline: e.target.checked })} className="rounded text-primary border-border focus:ring-0" />
                     <span>讲义大纲 (Outline)</span>
                   </label>
                   <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
-                    <input type="checkbox" checked={newOpts.mindmap} onChange={(e) => setNewOpts({...newOpts, mindmap: e.target.checked})} className="rounded text-primary border-border focus:ring-0" />
+                    <input type="checkbox" checked={newOpts.mindmap} onChange={(e) => setNewOpts({ ...newOpts, mindmap: e.target.checked })} className="rounded text-primary border-border focus:ring-0" />
                     <span>SVG思维导图</span>
                   </label>
                   <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
-                    <input type="checkbox" checked={newOpts.exercises} onChange={(e) => setNewOpts({...newOpts, exercises: e.target.checked})} className="rounded text-primary border-border focus:ring-0" />
+                    <input type="checkbox" checked={newOpts.exercises} onChange={(e) => setNewOpts({ ...newOpts, exercises: e.target.checked })} className="rounded text-primary border-border focus:ring-0" />
                     <span>经典期末测试题</span>
                   </label>
                   <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
-                    <input type="checkbox" checked={newOpts.code} onChange={(e) => setNewOpts({...newOpts, code: e.target.checked})} className="rounded text-primary border-border focus:ring-0" />
+                    <input type="checkbox" checked={newOpts.code} onChange={(e) => setNewOpts({ ...newOpts, code: e.target.checked })} className="rounded text-primary border-border focus:ring-0" />
                     <span>示例沙箱源码</span>
                   </label>
                 </div>

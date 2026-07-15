@@ -205,7 +205,7 @@ export default function LoginPage() {
                   ))}
                 </div>
                 <div className="text-base">
-                  <span className="text-white font-bold text-lg">50,000+</span>
+                  <span className="text-white font-bold text-lg">689</span>
                   <span className="text-white/60 ml-1.5 font-medium">位学习者正在使用</span>
                 </div>
               </div>

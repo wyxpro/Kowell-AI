@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, PhoneOff, Video, VideoOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { stepAudioService } from '@/services/ai';
-import { deepseekService } from '@/services/ai/deepseek';
+import { stepfunService } from '@/services/ai/stepfun';
 
 // 老师头像 — 使用真实 Unsplash 教师形象
 const TEACHER_AVATAR = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&auto=format';
@@ -245,7 +245,7 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
       // 保存记录
       conversationHistory.current.push({ role: 'user', content: text });
 
-      // 2. 调用 DeepSeek 模型回复
+      // 2. 调用 StepFun 模型回复
       const systemPrompt = {
         role: 'system' as const,
         content: '你是一位耐心的AI学业助教。你正在和学生进行实时语音通话。请用极其简短、亲切、口语化的中文口头回答。绝对不能包含任何Markdown符号（如加粗、标题、列表等），字数严格控制在3句话、70字以内。不要包含任何思考过程或标签。'
@@ -255,7 +255,7 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
       const recentHistory = conversationHistory.current.slice(-6);
       const messages = [systemPrompt, ...recentHistory];
 
-      const reply = await deepseekService.chat(messages);
+      const reply = await stepfunService.chat(messages);
       conversationHistory.current.push({ role: 'assistant', content: reply });
 
       // 3. 播放 AI TTS 回复

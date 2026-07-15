@@ -43,7 +43,7 @@ graph TD
     end
 
     subgraph LLM_Gateway ["LLM API网关与多模态模型"]
-        DeepSeek_Model["DeepSeek-v4-pro (推理/流式对话)"]:::provider
+        Step_Model["Step-3.7-Flash (推理/流式对话)"]:::provider
         MiniMax_Text["MiniMax-M3 (复杂大纲与多轮交互)"]:::provider
         Ernie_Fallback["Ernie Speed (动态降级备用)"]:::provider
         Speech_TTS["speech-02-hd (音频高保真合成)"]:::provider
@@ -72,7 +72,7 @@ graph TD
     UI_Path ==> |"2. 自适应路径规划"| F_Recommend
     UI_Eval ==> |"2. 论述与口述判分"| F_Evaluate
 
-    Client_Direct ===> |"HTTPS SSE / v1/proxy"| DeepSeek_Model
+    Client_Direct ===> |"HTTPS SSE / api/stepfun"| Step_Model
     
     Edge_Functions --> F_Chat & F_Generate & F_Recommend & F_Evaluate & F_TTS & F_Img & F_Vid
     
@@ -96,7 +96,7 @@ graph TD
 ### 2. 架构设计亮点说明
 
 > [!NOTE]
-> 1. **双核驱动 (Hybrid Core)**: 客户端通过 Proxy 代理直接请求 `DeepSeek-v4-pro` 以承载 **多轮答疑** 和 **苏格拉底画像交互**，无需经由后端中转，最大化利用大模型极速响应特性。
+> 1. **双核驱动 (Hybrid Core)**: 客户端通过 Proxy 代理直接请求 `Step-3.7-Flash` 以承载 **多轮答疑** 和 **苏格拉底画像交互**，无需经由后端中转，最大化利用大模型极速响应特性。
 > 2. **边缘解耦 (Edge Decoupling)**: 涉及密钥安全、数据表修改（如学习路径重构、评估数据回填）、第三方服务对接（微信支付、可灵视频、MiniMax TTS）统一在 **Supabase Deno Edge Functions** 完成。
 > 3. **主备降级 (Failover Strategy)**: Serverless 层内置动态重试机制，当 `MiniMax-M3` 出现网关异常时，自动平滑切回百度 `Ernie Speed` 备用模型，保证线上服务不中断。
 
@@ -110,11 +110,11 @@ graph TD
 
 | 功能模块 | 功能描述与应用场景 | 已对接模型 | 接口调用价格 (参考) | 计费标准 | 降级/高可用策略 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **对话式画像构建** | 自然语言多轮对话询问，后台以 Strict JSON 抽取 6 维学习特征，避免传统表单的枯燥体验。 | **DeepSeek-v4-pro** | 输入：¥1.00 / 百万 tokens<br>输出：¥2.00 / 百万 tokens | 按 Token 计费 (包含推理缓存打折) | 超时 15 秒则切换至 `MiniMax-M3` 并行分析并持久化 |
-| **智能答疑与辅导** | 提供流式 SSE 对话，内置苏格拉底式启发提问与直接回答双模一键切换。 | **DeepSeek-v4-pro** | 输入：¥1.00 / 百万 tokens<br>输出：¥2.00 / 百万 tokens | 按 Token 计费 | 网关故障时降级至 `Ernie-Speed` (免费/极低资费) |
-| **7类个性化资源生成** | 异步并行生成教学案例、三级 Markdown 思维导图、配套习题解析、代码示例、PPT/视频大纲等。 | **DeepSeek-v4-pro** | 输入：¥15.00 / 百万 tokens<br>输出：¥15.00 / 百万 tokens | 按 Token 计费 | 前端基于 WebSocket/SSE 进度展示，失败则自动重试单个任务 |
-| **智能规划推送** | 根据学生画像 JSON 数据与历史打卡节点，动态生成下一步推荐主题、预估时长与推荐资源列表。 | **DeepSeek-v4-pro** | 输入：¥15.00 / 百万 tokens<br>输出：¥15.00 / 百万 tokens | 按 Token 计费 | 出现解析错误时自动退回规则库推荐机制 (基于前置依存树) |
-| **学习效果评估** | 提供主观题、论述题与口述文本的多维度 AI 智能判分，输出 JSON 反馈（得分、优缺点、改进建议）。 | **DeepSeek-v4-pro** | 输入：¥15.00 / 百万 tokens<br>输出：¥15.00 / 百万 tokens | 按 Token 计费 | 判分失败时使用静态模糊匹配与答案相似度比对作为兜底方案 |
+| **对话式画像构建** | 自然语言多轮对话询问，后台以 Strict JSON 抽取 6 维学习特征，避免传统表单的枯燥体验。 | **Step-3.7-Flash** | 输入：¥1.00 / 百万 tokens<br>输出：¥2.00 / 百万 tokens | 按 Token 计费 (包含推理缓存打折) | 超时 15 秒则切换至 `MiniMax-M3` 并行分析并持久化 |
+| **智能答疑与辅导** | 提供流式 SSE 对话，内置苏格拉底式启发提问与直接回答双模一键切换。 | **Step-3.7-Flash** | 输入：¥1.00 / 百万 tokens<br>输出：¥2.00 / 百万 tokens | 按 Token 计费 | 网关故障时降级至 `Ernie-Speed` (免费/极低资费) |
+| **7类个性化资源生成** | 异步并行生成教学案例、三级 Markdown 思维导图、配套习题解析、代码示例、PPT/视频大纲等。 | **Step-3.7-Flash** | 输入：¥15.00 / 百万 tokens<br>输出：¥15.00 / 百万 tokens | 按 Token 计费 | 前端基于 WebSocket/SSE 进度展示，失败则自动重试单个任务 |
+| **智能规划推送** | 根据学生画像 JSON 数据与历史打卡节点，动态生成下一步推荐主题、预估时长与推荐资源列表。 | **Step-3.7-Flash** | 输入：¥15.00 / 百万 tokens<br>输出：¥15.00 / 百万 tokens | 按 Token 计费 | 出现解析错误时自动退回规则库推荐机制 (基于前置依存树) |
+| **学习效果评估** | 提供主观题、论述题与口述文本的多维度 AI 智能判分，输出 JSON 反馈（得分、优缺点、改进建议）。 | **Step-3.7-Flash** | 输入：¥15.00 / 百万 tokens<br>输出：¥15.00 / 百万 tokens | 按 Token 计费 | 判分失败时使用静态模糊匹配与答案相似度比对作为兜底方案 |
 
 ### 2. 音频模态 (Audio Modality)
 
@@ -154,7 +154,7 @@ graph TD
 ## 四、 核心优化与高可用控制机制
 
 ### 1. 思考链 (Chain-of-Thought) 内容净化机制
-系统集成了 DeepSeek 后，由于其特有的 `<think>` 标签思考链文本较长，在普通前端聊天框直接输出会破坏交互排版。Kowell AI 采取了 **双端拦截过滤策略**：
+系统集成了 StepFun 推理模型后，由于其特有的 `<think>` 标签思考链文本较长，在普通前端聊天框直接输出会破坏交互排版。Kowell AI 采取了 **双端拦截过滤策略**：
 - **前端拦截**: 在将消息渲染到 `AIChatPanel` 之前，通过正则替换过滤思考内容：
   ```typescript
   const cleanMsg = {

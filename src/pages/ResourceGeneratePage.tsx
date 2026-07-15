@@ -151,25 +151,32 @@ function renderMarkdownBlocks(text: string): React.ReactNode {
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    if (/^### /.test(line)) {
-      elements.push(<h3 key={i} className="text-sm font-bold mt-3 mb-1 text-white">{renderInline(line.replace(/^### /, ''))}</h3>);
-    } else if (/^## /.test(line)) {
-      elements.push(<h2 key={i} className="text-sm font-semibold mt-3 mb-1.5 text-primary border-b border-white/10 pb-1">{renderInline(line.replace(/^## /, ''))}</h2>);
-    } else if (/^# /.test(line)) {
-      elements.push(<h1 key={i} className="text-base font-bold mt-3 mb-2 text-white">{renderInline(line.replace(/^# /, ''))}</h1>);
+    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      const content = headingMatch[2];
+      if (level === 1) {
+        elements.push(<h1 key={i} className="text-base font-bold mt-3 mb-2 text-slate-900 dark:text-slate-50">{renderInline(content)}</h1>);
+      } else if (level === 2) {
+        elements.push(<h2 key={i} className="text-sm font-semibold mt-3 mb-1.5 text-primary border-b border-slate-200 dark:border-slate-800 pb-1">{renderInline(content)}</h2>);
+      } else if (level === 3) {
+        elements.push(<h3 key={i} className="text-sm font-bold mt-3 mb-1 text-slate-800 dark:text-slate-100">{renderInline(content)}</h3>);
+      } else {
+        elements.push(<h4 key={i} className="text-xs font-semibold mt-2 mb-1 text-slate-800 dark:text-slate-200">{renderInline(content)}</h4>);
+      }
     } else if (/^\d+\. /.test(line.trimStart())) {
       const num = line.trimStart().match(/^(\d+)\./)?.[1];
       elements.push(
         <div key={i} className="flex gap-2 text-sm leading-relaxed">
           <span className="text-primary font-semibold shrink-0 min-w-[1.2rem]">{num}.</span>
-          <span className="text-pretty text-white/90">{renderInline(line.trimStart().replace(/^\d+\. /, ''))}</span>
+          <span className="text-pretty text-slate-700 dark:text-slate-300">{renderInline(line.trimStart().replace(/^\d+\. /, ''))}</span>
         </div>
       );
     } else if (/^[-*•] /.test(line.trimStart())) {
       elements.push(
         <div key={i} className="flex gap-2 text-sm leading-relaxed">
           <span className="text-primary shrink-0 mt-1">•</span>
-          <span className="text-pretty text-white/90">{renderInline(line.trimStart().replace(/^[-*•] /, ''))}</span>
+          <span className="text-pretty text-slate-700 dark:text-slate-300">{renderInline(line.trimStart().replace(/^[-*•] /, ''))}</span>
         </div>
       );
     } else if (/^```/.test(line)) {
@@ -178,19 +185,19 @@ function renderMarkdownBlocks(text: string): React.ReactNode {
       i++;
       while (i < lines.length && !lines[i].startsWith('```')) { codeLines.push(lines[i]); i++; }
       elements.push(
-        <div key={i} className="my-2 rounded-lg overflow-hidden border border-white/10">
-          {lang && <div className="px-3 py-1 bg-white/5 text-[10px] font-mono text-white/60 border-b border-white/10">{lang}</div>}
-          <pre className="px-3 py-2.5 text-xs font-mono leading-relaxed overflow-x-auto bg-white/5 text-white/90"><code>{codeLines.join('\n')}</code></pre>
+        <div key={i} className="my-2 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+          {lang && <div className="px-3 py-1 bg-slate-100/50 dark:bg-slate-900 text-[10px] font-mono text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">{lang}</div>}
+          <pre className="px-3 py-2.5 text-xs font-mono leading-relaxed overflow-x-auto text-slate-800 dark:text-slate-200"><code>{codeLines.join('\n')}</code></pre>
         </div>
       );
     } else if (/^---+$/.test(line.trim())) {
-      elements.push(<hr key={i} className="my-3 border-white/10" />);
+      elements.push(<hr key={i} className="my-3 border-slate-200 dark:border-slate-800" />);
     } else if (/^> /.test(line)) {
-      elements.push(<blockquote key={i} className="border-l-2 border-primary/50 pl-3 my-1.5 text-sm text-white/70 italic">{renderInline(line.replace(/^> /, ''))}</blockquote>);
+      elements.push(<blockquote key={i} className="border-l-2 border-primary/50 pl-3 my-1.5 text-sm text-slate-600 dark:text-slate-400 italic">{renderInline(line.replace(/^> /, ''))}</blockquote>);
     } else if (line.trim() === '') {
       if (elements.length > 0) elements.push(<div key={i} className="h-1.5" />);
     } else {
-      elements.push(<p key={i} className="text-sm leading-relaxed text-pretty text-white/95">{renderInline(line)}</p>);
+      elements.push(<p key={i} className="text-sm leading-relaxed text-pretty text-slate-800 dark:text-slate-200">{renderInline(line)}</p>);
     }
     i++;
   }
@@ -203,8 +210,8 @@ function renderInline(text: string): React.ReactNode {
   let last = 0; let match: RegExpExecArray | null;
   while ((match = regex.exec(text)) !== null) {
     if (match.index > last) parts.push(text.slice(last, match.index));
-    if (match[2]) parts.push(<strong key={match.index} className="font-semibold text-white">{match[2]}</strong>);
-    else if (match[3]) parts.push(<code key={match.index} className="px-1 py-0.5 rounded bg-white/10 text-xs font-mono text-primary">{match[3]}</code>);
+    if (match[2]) parts.push(<strong key={match.index} className="font-semibold text-slate-900 dark:text-slate-50">{match[2]}</strong>);
+    else if (match[3]) parts.push(<code key={match.index} className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-xs font-mono text-primary">{match[3]}</code>);
     else if (match[4]) parts.push(<em key={match.index}>{match[4]}</em>);
     last = match.index + match[0].length;
   }
@@ -566,6 +573,14 @@ export default function ResourceGeneratePage() {
     }
   }, [location]);
 
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+    };
+  }, []);
+
   const [topic, setTopic] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
   const [courseDropdownOpen, setCourseDropdownOpen] = useState(false);
@@ -590,6 +605,7 @@ export default function ResourceGeneratePage() {
   // 附件上传状态
   const [attachments, setAttachments] = useState<{ name: string; type: string; size: number; url?: string }[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const [previewExample, setPreviewExample] = useState<typeof STANDARD_EXAMPLES[0] | null>(null);
 
@@ -898,6 +914,7 @@ export default function ResourceGeneratePage() {
     if (!user) { toast.error('请先登录'); return; }
     if (resourceTypes.length === 0) { toast.error('请至少选择一种资源类型'); return; }
 
+    abortRef.current = new AbortController();
     setGenerating(true);
     setProgress(0);
     setCurrentStep(0);
@@ -1656,7 +1673,7 @@ export default function ResourceGeneratePage() {
 
       {/* ── 我的资源 Dialog ─────────────────────────────────── */}
       <Dialog open={showMyInterface} onOpenChange={(v) => { setShowMyInterface(v); if (!v) { setActiveResource(null); setIsEditing(false); setIsCreatingManual(false); } }}>
-        <DialogContent className="max-w-[1100px] w-[96vw] h-[88vh] flex flex-col p-0 overflow-hidden rounded-2xl border-0 shadow-2xl bg-[#0f1117]">
+        <DialogContent className="dark max-w-[1100px] w-[96vw] h-[88vh] flex flex-col p-0 overflow-hidden rounded-2xl border-0 shadow-2xl bg-[#0f1117]">
 
           {/* ── 顶部渐变标题栏 */}
           <div className="relative shrink-0 overflow-hidden">
