@@ -79,7 +79,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#1e293b] text-slate-100">
+    <div className="flex flex-col h-full bg-[#131520] text-slate-100">
       {/* Logo */}
       <div className="p-4 flex items-center gap-3">
         <Link to="/" className="flex items-center gap-3 min-w-0 group" onClick={onNavigate}>
@@ -92,7 +92,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         </Link>
       </div>
-      <Separator className="bg-slate-700/50" />
+      <Separator className="bg-white/5" />
       <ScrollArea className="flex-1 px-3 py-3">
         <nav className="space-y-4">
           {navGroups.map((group) => (
@@ -109,7 +109,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       onClick={onNavigate}
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
                         ? 'bg-indigo-500/10 text-indigo-300 border-l-2 border-indigo-500 shadow-sm'
-                        : 'text-slate-300 hover:bg-slate-700/40 hover:text-white'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
                         }`}
                     >
                       <item.icon className="w-4 h-4 shrink-0" />
@@ -126,7 +126,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       onClick={handleToolboxToggle}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isToolboxActive
                         ? 'bg-indigo-500/10 text-indigo-300 border-l-2 border-indigo-500 shadow-sm'
-                        : 'text-slate-300 hover:bg-slate-700/40 hover:text-white'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
                         }`}
                     >
                       <Wrench className="w-4 h-4 shrink-0" />
@@ -148,7 +148,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                           transition={{ duration: 0.22, ease: 'easeInOut' }}
                           className="overflow-hidden"
                         >
-                          <div className="ml-3 mt-0.5 pl-3 border-l border-slate-700/50 space-y-0.5 py-1">
+                          <div className="ml-3 mt-0.5 pl-3 border-l border-white/5 space-y-0.5 py-1">
                             {TOOLBOX_ITEMS.map(tool => {
                               const active = location.pathname === tool.href;
                               return (
@@ -158,7 +158,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                                   onClick={() => handleToolNav(tool.href)}
                                   className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${active
                                     ? 'bg-indigo-500/10 text-indigo-300'
-                                    : 'text-slate-300 hover:bg-slate-700/40 hover:text-white'
+                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
                                     }`}
                                 >
                                   <div className={`w-5 h-5 rounded-md ${tool.bg} flex items-center justify-center shrink-0`}>
@@ -203,7 +203,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full bg-background">
       {/* 桌面端侧边栏 */}
-      <aside className="hidden md:block w-60 shrink-0 border-r border-slate-800">
+      <aside className="hidden md:block w-60 shrink-0 border-r border-[#1e293b]/20">
         <div className="sticky top-0 h-screen">
           <SidebarContent />
         </div>
@@ -237,7 +237,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           )}
         </div>
-        <SheetContent side="left" className="p-0 w-60 bg-[#1e293b] border-r border-slate-800">
+        <SheetContent side="left" className="p-0 w-60 bg-[#131520] border-r border-[#1e293b]/20">
           <SheetTitle className="sr-only">导航菜单</SheetTitle>
           <SidebarContent onNavigate={() => setOpen(false)} />
         </SheetContent>
