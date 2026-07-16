@@ -1,3 +1,5 @@
+const SEEDANCE_API_KEY = import.meta.env.VITE_SEEDANCE_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE5OTJmOGNlLTg0NDAtNDA2MC1hN2YwLTdjNzExMzY2MDA3YyIsInNjb3BlIjoiaWVfbW9kZWwiLCJjbGllbnRJZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCJ9.IWRZ1LbtdXPx0XxHeGEYtlSZ1z1RD-6ZWmZxhpKT6bc";
+
 export interface VideoGenerationParams {
   prompt: string;
   first_frame?: string;
@@ -69,7 +71,8 @@ export const videoAIService = {
       const resp = await fetch(url, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SEEDANCE_API_KEY}`
         },
         body: JSON.stringify({
           model: 'seedance-2-0-fast-260128',
@@ -96,7 +99,10 @@ export const videoAIService = {
     const url = `/api/gmicloud/api/v1/ie/requestqueue/apikey/requests/${requestId}`;
     try {
       const resp = await fetch(url, {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${SEEDANCE_API_KEY}`
+        }
       });
 
       if (!resp.ok) {

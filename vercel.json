@@ -1,0 +1,24 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/stepfun/:path*",
+      "destination": "https://api.stepfun.com/step_plan/v1/:path*"
+    },
+    {
+      "source": "/api/stepaudio/:path*",
+      "destination": "https://api.stepfun.com/step_plan/v1/:path*"
+    },
+    {
+      "source": "/api/gmicloud/:path*",
+      "destination": "https://console.gmicloud.ai/:path*"
+    },
+    {
+      "source": "/api/innoreation/v1/proxy/:path*",
+      "destination": "https://mangdream.com/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

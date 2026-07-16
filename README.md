@@ -1,4 +1,4 @@
-# 🎓 Kowell AI — 多智能体智能学习平台
+# 🎓 Kowell AI —   基于多智能体的AIGC资源生成与学习助手
 
 ![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-Rolldown-646CFF?logo=vite&logoColor=white) ![TailwindCSS](https://img.shields.io/badge/Tailwind-3.x-38B2AC?logo=tailwindcss&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E?logo=supabase&logoColor=white) ![Zustand](https://img.shields.io/badge/Zustand-5.x-764ABC) ![DeepSeek](https://img.shields.io/badge/DeepSeek-v4--pro-orange) ![Three.js](https://img.shields.io/badge/Three.js-3D-000000) ![ReactRouter](https://img.shields.io/badge/React_Router-7.x-CA4245?logo=reactrouter&logoColor=white) ![FramerMotion](https://img.shields.io/badge/Framer_Motion-12.x-FF0080)
 
@@ -6,9 +6,7 @@
 
 ## 📋 项目简介
 
-**Kowell AI** 是一款面向高等教育（本科、研究生、高职）学生的个性化多智能体智能学习平台。系统聚焦于计算机、人工智能、电子信息等专业方向，构建了 **「画像构建 → 资源生成 → 路径规划 → 学习辅导 → 效果评估」** 的 Agent 闭环个性化教学服务。
-
-平台通过深度集成的多智能体协作、数据可视化、三维交互与富文本编辑工具，为学生提供科学且生动的沉浸式学习体验。
+**Kowell AI** 一款面向学生和教师的多智能体个性化智能学习助手。平台依托多模态AI大模型、数据可视化、多智能体协作技术，聚焦人工智能、电子信息等专业，提供“画像构建-资源生成-路径规划-学习辅导-效果评估”完整Agent 闭环个性化学习服务，助力学生提升学习效率、优化资源利用。
 
 ### 🌟 核心亮点
 

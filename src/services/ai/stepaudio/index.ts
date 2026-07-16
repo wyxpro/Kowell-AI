@@ -1,4 +1,5 @@
 import { convertBlobToWav } from './audioConverter';
+import { STEPFUN_CONFIG } from '../stepfun/config';
 
 export interface ASRRequest {
   audioData: string; // Base64 encoded audio
@@ -77,7 +78,8 @@ export const stepAudioService = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'text/event-stream'
+        'Accept': 'text/event-stream',
+        ...(STEPFUN_CONFIG.apiKey ? { 'Authorization': `Bearer ${STEPFUN_CONFIG.apiKey}` } : {}),
       },
       body: JSON.stringify(body)
     });
@@ -187,7 +189,8 @@ export const stepAudioService = {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(STEPFUN_CONFIG.apiKey ? { 'Authorization': `Bearer ${STEPFUN_CONFIG.apiKey}` } : {}),
       },
       body: JSON.stringify(body)
     });
