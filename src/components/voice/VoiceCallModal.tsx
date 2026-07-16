@@ -6,7 +6,7 @@ import { stepAudioService } from '@/services/ai';
 import { stepfunService } from '@/services/ai/stepfun';
 
 // 老师头像 — 使用真实智能辅导形象
-const TEACHER_AVATAR = 'https://imagedb.pxmsw.cn/api/image/1689309235971';
+const TEACHER_AVATAR = 'https://img1.baidu.com/it/u=2930906500,654780520&fm=253&fmt=auto&app=138&f=PNG?w=500&h=529';
 const TEACHER_NAME = '您的 AI 智学助教';
 const TEACHER_NUM = '小智老师';
 

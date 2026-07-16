@@ -504,6 +504,15 @@ export default function TutoringPage() {
                 </div>
               </DialogContent>
             </Dialog>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleNewSession}
+              className="gap-1.5 rounded-full border border-border bg-background/50 hover:bg-accent ml-1"
+            >
+              <Plus className="w-3.5 h-3.5 text-primary" />
+              新建对话
+            </Button>
           </h1>
           <div className="flex items-center gap-2 flex-wrap">
             <button

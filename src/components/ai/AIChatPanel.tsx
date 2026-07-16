@@ -12,7 +12,7 @@ import {
 import { toast } from 'sonner';
 
 const PORTRAIT_AVATAR = 'https://storage-public.zhaopin.cn/user/avatar/1589543911273430172/wiN9SBGr9bEj7P671579067783.736198.jpg';
-const TUTORING_AVATAR = 'https://imagedb.pxmsw.cn/api/image/1689309235971';
+const TUTORING_AVATAR = 'https://img1.baidu.com/it/u=2930906500,654780520&fm=253&fmt=auto&app=138&f=PNG?w=500&h=529';
 
 /* ─── Markdown 渲染器（无需第三方库） ─── */
 function MarkdownContent({ content, isUser }: { content: string; isUser: boolean }) {

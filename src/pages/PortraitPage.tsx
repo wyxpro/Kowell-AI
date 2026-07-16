@@ -390,7 +390,7 @@ export default function PortraitPage() {
               {/* 对话主面板 */}
               <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-card">
                 <CardHeader className="pb-3 shrink-0 border-b border-border/40">
-                  <CardTitle className="text-base flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center">
                     <div className="flex items-center gap-2">
                       <span className="flex items-center gap-2">
                         <Brain className="w-4 h-4 text-primary" />对话式画像构建
@@ -461,12 +461,11 @@ export default function PortraitPage() {
                           </div>
                         </DialogContent>
                       </Dialog>
+                      <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1 px-2.5 border border-border" onClick={handleNewSession}>
+                        <Plus className="w-3 h-3 text-primary" />
+                        新建对话
+                      </Button>
                     </div>
-                    {/* 新建按钮 */}
-                    <Button size="sm" variant="outline" className="h-8 px-2 text-xs gap-1" onClick={handleNewSession}>
-                      <Plus className="w-3.5 h-3.5" />
-                      新建对话
-                    </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col min-h-0 p-4">
