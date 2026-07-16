@@ -1092,7 +1092,7 @@ export default function LandingPage() {
                 </Button>
                 <Button size="lg" variant="outline" asChild className="w-full sm:w-44 h-14 text-base font-bold transition-all duration-300 hover:scale-105 rounded-xl bg-background/30 backdrop-blur-md border border-border/80 hover:bg-muted/50">
                   <a href="https://my.feishu.cn/wiki/O58IwTq07inkjTkWiyrcgHCrn7e?from=from_copylink" target="_blank" rel="noopener noreferrer">
-                    了解更多<ArrowRight className="w-4 h-4 ml-1.5" />
+                    开源文档<ArrowRight className="w-4 h-4 ml-1.5" />
                   </a>
                 </Button>
               </motion.div>
@@ -1602,7 +1602,7 @@ export default function LandingPage() {
                 <ArrowRight className="w-4.5 h-4.5" />
               </Link>
 
-              {/* 了解更多按钮 */}
+              {/* 开源文档按钮 */}
               <a
                 href="https://my.feishu.cn/wiki/O58IwTq07inkjTkWiyrcgHCrn7e?from=from_copylink"
                 target="_blank"
@@ -1610,7 +1610,7 @@ export default function LandingPage() {
                 className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-background border border-border/80 text-foreground hover:bg-muted/40 font-bold text-base transition-all hover:scale-102 active:scale-98 min-w-[160px]"
               >
                 <BookOpen className="w-4.5 h-4.5 text-muted-foreground" />
-                <span>了解更多</span>
+                <span>开源文档</span>
               </a>
             </div>
           </motion.div>
