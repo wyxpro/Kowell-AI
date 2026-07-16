@@ -79,7 +79,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-[#0b0e14] via-[#04060a] to-[#070a0e] text-slate-100">
+    <div className="flex flex-col h-full bg-[#18191c] text-slate-100">
       {/* Logo */}
       <div className="p-4 flex items-center gap-3">
         <Link to="/" className="flex items-center gap-3 min-w-0 group" onClick={onNavigate}>
@@ -237,7 +237,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           )}
         </div>
-        <SheetContent side="left" className="p-0 w-60 bg-[#04060a] border-r border-[#1e293b]/40">
+        <SheetContent side="left" className="p-0 w-60 bg-[#18191c] border-r border-[#1e293b]/40">
           <SheetTitle className="sr-only">导航菜单</SheetTitle>
           <SidebarContent onNavigate={() => setOpen(false)} />
         </SheetContent>
