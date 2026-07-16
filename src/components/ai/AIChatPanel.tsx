@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+const PORTRAIT_AVATAR = 'https://storage-public.zhaopin.cn/user/avatar/1589543911273430172/wiN9SBGr9bEj7P671579067783.736198.jpg';
+const TUTORING_AVATAR = 'https://imagedb.pxmsw.cn/api/image/1689309235971';
+
 /* ─── Markdown 渲染器（无需第三方库） ─── */
 function MarkdownContent({ content, isUser }: { content: string; isUser: boolean }) {
   if (isUser) {
@@ -377,15 +380,18 @@ export default function AIChatPanel({
         <div className="space-y-4 pb-4">
           {displayMessages.map((msg) => (
             <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-sky-100 dark:bg-sky-900/40'
+              <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 ${
+                msg.role === 'user' ? 'bg-primary text-primary-foreground' : ''
               }`}>
-                {msg.role === 'user'
-                  ? <User className="w-4 h-4" />
-                  : sessionType === 'portrait'
-                    ? <GraduationCap className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-                    : <Bot className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-                }
+                {msg.role === 'user' ? (
+                  <User className="w-4 h-4" />
+                ) : (
+                  <img
+                    src={sessionType === 'portrait' ? PORTRAIT_AVATAR : TUTORING_AVATAR}
+                    alt="AI Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
               <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
                 msg.role === 'user'
@@ -417,11 +423,12 @@ export default function AIChatPanel({
           ))}
           {loading && !streamingText && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center shrink-0">
-                {sessionType === 'portrait'
-                  ? <GraduationCap className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-                  : <Bot className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-                }
+              <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-sky-100 dark:bg-sky-900/40">
+                <img
+                  src={sessionType === 'portrait' ? PORTRAIT_AVATAR : TUTORING_AVATAR}
+                  alt="AI Avatar"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />

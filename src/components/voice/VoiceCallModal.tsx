@@ -5,10 +5,10 @@ import { toast } from 'sonner';
 import { stepAudioService } from '@/services/ai';
 import { stepfunService } from '@/services/ai/stepfun';
 
-// 老师头像 — 使用真实 Unsplash 教师形象
-const TEACHER_AVATAR = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&auto=format';
-const TEACHER_NAME = '智学助教';
-const TEACHER_NUM = '10086';
+// 老师头像 — 使用真实智能辅导形象
+const TEACHER_AVATAR = 'https://imagedb.pxmsw.cn/api/image/1689309235971';
+const TEACHER_NAME = '您的 AI 智学助教';
+const TEACHER_NUM = '小智老师';
 
 type CallPhase = 'idle' | 'ringing' | 'connected';
 type VoiceStatus = 'idle' | 'ai-speaking' | 'user-listening' | 'ai-thinking';
@@ -277,7 +277,7 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
   // 打开时初始化
   useEffect(() => {
     if (open) {
-      setPhase('ringing');
+      setPhase('connected');
       setElapsed(0);
       setMuted(false);
       setCamOn(false);
@@ -285,11 +285,8 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
       setVoiceStatus('idle');
       conversationHistory.current = [];
 
-      ringTimeoutRef.current = setTimeout(() => {
-        setPhase('connected');
-        // 通话连接成功，播报欢迎词
-        playTTS('同学你好！我是你的 AI 智学助教。今天有什么学业难题需要我解答吗？');
-      }, 2500);
+      // 通话连接成功，播报欢迎词
+      playTTS('同学你好！我是小智老师。今天有什么学业难题需要我解答吗？');
     } else {
       setPhase('idle');
       setVoiceStatus('idle');
