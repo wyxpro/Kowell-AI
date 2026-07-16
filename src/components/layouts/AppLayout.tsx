@@ -246,21 +246,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* 主内容区 */}
       <main className="flex-1 min-w-0 md:pt-0 pt-14 flex flex-col">
         {/* 桌面端顶部栏 */}
-        <div className="hidden md:flex items-center justify-between gap-2 px-6 py-3 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-30">
-          {/* 搜索框 — 扩大宽度 */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground gap-2 h-8 w-72 justify-start"
-            onClick={() => setSearchOpen(true)}
-          >
-            <Search className="w-3.5 h-3.5 shrink-0" />
-            <span className="text-xs flex-1 text-left">搜索资源、课程...</span>
-            <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono shrink-0">
-              <span>Ctrl</span>+<span>K</span>
-            </kbd>
-          </Button>
-
+        <div className="hidden md:flex items-center justify-end gap-2 px-6 py-3 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-30">
           {/* 右侧操作区：通知 → 产品可视化 → 升级套餐 → 邀请 → 头像 */}
           <div className="flex items-center gap-1.5">
             {/* 通知铃 */}
