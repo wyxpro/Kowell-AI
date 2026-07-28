@@ -1,10 +1,11 @@
-<img width="1921" height="1081" alt="image" src="https://github.com/user-attachments/assets/7505ce44-7f98-4b53-b1bb-b16ce9cd5be0" /># 🎓 Kowell AI —   基于多智能体的AIGC资源生成与学习助手
+# 🎓 Kowell AI —   基于多智能体的AIGC资源生成与学习助手
 
 ![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-Rolldown-646CFF?logo=vite&logoColor=white) ![TailwindCSS](https://img.shields.io/badge/Tailwind-3.x-38B2AC?logo=tailwindcss&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E?logo=supabase&logoColor=white) ![Zustand](https://img.shields.io/badge/Zustand-5.x-764ABC) ![DeepSeek](https://img.shields.io/badge/DeepSeek-v4--pro-orange) ![Three.js](https://img.shields.io/badge/Three.js-3D-000000) ![ReactRouter](https://img.shields.io/badge/React_Router-7.x-CA4245?logo=reactrouter&logoColor=white) ![FramerMotion](https://img.shields.io/badge/Framer_Motion-12.x-FF0080)
 
 ---
 
 ## 📋 项目简介
+<img width="1921" height="1081" alt="image" src="https://github.com/user-attachments/assets/7505ce44-7f98-4b53-b1bb-b16ce9cd5be0" />
 <img width="1972" height="1273" alt="image" src="https://github.com/user-attachments/assets/5295ea61-bd8d-4de4-a870-f058b3e4d301" />
 <img width="2204" height="1245" alt="image" src="https://github.com/user-attachments/assets/808bed4d-2c33-48e2-9a37-96db7ca7cddd" />
 <img width="2196" height="1194" alt="image" src="https://github.com/user-attachments/assets/62af28ee-5199-4ed3-8a9a-c01eabc8aebb" />
