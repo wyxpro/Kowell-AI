@@ -6,7 +6,6 @@
 
 ## 📋 项目简介
 <img width="1921" height="1081" alt="image" src="https://github.com/user-attachments/assets/7505ce44-7f98-4b53-b1bb-b16ce9cd5be0" />
-<img width="1972" height="1273" alt="image" src="https://github.com/user-attachments/assets/5295ea61-bd8d-4de4-a870-f058b3e4d301" />
 <img width="2204" height="1245" alt="image" src="https://github.com/user-attachments/assets/808bed4d-2c33-48e2-9a37-96db7ca7cddd" />
 <img width="2196" height="1194" alt="image" src="https://github.com/user-attachments/assets/62af28ee-5199-4ed3-8a9a-c01eabc8aebb" />
 **Kowell AI** 一款面向学生和教师的多智能体个性化智能学习助手。平台依托多模态AI大模型、数据可视化、多智能体协作技术，聚焦人工智能、电子信息等专业，提供“画像构建-资源生成-路径规划-学习辅导-效果评估”完整Agent 闭环个性化学习服务，助力学生提升学习效率、优化资源利用。
