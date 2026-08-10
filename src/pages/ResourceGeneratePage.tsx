@@ -12,6 +12,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
+import { parseGeneratedExercises, serializeExerciseAnswer } from '@/lib/exercises';
 import { textAIService, visionAIService, videoAIService } from '@/services/ai';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +27,7 @@ import {
   CheckCircle, PenTool, Cpu, MessageSquare, FileCheck, Layers,
   Video, Presentation, Lock, Paperclip, X, ImageIcon, Film, FileUp,
   ChevronDown, ChevronUp, Link2, Download, Image as ImageIcon2, Play,
-  RefreshCw, FileDown, Plus, Trash2, Edit, Search, Calendar,
+  RefreshCw, FileDown, Plus, Trash2, Edit, Search,
 } from 'lucide-react';
 
 /* ──────────────────────────────────────────────────────────────
@@ -142,6 +143,12 @@ async function createVideoTask(prompt: string): Promise<string> {
 
 async function pollVideoTask(taskId: string): Promise<string> {
   return videoAIService.pollVideoResult(taskId);
+}
+
+function resourceContentToText(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (content === null || content === undefined) return '';
+  return JSON.stringify(content, null, 2) ?? '';
 }
 
 /* ─── Markdown 块渲染（AI生成内容用） ─── */
@@ -484,84 +491,6 @@ const resourceTypeOptions = [
   { value: 'video', label: '教学短视频', icon: Video, desc: '多模态动画讲解', color: 'text-indigo-500', available: true, tag: '' },
 ];
 
-const RESOURCE_PROMPTS = {
-  document: `你是一位资深的计算机/人工智能教授。请根据用户提供的主题，编写一个深入浅出的【教学案例】。
-内容必须包括以下部分：
-## 一、案例背景
-详细介绍该技术在实际工业界或学术界的应用背景。
-## 二、核心原理
-用清晰、通俗但精准的语言解释其核心的科学或工程原理，并说明其中的关键公式（若有）。
-## 三、算法流程与实现步骤
-列出一步步的技术实现流程，要求逻辑严密。
-## 四、应用场景
-列举2-3个真实场景案例讲解。
-
-要求：内容科学正确，格式排版整齐美观，多用 Markdown 的标题、粗体、列表、代码块、引用等元素进行结构化排版。`,
-
-  mindmap: `你是一位资深的计算机/人工智能教授。请根据用户提供的主题，生成一份【思维导图】结构的 Markdown 文本。
-要求使用 Markdown 的列表层级结构来表示思维导图：
-# [主题名称]
-* 核心知识结构
-  * 分支一
-    * 细分要点1
-    * 细分要点2
-  * 分支二
-    * 细分要点1
-
-要求层级结构清晰合理，至少有三级节点，文字凝练，能够直观地可视化知识结构。不要包含任何多余的解释、前言或后记，只输出 Markdown 列表结构。`,
-
-  exercise: `你是一位资深的计算机/人工智能教授。请根据用户提供的主题，设计一套【配套巩固练习题】。
-包含：
-## 一、基础选择题
-设计2-3道高质量选择题，带有A/B/C/D选项，并紧接着给出 **【答案解析】**。
-## 二、算法填空题或简答题
-设计1-2道核心算法填空题或综合简答题，并给出详细的参考答案与解析。
-
-要求：题目切中要害，考查深度适中，解析详尽易懂，使用 Markdown 排版。`,
-
-  reading: `你是一位资深的计算机动画设计师与教授。请根据用户提供的主题，设计一个【动画演示脚本及原理图解】。
-包含：
-## 一、动画演示设计思路
-说明如何用动画逐步展示该知识点的运行机制。
-## 二、逐帧画面状态与图解
-详细列出 4-6 个关键帧画面：
-- **画面帧 1**：[画面内容描述，如初始状态指针位置，节点颜色]
-- **画面帧 2**：[动画过渡状态，指针移动，值交换]
-...
-用生动的文字描述动态图解知识原理。使用 Markdown 排版，格式整齐。`,
-
-  code: `你是一位资深的软件工程师 and 计算机教授。请根据用户提供的主题，编写一个高质量、可运行的【代码示例】。
-如果是机器学习或深度学习相关主题，请首选 Python/PyTorch 实现。
-必须包含：
-- 完整的、逻辑自洽的代码，严禁包含未实现的 placeholder。
-- 详细的关键步骤中文注释，帮助学生阅读理解。
-- 代码前后使用标准的 \`\`\` 块包裹，并标明语言（如 \`\`\`python）。
-- 简短的代码运行说明。
-
-使用 Markdown 进行整齐的排版。`,
-
-  ppt: `你是一位精通微课和系统性教学设计的教授。请根据用户提供的主题，生成一份结构清晰的【课件PPT大纲与文字内容】。
-采用 Markdown 格式排版，必须包含 3-4 个幻灯片页面。
-每一页必须使用以下格式：
-## 第 X 页：[幻灯片标题]
-- [要点 1]：[简短描述]
-- [要点 2]：[简短描述]
-...
-
-要求：结构分明，每页幻灯片的文字简练、突出重点，非常适合自动生成和排版演示文稿。`,
-
-  video: `你是一位优秀的教学短视频编导与计算机教授。请根据用户提供的主题，撰写一份【教学短视频脚本与多模态讲解大纲】。
-包含：
-## 一、视频基本信息
-- 时长：3-5分钟
-- 风格：科技感、简洁明快
-## 二、分镜头脚本大纲
-- **镜头 1**：【画面】[描述画面内容] 【旁白】[解说词]
-- **镜头 2**：【画面】[描述画面内容] 【旁白】[解说词]
-...
-用多模态大纲生动解说该知识点的核心原理。格式排版整齐，适合配音和分镜描述。`
-};
-
 export default function ResourceGeneratePage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -730,7 +659,7 @@ export default function ResourceGeneratePage() {
       title: res.title || '',
       topic: res.chapter || (res.tags?.[0] || ''),
       course_name: res.courses?.name || (res.tags?.[1] || ''),
-      content: typeof res.content === 'object' ? JSON.stringify(res.content) : (res.content || ''),
+      content: resourceContentToText(res.content),
       type: res.resource_type || 'document'
     });
   };
@@ -982,16 +911,8 @@ export default function ResourceGeneratePage() {
         setActivePreviewType(rType);
         setResult('');
 
-        const systemPrompt = RESOURCE_PROMPTS[rType as keyof typeof RESOURCE_PROMPTS] || "You are a helpful assistant.";
-        const userPrompt = `课程名称：${selectedCourse}\n主要专业：${profile?.major || '计算机科学'}\n学历层次：${profile?.education || '本科'}\n生成主题：${enrichedTopic}`;
-        const messages = [
-          { role: 'system' as const, content: systemPrompt },
-          { role: 'user' as const, content: userPrompt }
-        ];
-
         let contentBuffer = '';
-        let thinkBuffer = '';
-        let isThinking = false;
+        let normalizedExercises: ReturnType<typeof parseGeneratedExercises> | null = null;
 
         await new Promise<void>((resolve, reject) => {
           textAIService.streamResourceGeneration(
@@ -1005,18 +926,18 @@ export default function ResourceGeneratePage() {
             {
               onChunk: (chunk) => {
                 contentBuffer += chunk;
-                setResult(contentBuffer);
-                setGeneratedResults(prev => ({
-                  ...prev,
-                  [rType]: contentBuffer
-                }));
+                if (rType !== 'exercise') {
+                  setResult(contentBuffer);
+                  setGeneratedResults(prev => ({
+                    ...prev,
+                    [rType]: contentBuffer
+                  }));
+                }
               },
               onThink: (thinkText) => {
-                thinkBuffer += thinkText;
                 setThinkLog(prev => prev + thinkText);
               },
               onDone: () => {
-                results.push({ type: rType, content: contentBuffer });
                 resolve();
               },
               onError: (err) => {
@@ -1026,6 +947,28 @@ export default function ResourceGeneratePage() {
             abortRef.current?.signal
           );
         });
+
+        if (rType === 'exercise') {
+          try {
+            normalizedExercises = parseGeneratedExercises(contentBuffer);
+          } catch (error) {
+            throw new Error(`练习题格式校验失败：${(error as Error).message}`);
+          }
+
+          const allowedDifficulties = new Set(['easy', 'medium', 'hard']);
+          if (normalizedExercises.length !== 5) {
+            throw new Error('练习题格式校验失败：必须且只能生成 5 道题目');
+          }
+          if (normalizedExercises.some(exercise => !allowedDifficulties.has(exercise.difficulty))) {
+            throw new Error('练习题格式校验失败：difficulty 只能是 easy、medium 或 hard');
+          }
+
+          contentBuffer = JSON.stringify(normalizedExercises, null, 2);
+          setResult(contentBuffer);
+          setGeneratedResults(prev => ({ ...prev, [rType]: contentBuffer }));
+        }
+
+        results.push({ type: rType, content: contentBuffer });
 
         // PPT 类型：客户端生成 .pptx 文件
         if (rType === 'ppt') {
@@ -1040,23 +983,98 @@ export default function ResourceGeneratePage() {
 
         // Save to Supabase
         const courseId = await getOrCreateCourseId(selectedCourse);
-        const { error: insertError } = await supabase.from('resources').insert({
-          user_id: user.id,
-          course_id: courseId,
-          title: `${finalTopic} ${typeLabel}`,
-          content: contentBuffer,
-          status: 'completed',
-          resource_type: rType,
-          source: 'ai',
-          tags: [finalTopic, selectedCourse].filter(Boolean),
-          chapter: finalTopic || null,
-        });
+        if (rType === 'exercise') {
+          if (!normalizedExercises) {
+            throw new Error('练习题格式校验失败：未获得规范化题目');
+          }
 
-        if (insertError) {
-          console.error('保存生成资源失败:', insertError);
-          setLogs(l => [...l, `保存「${typeLabel}」到数据库失败: ${insertError.message}`]);
-        } else {
+          const { data: resource, error: resourceError } = await supabase
+            .from('resources')
+            .insert({
+              user_id: user.id,
+              course_id: courseId,
+              title: `${finalTopic} ${typeLabel}`,
+              content: normalizedExercises,
+              status: 'generating',
+              resource_type: rType,
+              source: 'ai',
+              tags: [finalTopic, selectedCourse].filter(Boolean),
+              chapter: finalTopic || null,
+            })
+            .select('id')
+            .single();
+
+          if (resourceError) {
+            console.error('保存练习资源失败:', resourceError);
+            throw new Error(`保存练习资源失败：${resourceError.message}`);
+          }
+          if (!resource) {
+            throw new Error('保存练习资源失败：未返回资源 ID');
+          }
+
+          const { error: exercisesError } = await supabase.from('exercises').insert(
+            normalizedExercises.map(exercise => ({
+              resource_id: resource.id,
+              question_type: exercise.question_type,
+              question: exercise.question,
+              options: exercise.options,
+              answer: serializeExerciseAnswer(exercise.answer, exercise.question_type, exercise.options),
+              explanation: exercise.explanation,
+              difficulty: exercise.difficulty,
+              category: null,
+              tags: [finalTopic, selectedCourse].filter(Boolean),
+              ai_generated: true,
+            }))
+          );
+
+          if (exercisesError) {
+            console.error('保存练习题失败:', exercisesError);
+            const { error: updateError } = await supabase
+              .from('resources')
+              .update({ status: 'failed' })
+              .eq('id', resource.id);
+            if (updateError) {
+              console.error('标记练习资源失败状态失败:', updateError);
+            }
+            throw new Error(`保存练习题失败，资源已标记为失败：${exercisesError.message}`);
+          }
+
+          const { error: completeError } = await supabase
+            .from('resources')
+            .update({ status: 'completed' })
+            .eq('id', resource.id);
+          if (completeError) {
+            console.error('完成练习资源状态更新失败:', completeError);
+            const { error: failedStatusError } = await supabase
+              .from('resources')
+              .update({ status: 'failed' })
+              .eq('id', resource.id);
+            if (failedStatusError) {
+              console.error('标记练习资源失败状态失败:', failedStatusError);
+            }
+            throw new Error(`练习题已保存，但资源状态更新失败：${completeError.message}`);
+          }
+
           setLogs(l => [...l, `保存「${typeLabel}」成功`]);
+        } else {
+          const { error: insertError } = await supabase.from('resources').insert({
+            user_id: user.id,
+            course_id: courseId,
+            title: `${finalTopic} ${typeLabel}`,
+            content: contentBuffer,
+            status: 'completed',
+            resource_type: rType,
+            source: 'ai',
+            tags: [finalTopic, selectedCourse].filter(Boolean),
+            chapter: finalTopic || null,
+          });
+
+          if (insertError) {
+            console.error('保存生成资源失败:', insertError);
+            setLogs(l => [...l, `保存「${typeLabel}」到数据库失败: ${insertError.message}`]);
+          } else {
+            setLogs(l => [...l, `保存「${typeLabel}」成功`]);
+          }
         }
 
         // If 'video' is selected, trigger Kling video task in background
@@ -1910,7 +1928,7 @@ export default function ResourceGeneratePage() {
                       <div className="flex items-center gap-2 shrink-0">
                         {/* 导出/生成功能 */}
                         <button
-                          onClick={() => downloadAsDocx(activeResource.title || '资源', activeResource.content || '').catch(() => toast.error('DOCX 下载失败'))}
+                          onClick={() => downloadAsDocx(activeResource.title || '资源', resourceContentToText(activeResource.content)).catch(() => toast.error('DOCX 下载失败'))}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/80 hover:text-white bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 hover:border-blue-500/40 transition-all"
                         >
                           <FileDown className="w-3.5 h-3.5" />Word
@@ -1958,7 +1976,7 @@ export default function ResourceGeneratePage() {
                   <div className="flex-1 overflow-y-auto p-6">
                     <div className="max-w-3xl mx-auto bg-white/5 border border-white/12 rounded-2xl p-6 shadow-xl text-slate-100">
                       <div className="prose prose-invert prose-sm max-w-none text-slate-100 dark:text-slate-100">
-                        {renderMarkdownBlocks(activeResource.content || '')}
+                        {renderMarkdownBlocks(resourceContentToText(activeResource.content))}
                       </div>
                     </div>
                   </div>

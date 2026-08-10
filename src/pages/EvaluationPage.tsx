@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
@@ -7,13 +7,15 @@ import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   BarChart3, TrendingUp, Target, Zap, AlertTriangle, ArrowRight,
-  CheckCircle, Brain, BookOpen, Clock, BookMarked, Loader2, ChevronRight,
+  CheckCircle, Brain, BookOpen, Clock, BookMarked, Loader2,
   Mic, MicOff, Square, FileText, Lightbulb, Star, RefreshCw,
   MessageSquare, PenTool, Library,
 } from 'lucide-react';
@@ -22,7 +24,19 @@ import {
   ResponsiveContainer, Tooltip, Legend, LineChart, Line,
   CartesianGrid, XAxis, YAxis,
 } from 'recharts';
-import type { Exercise, Evaluation } from '@/types/types';
+import {
+  deserializeExerciseAnswer,
+  getExerciseQuestionType,
+  gradeObjectiveExercise,
+  serializeExerciseAnswer,
+} from '@/lib/exercises';
+import type {
+  Exercise,
+  ExerciseAiResult,
+  ExerciseLocalResult,
+  ExerciseQuestionType,
+  ExerciseSubmission,
+} from '@/types/types';
 
 const radarData = [
   { subject: '知识掌握', A: 85, fullMark: 100 },
@@ -47,21 +61,56 @@ const weaknessStats = [
 ];
 
 interface ExerciseState {
-  selectedAnswer: string;
+  selectedAnswer: string | string[];
   submitted: boolean;
-  aiResult: { is_correct: boolean; score: number; feedback: string; analysis: string; suggestions: string } | null;
-  loading: boolean;
-  startTime: number;
+  submissionStatus: 'idle' | 'saving' | 'saved' | 'failed';
+  aiStatus: 'idle' | 'pending' | 'completed' | 'failed';
+  localResult: ExerciseLocalResult | null;
+  aiResult: ExerciseAiResult | null;
+  submissionId: string | null;
+  submissionError: string | null;
+  aiError: string | null;
+  startTime: number | null;
+  timeSpent: number | null;
 }
+
+type ExerciseSource = { id: string; title: string; chapter: string | null };
+type ExerciseSubmissionRow = ExerciseSubmission & {
+  exercises: { question_type?: unknown; options?: unknown } | null;
+};
+
+const initialExerciseState = (): ExerciseState => ({
+  selectedAnswer: '',
+  submitted: false,
+  submissionStatus: 'idle',
+  aiStatus: 'idle',
+  localResult: null,
+  aiResult: null,
+  submissionId: null,
+  submissionError: null,
+  aiError: null,
+  startTime: null,
+  timeSpent: null,
+});
+
+const questionTypeLabels: Record<ExerciseQuestionType, string> = {
+  single: '单选题',
+  multiple: '多选题',
+  subjective: '简答题',
+};
 
 export default function EvaluationPage() {
   const { user } = useAuth();
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [submissions, setSubmissions] = useState<ExerciseSubmission[]>([]);
+  const [submissionQuestionTypes, setSubmissionQuestionTypes] = useState<Record<string, ExerciseQuestionType>>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'practice' | 'oral' | 'essay' | 'history'>('practice');
   const [exState, setExState] = useState<Record<string, ExerciseState>>({});
-  const startTimes = useRef<Record<string, number>>({});
+  const aiControllers = useRef<Record<string, AbortController>>({});
+  const aiRequestVersions = useRef<Record<string, number>>({});
+  const submissionLocks = useRef(new Set<string>());
+  const mountedRef = useRef(true);
 
   // 口述评估状态
   const [oralTopic, setOralTopic] = useState('');
@@ -77,113 +126,434 @@ export default function EvaluationPage() {
   const [essayLoading, setEssayLoading] = useState(false);
 
   // 资源中心练习题来源
-  const [exerciseSources, setExerciseSources] = useState<{ id: string; title: string; topic: string }[]>([]);
+  const [exerciseSources, setExerciseSources] = useState<ExerciseSource[]>([]);
   const [selectedSource, setSelectedSource] = useState<string>('all');
 
+  const setExerciseState = (exerciseId: string, updater: (state: ExerciseState) => ExerciseState) => {
+    if (!mountedRef.current) return;
+    setExState(previous => ({
+      ...previous,
+      [exerciseId]: updater(previous[exerciseId] ?? initialExerciseState()),
+    }));
+  };
+
+  const upsertSubmission = (submission: ExerciseSubmission) => {
+    if (!mountedRef.current) return;
+    setSubmissions(previous => [
+      submission,
+      ...previous.filter(item => item.id !== submission.id),
+    ]);
+  };
+
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
-    Promise.all([
-      // 从资源中心获取练习题类型资源
-      supabase.from('resources')
-        .select('id,title,topic,content')
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      Object.values(aiControllers.current).forEach(controller => controller.abort());
+      aiControllers.current = {};
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const loadExercises = async () => {
+      setLoading(true);
+      const resourcesResult = await supabase.from('resources')
+        .select('id,title,chapter')
         .eq('user_id', user.id)
-        .eq('type', 'exercise')
+        .eq('resource_type', 'exercise')
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
-        .limit(20),
-      // 全局练习题库（兼容旧数据）
-      supabase.from('exercises').select('*').order('created_at', { ascending: false }).limit(50),
-      supabase.from('evaluations').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10),
-    ]).then(([resourcesRes, exRes, evRes]) => {
-      // 资源中心练习题
-      const resourceList = Array.isArray(resourcesRes.data) ? resourcesRes.data : [];
-      setExerciseSources(resourceList.map(r => ({ id: r.id, title: r.title, topic: r.topic || '' })));
+        .limit(20);
+      if (resourcesResult.error) {
+        toast.error(`练习资源加载失败：${resourcesResult.error.message}`);
+      }
 
-      // 合并：优先展示从资源中心生成的练习题（解析 content JSON）
-      const resourceExercises: Exercise[] = [];
-      resourceList.forEach(r => {
-        try {
-          const parsed = JSON.parse(r.content || '[]');
-          if (Array.isArray(parsed)) {
-            parsed.forEach((q: Exercise, i: number) => {
-              resourceExercises.push({ ...q, id: q.id || `${r.id}-${i}`, source_resource_id: r.id, source_title: r.title });
-            });
-          }
-        } catch { /* content 非 JSON，忽略 */ }
+      const resources = (resourcesResult.data ?? []) as ExerciseSource[];
+      const resourceIds = resources.map(resource => resource.id);
+      const exercisesQuery = supabase.from('exercises').select('*').order('created_at', { ascending: false }).limit(50);
+      const exercisesResult = resourceIds.length > 0
+        ? await exercisesQuery.or(`resource_id.is.null,resource_id.in.(${resourceIds.join(',')})`)
+        : await exercisesQuery.is('resource_id', null);
+      const submissionsResult = await supabase.from('user_exercise_submissions')
+        .select('*, exercises(question_type, options)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (exercisesResult.error) toast.error(`练习题加载失败：${exercisesResult.error.message}`);
+      if (submissionsResult.error) toast.error(`答题记录加载失败：${submissionsResult.error.message}`);
+      if (cancelled || !mountedRef.current) return;
+
+      const sourceById = new Map(resources.map(resource => [resource.id, resource]));
+      const loadedExercises = ((exercisesResult.data ?? []) as Exercise[]).map(exercise => {
+        const source = exercise.resource_id ? sourceById.get(exercise.resource_id) : undefined;
+        return source
+          ? { ...exercise, source_resource_id: source.id, source_title: source.title }
+          : exercise;
+      });
+      const exerciseSourceIds = new Set(loadedExercises.flatMap(exercise => exercise.resource_id ? [exercise.resource_id] : []));
+      const availableSources = resources.filter(resource => exerciseSourceIds.has(resource.id));
+      const skippedSources = resources.filter(resource => !exerciseSourceIds.has(resource.id));
+      if (skippedSources.length > 0) {
+        console.warn('已跳过没有结构化题目行的练习资源:', skippedSources.map(resource => resource.id));
+      }
+      const submissionRows = (submissionsResult.data ?? []) as ExerciseSubmissionRow[];
+      const loadedSubmissions: ExerciseSubmission[] = submissionRows;
+      const loadedSubmissionQuestionTypes = submissionRows.reduce<Record<string, ExerciseQuestionType>>((result, submission) => {
+        result[submission.exercise_id] = getExerciseQuestionType(submission.exercises ?? {});
+        return result;
+      }, {});
+      const newestByExercise = new Map<string, ExerciseSubmission>();
+      loadedSubmissions.forEach(submission => {
+        if (!newestByExercise.has(submission.exercise_id)) newestByExercise.set(submission.exercise_id, submission);
       });
 
-      const dbExercises = Array.isArray(exRes.data) ? exRes.data : [];
-      // 去重合并
-      const merged = [...resourceExercises, ...dbExercises.filter(e => !resourceExercises.find(re => re.id === e.id))];
-      setExercises(merged);
-      setEvaluations(Array.isArray(evRes.data) ? evRes.data : []);
+      setExerciseSources(availableSources);
+      setExercises(loadedExercises);
+      setSubmissions(loadedSubmissions);
+      setSubmissionQuestionTypes(loadedSubmissionQuestionTypes);
+      setExState(previous => {
+        const next = { ...previous };
+        newestByExercise.forEach((submission, exerciseId) => {
+          if (next[exerciseId]) return;
+          const exercise = loadedExercises.find(item => item.id === exerciseId);
+          const questionType = exercise ? getExerciseQuestionType(exercise) : 'subjective';
+          let selectedAnswer: string | string[] = submission.user_answer;
+          if (exercise) {
+            try {
+              selectedAnswer = deserializeExerciseAnswer(submission.user_answer, questionType, exercise.options);
+            } catch {
+              selectedAnswer = questionType === 'multiple' ? [] : submission.user_answer;
+            }
+          }
+          const hasObjectiveResult = questionType !== 'subjective' && submission.is_correct !== null;
+          const hasSubjectiveResult = questionType === 'subjective'
+            && submission.is_correct !== null
+            && submission.ai_score !== null;
+          const hasAiText = Boolean(submission.ai_feedback || submission.ai_analysis || submission.ai_suggestions);
+          const hasAiResult = submission.ai_status === 'completed'
+            && (questionType === 'subjective' ? hasSubjectiveResult : hasAiText);
+          const restoredAiStatus = submission.ai_status === 'completed' && hasAiResult
+            ? 'completed'
+            : submission.ai_status === 'pending'
+              ? 'pending'
+              : 'failed';
+          next[exerciseId] = {
+            ...initialExerciseState(),
+            selectedAnswer,
+            submitted: true,
+            submissionStatus: 'saved',
+            aiStatus: restoredAiStatus,
+            localResult: hasObjectiveResult
+              ? { is_correct: submission.is_correct as boolean, score: submission.is_correct ? 100 : 0 }
+              : null,
+            aiResult: hasAiResult
+              ? {
+                is_correct: submission.is_correct ?? false,
+                score: questionType === 'subjective' ? Number(submission.ai_score) : (submission.is_correct ? 100 : 0),
+                feedback: submission.ai_feedback ?? '',
+                analysis: submission.ai_analysis ?? '',
+                suggestions: submission.ai_suggestions ?? '',
+              }
+              : null,
+            submissionId: submission.id,
+            timeSpent: submission.time_spent,
+            aiError: submission.ai_status === 'failed'
+              ? '上次 AI 评估失败，可重新发起'
+              : submission.ai_status === 'pending'
+                ? '上次 AI 评估尚未完成，可重新发起'
+                : submission.ai_status === 'completed' && !hasAiResult
+                  ? '历史记录缺少完整 AI 反馈，可重新发起'
+                  : submission.ai_status === 'skipped'
+                    ? '历史记录尚未进行 AI 评估，可重新发起'
+                    : null,
+          };
+        });
+        return next;
+      });
       setLoading(false);
-    });
+    };
+
+    void loadExercises();
+    return () => { cancelled = true; };
   }, [user]);
 
-  const selectAnswer = (exId: string, option: string) => {
-    setExState(prev => {
-      if (prev[exId]?.submitted) return prev;
-      if (!prev[exId]) startTimes.current[exId] = Date.now();
-      return { ...prev, [exId]: { ...(prev[exId] ?? { submitted: false, aiResult: null, loading: false, startTime: Date.now() }), selectedAnswer: option } };
+  const updateAnswer = (exerciseId: string, answer: string | string[]) => {
+    setExerciseState(exerciseId, state => state.submitted ? state : {
+      ...state,
+      selectedAnswer: answer,
+      startTime: state.startTime ?? Date.now(),
     });
   };
 
-  const handleSubmitAnswer = async (exercise: Exercise) => {
+  const addWrongBookEntry = async (exerciseId: string, submissionId: string) => {
     if (!user) return;
-    const state = exState[exercise.id];
-    if (!state?.selectedAnswer) { toast.warning('请先选择一个答案'); return; }
+    const { error } = await supabase.from('wrong_book').upsert({
+      user_id: user.id,
+      exercise_id: exerciseId,
+      submission_id: submissionId,
+    }, { onConflict: 'user_id,exercise_id' });
+    if (error) toast.error(`错题本保存失败：${error.message}`);
+  };
 
-    setExState(prev => ({ ...prev, [exercise.id]: { ...prev[exercise.id], loading: true } }));
-    const timeSpent = Math.round((Date.now() - (startTimes.current[exercise.id] ?? Date.now())) / 1000);
+  const runAiEvaluation = async (
+    exercise: Exercise,
+    answer: string | string[],
+    submissionId: string,
+    existingRequestId?: string,
+  ) => {
+    if (!user || !mountedRef.current || aiControllers.current[exercise.id]) return;
+    const version = (aiRequestVersions.current[exercise.id] ?? 0) + 1;
+    aiRequestVersions.current[exercise.id] = version;
+    const controller = new AbortController();
+    aiControllers.current[exercise.id] = controller;
+    const questionType = getExerciseQuestionType(exercise);
+    const requestId = existingRequestId ?? crypto.randomUUID();
 
+    setExerciseState(exercise.id, state => ({ ...state, aiStatus: 'pending', aiError: null }));
     try {
-      // 调用 AI 判分
-      const aiResult = await textAIService.evaluateAnswer({
-        question: exercise.question,
-        questionType: exercise.options?.length ? 'single' : 'subjective',
-        correctAnswer: exercise.answer,
-        userAnswer: state.selectedAnswer
-      });
-
-      // 存储提交记录
-      await supabase.from('user_exercise_submissions').insert({
-        user_id: user.id,
-        exercise_id: exercise.id,
-        user_answer: state.selectedAnswer,
-        is_correct: aiResult.is_correct,
-        ai_score: aiResult.score,
-        ai_feedback: aiResult.feedback,
-        time_spent: timeSpent,
-      });
-
-      // 如果答错，加入错题本
-      if (!aiResult.is_correct) {
-        await supabase.from('wrong_book').upsert({
-          user_id: user.id,
-          exercise_id: exercise.id,
-        }, { onConflict: 'user_id,exercise_id' });
-        toast.error(`回答有误，已加入错题本 📚`);
-      } else {
-        toast.success(`🎉 回答正确！得分 ${aiResult.score}`);
+      if (!existingRequestId) {
+        const { data: pendingSubmission, error: pendingError } = await supabase.from('user_exercise_submissions')
+          .update({ ai_status: 'pending', ai_request_id: requestId })
+          .eq('id', submissionId)
+          .eq('user_id', user.id)
+          .select('*')
+          .single();
+        if (pendingError) throw pendingError;
+        if (aiRequestVersions.current[exercise.id] !== version) return;
+        if (!mountedRef.current || controller.signal.aborted) throw new Error('AI 评估已中断');
+        upsertSubmission(pendingSubmission as ExerciseSubmission);
       }
 
-      setExState(prev => ({
-        ...prev,
-        [exercise.id]: { ...prev[exercise.id], submitted: true, aiResult, loading: false },
-      }));
+      const serializedAnswer = serializeExerciseAnswer(answer, questionType, exercise.options);
+      const aiResult = await textAIService.evaluateAnswer({
+        question: exercise.question,
+        questionType,
+        correctAnswer: exercise.answer,
+        userAnswer: serializedAnswer,
+      }, controller.signal);
+      if (aiRequestVersions.current[exercise.id] !== version) return;
+      if (!mountedRef.current || controller.signal.aborted) throw new Error('AI 评估已中断');
 
-      const ev = await supabase.from('evaluations').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10);
-      setEvaluations(Array.isArray(ev.data) ? ev.data : []);
-    } catch (err) {
-      toast.error(`提交失败：${(err as Error).message}`);
-      setExState(prev => ({ ...prev, [exercise.id]: { ...prev[exercise.id], loading: false } }));
+      const updates = questionType === 'subjective'
+        ? {
+          is_correct: aiResult.is_correct,
+          ai_score: aiResult.score,
+          ai_feedback: aiResult.feedback,
+          ai_analysis: aiResult.analysis,
+          ai_suggestions: aiResult.suggestions,
+          ai_status: 'completed',
+        }
+        : {
+          ai_feedback: aiResult.feedback,
+          ai_analysis: aiResult.analysis,
+          ai_suggestions: aiResult.suggestions,
+          ai_status: 'completed',
+        };
+      const { data: updatedSubmission, error } = await supabase.from('user_exercise_submissions')
+        .update(updates)
+        .eq('id', submissionId)
+        .eq('user_id', user.id)
+        .eq('ai_request_id', requestId)
+        .select('*')
+        .maybeSingle();
+      if (error) throw error;
+      if (!updatedSubmission || !mountedRef.current || aiRequestVersions.current[exercise.id] !== version) return;
+
+      upsertSubmission(updatedSubmission as ExerciseSubmission);
+      setExerciseState(exercise.id, state => ({
+        ...state,
+        aiStatus: 'completed',
+        aiResult,
+        aiError: null,
+      }));
+      if (questionType === 'subjective' && !aiResult.is_correct) {
+        void addWrongBookEntry(exercise.id, submissionId);
+      }
+    } catch (error) {
+      if (aiRequestVersions.current[exercise.id] !== version) return;
+      const message = controller.signal.aborted
+        ? 'AI 评估已中断，可重新发起'
+        : error instanceof Error
+          ? error.message
+          : 'AI 解析失败';
+      const failureQuery = supabase.from('user_exercise_submissions')
+        .update({ ai_status: 'failed' })
+        .eq('id', submissionId)
+        .eq('user_id', user.id)
+        .eq('ai_request_id', requestId);
+      const { data: failedSubmission, error: updateError } = await failureQuery
+        .select('*')
+        .maybeSingle();
+      if (mountedRef.current) {
+        if (updateError) toast.error(`AI 状态保存失败：${updateError.message}`);
+        else if (failedSubmission) upsertSubmission(failedSubmission as ExerciseSubmission);
+        setExerciseState(exercise.id, state => ({ ...state, aiStatus: 'failed', aiError: message }));
+      }
+    } finally {
+      if (aiControllers.current[exercise.id] === controller) delete aiControllers.current[exercise.id];
     }
   };
 
-  const completedCount = evaluations.length;
-  const avgScore = evaluations.length > 0
-    ? Math.round(evaluations.reduce((s, e) => s + (e.score || 0), 0) / evaluations.length) : 0;
+  const persistSubmission = async (
+    exercise: Exercise,
+    answer: string | string[],
+    timeSpent: number,
+    localResult: ExerciseLocalResult | null,
+    submissionId: string,
+  ) => {
+    if (!user) return;
+    const questionType = getExerciseQuestionType(exercise);
+    try {
+      const userAnswer = serializeExerciseAnswer(answer, questionType, exercise.options);
+      const aiRequestId = crypto.randomUUID();
+      const { data, error } = await supabase.from('user_exercise_submissions').upsert({
+        id: submissionId,
+        user_id: user.id,
+        exercise_id: exercise.id,
+        user_answer: userAnswer,
+        is_correct: localResult?.is_correct ?? null,
+        ai_score: localResult?.score ?? null,
+        ai_feedback: null,
+        ai_status: 'pending',
+        ai_analysis: null,
+        ai_suggestions: null,
+        ai_request_id: aiRequestId,
+        time_spent: timeSpent,
+      }, { onConflict: 'id' }).select('*').single();
+      if (error) throw error;
+      const submission = data as ExerciseSubmission;
+      if (localResult && !localResult.is_correct) void addWrongBookEntry(exercise.id, submission.id);
+      if (!mountedRef.current) {
+        await supabase.from('user_exercise_submissions')
+          .update({ ai_status: 'failed' })
+          .eq('id', submission.id)
+          .eq('user_id', user.id)
+          .eq('ai_request_id', aiRequestId);
+        return;
+      }
+      setSubmissionQuestionTypes(previous => ({ ...previous, [exercise.id]: questionType }));
+      upsertSubmission(submission);
+      setExerciseState(exercise.id, state => ({
+        ...state,
+        submissionStatus: 'saved',
+        aiStatus: 'pending',
+        submissionId: submission.id,
+        submissionError: null,
+      }));
+      void runAiEvaluation(exercise, answer, submission.id, aiRequestId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '答题记录保存失败';
+      setExerciseState(exercise.id, state => ({
+        ...state,
+        submissionStatus: 'failed',
+        aiStatus: 'idle',
+        submissionError: message,
+        aiError: null,
+      }));
+    } finally {
+      submissionLocks.current.delete(exercise.id);
+    }
+  };
+
+  const handleSubmitAnswer = (exercise: Exercise) => {
+    if (!user || submissionLocks.current.has(exercise.id)) return;
+    const state = exState[exercise.id] ?? initialExerciseState();
+    if (state.submitted) return;
+    const questionType = getExerciseQuestionType(exercise);
+    const answerIsEmpty = typeof state.selectedAnswer === 'string'
+      ? !state.selectedAnswer.trim()
+      : state.selectedAnswer.length === 0;
+    if (answerIsEmpty) {
+      toast.warning(questionType === 'multiple' ? '请至少选择一个答案' : '请先填写答案');
+      return;
+    }
+
+    submissionLocks.current.add(exercise.id);
+    const localResult = gradeObjectiveExercise(exercise, state.selectedAnswer);
+    const timeSpent = Math.max(0, Math.round((Date.now() - (state.startTime ?? Date.now())) / 1000));
+    const submissionId = crypto.randomUUID();
+    setExerciseState(exercise.id, current => ({
+      ...current,
+      submitted: true,
+      submissionStatus: 'saving',
+      aiStatus: 'pending',
+      localResult,
+      aiResult: null,
+      submissionId,
+      submissionError: null,
+      aiError: null,
+      timeSpent,
+    }));
+    void persistSubmission(exercise, state.selectedAnswer, timeSpent, localResult, submissionId);
+  };
+
+  const retrySubmission = (exercise: Exercise) => {
+    if (!user || submissionLocks.current.has(exercise.id)) return;
+    const state = exState[exercise.id];
+    if (!state?.submitted || state.submissionStatus !== 'failed' || !state.submissionId) return;
+
+    submissionLocks.current.add(exercise.id);
+    setExerciseState(exercise.id, current => ({
+      ...current,
+      submissionStatus: 'saving',
+      aiStatus: 'pending',
+      submissionError: null,
+      aiError: null,
+    }));
+    void persistSubmission(
+      exercise,
+      state.selectedAnswer,
+      state.timeSpent ?? 0,
+      state.localResult,
+      state.submissionId,
+    );
+  };
+
+  const retryAiEvaluation = (exercise: Exercise) => {
+    const state = exState[exercise.id];
+    if (!state?.submissionId || !user) return;
+    void runAiEvaluation(exercise, state.selectedAnswer, state.submissionId);
+  };
+
+  const exerciseTypeById = useMemo(() => {
+    const questionTypes = new Map<string, ExerciseQuestionType>();
+    Object.entries(submissionQuestionTypes).forEach(([exerciseId, questionType]) => {
+      questionTypes.set(exerciseId, questionType);
+    });
+    exercises.forEach(exercise => {
+      questionTypes.set(exercise.id, getExerciseQuestionType(exercise));
+    });
+    return questionTypes;
+  }, [exercises, submissionQuestionTypes]);
+  const answeredSubmissions = useMemo(
+    () => submissions.filter(submission => {
+      const questionType = exerciseTypeById.get(submission.exercise_id);
+      return questionType === 'single' || questionType === 'multiple'
+        ? submission.is_correct !== null
+        : submission.is_correct !== null && submission.ai_score !== null;
+    }),
+    [exerciseTypeById, submissions],
+  );
+  const completedCount = submissions.length;
+  const avgScore = answeredSubmissions.length > 0
+    ? Math.round(answeredSubmissions.reduce((sum, submission) => {
+      const questionType = exerciseTypeById.get(submission.exercise_id);
+      const score = questionType === 'single' || questionType === 'multiple'
+        ? (submission.is_correct ? 100 : 0)
+        : Number(submission.ai_score ?? 0);
+      return sum + score;
+    }, 0) / answeredSubmissions.length)
+    : 0;
+  const correctRate = answeredSubmissions.length > 0
+    ? Math.round((answeredSubmissions.filter(submission => submission.is_correct).length / answeredSubmissions.length) * 100)
+    : 0;
+  const totalDurationMinutes = Math.round(submissions.reduce((sum, submission) => sum + (submission.time_spent || 0), 0) / 60);
 
   return (
     <AppLayout>
@@ -208,12 +578,12 @@ export default function EvaluationPage() {
             { icon: TrendingUp, label: '平均得分', value: avgScore, color: 'text-secondary' },
             {
               icon: Zap, label: '正确率',
-              value: `${evaluations.length > 0 ? Math.round((evaluations.filter(e => e.is_correct).length / evaluations.length) * 100) : 0}%`,
+              value: `${correctRate}%`,
               color: 'text-green-500',
             },
             {
               icon: Clock, label: '总时长',
-              value: `${Math.round(evaluations.reduce((s, e) => s + (e.time_spent || 0), 0) / 60)}h`,
+              value: `${totalDurationMinutes}分`,
               color: 'text-sky-500',
             },
           ].map(s => (
@@ -366,105 +736,171 @@ export default function EvaluationPage() {
             {exercises
               .filter(e => selectedSource === 'all' || e.source_resource_id === selectedSource)
               .map((ex, idx) => {
-              const state = exState[ex.id];
-              return (
-                <motion.div key={ex.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-                  <Card className="overflow-hidden">
-                    <CardContent className="p-4">
-                      {/* 来源标签 */}
-                      {ex.source_title && (
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <Library className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-[11px] text-muted-foreground">{ex.source_title}</span>
-                        </div>
-                      )}
-                      <div className="flex items-start gap-3">
-                        <Badge variant={ex.difficulty === 'hard' ? 'destructive' : ex.difficulty === 'medium' ? 'secondary' : 'default'} className="shrink-0 mt-0.5">
-                          {ex.difficulty === 'easy' ? '简单' : ex.difficulty === 'medium' ? '中等' : '困难'}
-                        </Badge>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium mb-3 text-pretty">{ex.question}</p>
-                          {ex.options?.length > 0 && (
-                            <div className="space-y-2 mb-4">
-                              {ex.options.map((opt, i) => {
-                                const letter = String.fromCharCode(65 + i);
-                                const isSelected = state?.selectedAnswer === opt;
-                                const isCorrect = ex.answer === opt;
-                                const isSubmitted = state?.submitted;
-                                let cls = 'flex items-center gap-2 text-sm px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ';
-                                if (isSubmitted) {
-                                  cls += isCorrect ? 'bg-green-50 dark:bg-green-900/20 border-green-400 text-green-700 dark:text-green-300'
-                                    : isSelected ? 'bg-destructive/10 border-destructive text-destructive' : 'bg-muted border-border text-muted-foreground';
-                                } else {
-                                  cls += isSelected ? 'bg-primary/10 border-primary text-primary' : 'bg-muted border-transparent hover:border-border hover:bg-muted/80';
-                                }
-                                return (
-                                  <label key={i} className={cls} onClick={() => !isSubmitted && selectAnswer(ex.id, opt)}>
-                                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs font-bold shrink-0 ${isSelected ? 'border-current bg-current text-background' : 'border-current'}`}>
-                                      {isSubmitted && isCorrect ? '✓' : isSubmitted && isSelected && !isCorrect ? '✗' : letter}
-                                    </span>
-                                    <span className="flex-1">{opt}</span>
+                const state = exState[ex.id] ?? initialExerciseState();
+                const questionType = getExerciseQuestionType(ex);
+                const isSubmitted = state.submitted;
+                const selectedAnswers = Array.isArray(state.selectedAnswer) ? state.selectedAnswer : [];
+                let correctAnswerLabel = ex.answer;
+                if (questionType === 'multiple') {
+                  try {
+                    const parsed: unknown = JSON.parse(ex.answer);
+                    if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
+                      correctAnswerLabel = parsed.join('、');
+                    }
+                  } catch {
+                    // 保留旧数据中的原始答案文本。
+                  }
+                }
+                return (
+                  <motion.div key={ex.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-4">
+                        {ex.source_title && (
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <Library className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-[11px] text-muted-foreground">{ex.source_title}</span>
+                          </div>
+                        )}
+                        <div className="flex items-start gap-3">
+                          <div className="flex gap-1.5 shrink-0 mt-0.5 flex-wrap">
+                            <Badge variant={ex.difficulty === 'hard' ? 'destructive' : ex.difficulty === 'medium' ? 'secondary' : 'default'}>
+                              {ex.difficulty === 'easy' ? '简单' : ex.difficulty === 'medium' ? '中等' : '困难'}
+                            </Badge>
+                            <Badge variant="outline">{questionTypeLabels[questionType]}</Badge>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium mb-3 text-pretty">{ex.question}</p>
+
+                            {questionType === 'single' && (
+                              <RadioGroup
+                                value={typeof state.selectedAnswer === 'string' ? state.selectedAnswer : ''}
+                                onValueChange={value => updateAnswer(ex.id, value)}
+                                disabled={isSubmitted}
+                                aria-label={`${ex.question}的答案`}
+                                className="mb-4"
+                              >
+                                {ex.options.map((option, index) => (
+                                  <label key={option} className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm cursor-pointer has-[:disabled]:cursor-default">
+                                    <RadioGroupItem value={option} disabled={isSubmitted} />
+                                    <span className="font-medium text-muted-foreground">{String.fromCharCode(65 + index)}.</span>
+                                    <span>{option}</span>
                                   </label>
-                                );
-                              })}
-                            </div>
-                          )}
+                                ))}
+                              </RadioGroup>
+                            )}
 
-                          {/* AI 判分结果 */}
-                          {state?.submitted && state.aiResult && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className={`p-3 rounded-lg mb-3 ${state.aiResult.is_correct ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-destructive/5 border border-destructive/20'}`}
-                            >
-                              <div className="flex items-center gap-2 mb-1.5">
-                                {state.aiResult.is_correct
-                                  ? <CheckCircle className="w-4 h-4 text-green-500" />
-                                  : <AlertTriangle className="w-4 h-4 text-destructive" />}
-                                <span className="text-sm font-semibold">
-                                  {state.aiResult.is_correct ? '回答正确' : '回答有误'} · {state.aiResult.score}分
-                                </span>
+                            {questionType === 'multiple' && (
+                              <div className="space-y-2 mb-4" role="group" aria-label={`${ex.question}的答案，可多选`}>
+                                {ex.options.map((option, index) => {
+                                  const checked = selectedAnswers.includes(option);
+                                  return (
+                                    <label key={option} className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm cursor-pointer has-[:disabled]:cursor-default">
+                                      <Checkbox
+                                        checked={checked}
+                                        disabled={isSubmitted}
+                                        onCheckedChange={nextChecked => updateAnswer(ex.id, nextChecked
+                                          ? [...selectedAnswers, option]
+                                          : selectedAnswers.filter(answer => answer !== option))}
+                                      />
+                                      <span className="font-medium text-muted-foreground">{String.fromCharCode(65 + index)}.</span>
+                                      <span>{option}</span>
+                                    </label>
+                                  );
+                                })}
                               </div>
-                              {state.aiResult.analysis && <p className="text-xs text-muted-foreground mb-1 text-pretty">{state.aiResult.analysis}</p>}
-                              {state.aiResult.feedback && <p className="text-xs text-primary text-pretty">{state.aiResult.feedback}</p>}
-                              {state.aiResult.suggestions && (
-                                <p className="text-xs text-muted-foreground mt-1 text-pretty">💡 {state.aiResult.suggestions}</p>
-                              )}
-                            </motion.div>
-                          )}
+                            )}
 
-                          {!state?.submitted ? (
-                            <Button
-                              size="sm"
-                              onClick={() => handleSubmitAnswer(ex)}
-                              disabled={state?.loading || !state?.selectedAnswer}
-                              className="gap-1.5"
-                            >
-                              {state?.loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
-                              {state?.loading ? 'AI评分中...' : '提交答案'}
-                            </Button>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <Badge className={state.aiResult?.is_correct ? 'bg-emerald-500/10 text-emerald-600 border-0' : 'bg-destructive/10 text-destructive border-0'}>
-                                {state.aiResult?.is_correct ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertTriangle className="w-3 h-3 mr-1" />}
-                                {state.aiResult?.score}分
-                              </Badge>
-                              {!state.aiResult?.is_correct && (
-                                <Button size="sm" variant="ghost" asChild className="text-xs h-7 gap-1 text-destructive">
-                                  <Link to="/wrong-book">
-                                    <BookMarked className="w-3 h-3" />查看错题本
-                                  </Link>
+                            {questionType === 'subjective' && (
+                              <Textarea
+                                value={typeof state.selectedAnswer === 'string' ? state.selectedAnswer : ''}
+                                onChange={event => updateAnswer(ex.id, event.target.value)}
+                                disabled={isSubmitted}
+                                rows={5}
+                                className="mb-4 resize-y"
+                                placeholder="请输入你的答案…"
+                                aria-label={`${ex.question}的答案`}
+                              />
+                            )}
+
+                            {isSubmitted && state.localResult && (
+                              <div aria-live="polite" className={`mb-3 rounded-lg border p-3 ${state.localResult.is_correct ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20' : 'border-destructive/30 bg-destructive/5'}`}>
+                                <div className="flex items-center gap-2 text-sm font-semibold">
+                                  {state.localResult.is_correct ? <CheckCircle className="w-4 h-4 text-emerald-600" /> : <AlertTriangle className="w-4 h-4 text-destructive" />}
+                                  {state.localResult.is_correct ? '本地判分：回答正确 · 100分' : '本地判分：回答有误 · 0分'}
+                                </div>
+                                <p className="mt-1 text-xs text-muted-foreground text-pretty">标准答案：{correctAnswerLabel}</p>
+                                {ex.explanation && <p className="mt-1 text-xs text-muted-foreground text-pretty">解析：{ex.explanation}</p>}
+                              </div>
+                            )}
+
+                            {isSubmitted && state.aiStatus === 'pending' && (
+                              <div aria-live="polite" className="mb-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-primary">
+                                <p>{state.submissionStatus === 'saving'
+                                  ? questionType === 'subjective'
+                                    ? '答案已锁定，正在保存；保存后开始 AI 评估，可继续下一题。'
+                                    : '答题结果已确定，保存后开始生成 AI 个性化建议。'
+                                  : state.aiError
+                                    ? '上次 AI 评估未完成，可重新发起。'
+                                    : questionType === 'subjective'
+                                      ? '已提交，AI 评估中，可继续下一题。'
+                                      : 'AI 个性化建议生成中…'}</p>
+                                {state.aiError && state.submissionId && (
+                                  <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => retryAiEvaluation(ex)}>
+                                    <RefreshCw className="mr-1.5 w-3.5 h-3.5" />重新发起 AI 评估
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                            {isSubmitted && state.submissionStatus === 'saving' && (
+                              <div aria-live="polite" className="mb-3 text-xs text-muted-foreground">正在保存答题记录…</div>
+                            )}
+                            {isSubmitted && state.submissionStatus === 'failed' && (
+                              <div aria-live="polite" className="mb-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                                <p>答题记录未保存{state.submissionError ? `：${state.submissionError}` : ''}</p>
+                                <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => retrySubmission(ex)}>
+                                  <RefreshCw className="mr-1.5 w-3.5 h-3.5" />重试保存
                                 </Button>
-                              )}
-                            </div>
-                          )}
+                              </div>
+                            )}
+
+                            {isSubmitted && state.aiStatus === 'completed' && state.aiResult && (
+                              <div aria-live="polite" className="mb-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                                <p className="mb-1.5 text-sm font-semibold">AI 个性化建议</p>
+                                {questionType === 'subjective' && (
+                                  <p className="mb-1 text-sm">AI 评分：{state.aiResult.is_correct ? '回答正确' : '仍需改进'} · {state.aiResult.score}分</p>
+                                )}
+                                {state.aiResult.analysis && <p className="text-xs text-muted-foreground text-pretty">{state.aiResult.analysis}</p>}
+                                {state.aiResult.feedback && <p className="mt-1 text-xs text-primary text-pretty">{state.aiResult.feedback}</p>}
+                                {state.aiResult.suggestions && <p className="mt-1 text-xs text-muted-foreground text-pretty">建议：{state.aiResult.suggestions}</p>}
+                              </div>
+                            )}
+                            {isSubmitted && state.aiStatus === 'failed' && (
+                              <div aria-live="polite" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                                <p>解析暂不可用{state.aiError ? `：${state.aiError}` : ''}</p>
+                                {state.submissionId && (
+                                  <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => retryAiEvaluation(ex)}>
+                                    <RefreshCw className="mr-1.5 w-3.5 h-3.5" />重试 AI 解析
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+
+                            {!isSubmitted ? (
+                              <Button size="sm" onClick={() => handleSubmitAnswer(ex)} className="gap-1.5">
+                                <ArrowRight className="w-3.5 h-3.5" />提交答案
+                              </Button>
+                            ) : state.localResult && !state.localResult.is_correct ? (
+                              <Button size="sm" variant="ghost" asChild className="text-xs h-7 gap-1 text-destructive">
+                                <Link to="/wrong-book"><BookMarked className="w-3 h-3" />查看错题本</Link>
+                              </Button>
+                            ) : null}
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
           </div>
         )}
 
@@ -527,6 +963,7 @@ export default function EvaluationPage() {
                   onClick={async () => {
                     if (!oralTopic.trim()) { toast.error('请填写评估主题'); return; }
                     if (!oralText.trim()) { toast.error('请输入口述内容'); return; }
+                    setOralLoading(true);
                     try {
                       const data = await textAIService.evaluateAnswer({
                         question: `请评估以下关于「${oralTopic}」的口述表达：\n\n${oralText}`,
@@ -640,6 +1077,7 @@ export default function EvaluationPage() {
                   onClick={async () => {
                     if (!essayTopic.trim()) { toast.error('请填写论述题目'); return; }
                     if (essayContent.trim().length < 50) { toast.error('论述内容至少50字'); return; }
+                    setEssayLoading(true);
                     try {
                       const data = await textAIService.evaluateAnswer({
                         question: `请对以下关于「${essayTopic}」的综合论述进行多维度评估：\n\n${essayContent}`,

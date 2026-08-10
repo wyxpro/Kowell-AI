@@ -38,11 +38,17 @@ export const RESOURCE_PROMPTS = {
 要求层级清晰，文字极简凝练。不要包含任何多余解释、前言或后记，只输出符合层级的 Markdown 列表。`,
 
   exercise: 
-    `为课程相关主题生成 5 道配套练习题。要求：
-1. 包含单选题、多选题和简答题；
-2. 难度递增，从基础到进阶；
-3. 每题给出明确的问题描述、选项、标准答案和极尽详细的解析；
-4. 侧重考察学生对核心概念的理解与实际场景的应用能力。使用规范的 Markdown 格式输出。`,
+    `为课程相关主题生成配套练习题。只输出一个严格有效的 JSON 数组，不得输出 Markdown、代码围栏、前言、后记或任何额外文本。
+数组必须且只能包含 5 个题目对象；每个对象必须且只能包含以下字段：
+"question_type"、"question"、"options"、"answer"、"explanation"、"difficulty"。
+字段规则：
+1. question_type 只能是 "single"、"multiple" 或 "subjective"；5 题应覆盖三种题型。
+2. question 是非空题干字符串；explanation 是非空解析字符串。
+3. single：options 为非空选项字符串数组，answer 为其中一个完整选项文本字符串。
+4. multiple：options 为非空选项字符串数组，answer 为包含一个或多个完整选项文本的字符串数组，且每项均必须来自 options。
+5. subjective：options 必须是 []，answer 必须是非空参考答案字符串。
+6. difficulty 只能是 "easy"、"medium" 或 "hard"，题目难度从基础到进阶。
+请确保所有字符串均使用合法 JSON 转义，输出内容可直接由 JSON.parse 解析。`,
 
   reading: 
     `你是一位资深的计算机动画设计师与教授。请根据用户提供的主题，设计一个【动画演示脚本及原理图解】。
@@ -104,7 +110,10 @@ export const PATH_RECOMMEND_PROMPT =
 
 // 6. 学习效果评估 (Evaluation Scoring)
 export const EVALUATION_PROMPT = 
-  `请判断以下题目的学生答案是否正确，并给出详细解析。
+  `请根据题目类型评估学生答案，并严格按既有 JSON 结构返回。
+题目类型仅为 single、multiple、subjective：
+1. single 和 multiple 是客观题：前端本地判分结果为准。你只需补充 analysis、feedback 和 suggestions；仍须返回 is_correct 和 score，但它们仅作兼容字段，不得覆盖前端本地判分。
+2. subjective 是主观题：请判断答案并给出合理的 is_correct、score、analysis、feedback 和 suggestions。
 请严格按照以下JSON格式输出，不要有其他内容，不要包裹在 markdown 代码块中：
 {
   "is_correct": true或false,

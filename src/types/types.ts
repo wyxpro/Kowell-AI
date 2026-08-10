@@ -44,13 +44,13 @@ export interface Resource {
   course_id: string | null;
   title: string;
   resource_type: 'document' | 'mindmap' | 'exercise' | 'reading' | 'code' | 'ppt' | 'video';
-  content: string | Record<string, unknown>;
+  content: string | Record<string, unknown> | unknown[];
   chapter: string | null;
   status: 'generating' | 'completed' | 'failed';
   is_read: boolean;
   is_edited: boolean;
   version: number;
-  original_content: string | Record<string, unknown> | null;
+  original_content: string | Record<string, unknown> | unknown[] | null;
   tags: string[];
   rating: number;
   rating_count: number;
@@ -94,10 +94,47 @@ export interface ChatMessage {
   created_at: string;
 }
 
+export type ExerciseQuestionType = 'single' | 'multiple' | 'subjective';
+export type ExerciseAnswer = string | string[];
+export type ExerciseAiStatus = 'pending' | 'completed' | 'failed' | 'skipped';
+
+export interface ExerciseLocalResult {
+  is_correct: boolean;
+  score: 100 | 0;
+}
+
+export interface ExerciseAiResult {
+  is_correct: boolean;
+  score: number;
+  feedback: string;
+  analysis: string;
+  suggestions: string;
+  strengths?: string[];
+  improvements?: string[];
+  dimensions?: Array<{ name: string; score: number }>;
+}
+
+export interface ExerciseSubmission {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  user_answer: string;
+  is_correct: boolean | null;
+  ai_score: number | null;
+  ai_feedback: string | null;
+  ai_status: ExerciseAiStatus;
+  ai_analysis: string | null;
+  ai_suggestions: string | null;
+  ai_request_id: string | null;
+  time_spent: number;
+  created_at: string;
+}
+
 export interface Exercise {
   id: string;
   resource_id: string | null;
   question: string;
+  question_type?: ExerciseQuestionType;
   options: string[];
   answer: string;
   explanation: string;
@@ -120,17 +157,7 @@ export interface UserExercise {
   created_at: string;
 }
 
-export interface UserExerciseSubmission {
-  id: string;
-  user_id: string;
-  exercise_id: string;
-  user_answer: string;
-  is_correct: boolean | null;
-  ai_score: number | null;
-  ai_feedback: string | null;
-  time_spent: number;
-  created_at: string;
-}
+export type UserExerciseSubmission = ExerciseSubmission;
 
 export interface WrongBookEntry {
   id: string;

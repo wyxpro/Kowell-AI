@@ -1,3 +1,6 @@
+import { z } from 'zod';
+import { cleanJsonCodeBlock, parseAiEvaluationResult } from '@/lib/exercises';
+import type { ExerciseAiResult } from '@/types/types';
 import { stepfunService, type ChatMessage } from '../stepfun';
 import {
   PORTRAIT_SYSTEM_PROMPT,
@@ -13,6 +16,42 @@ export interface TextStreamCallbacks {
   onThink?: (thinkText: string) => void;
   onDone?: (fullText: string) => void;
   onError?: (err: string) => void;
+}
+
+const oralEvaluationSchema = z.object({
+  score: z.number().min(0).max(100),
+  feedback: z.string().trim().min(1),
+  strengths: z.array(z.string().trim().min(1)).optional(),
+  improvements: z.array(z.string().trim().min(1)).optional()
+}).strict();
+
+const essayEvaluationSchema = z.object({
+  score: z.number().min(0).max(100),
+  feedback: z.string().trim().min(1),
+  dimensions: z.array(z.object({
+    name: z.string().trim().min(1),
+    score: z.number().min(0).max(100)
+  }).strict()).optional()
+}).strict();
+
+function parseOralEvaluationResult(text: string): ExerciseAiResult {
+  const result = oralEvaluationSchema.parse(JSON.parse(cleanJsonCodeBlock(text)));
+  return {
+    ...result,
+    is_correct: false,
+    analysis: '',
+    suggestions: ''
+  };
+}
+
+function parseEssayEvaluationResult(text: string): ExerciseAiResult {
+  const result = essayEvaluationSchema.parse(JSON.parse(cleanJsonCodeBlock(text)));
+  return {
+    ...result,
+    is_correct: false,
+    analysis: '',
+    suggestions: ''
+  };
 }
 
 /**
@@ -229,43 +268,28 @@ export const textAIService = {
       userAnswer: string;
     },
     signal?: AbortSignal
-  ): Promise<{ is_correct: boolean; score: number; feedback: string; analysis: string; suggestions: string }> {
+  ): Promise<ExerciseAiResult> {
     let fullText = '';
+    let streamError: string | undefined;
     await this.streamEvaluation(
       params,
       {
         onChunk: (chunk) => {
           fullText += chunk;
+        },
+        onError: (error) => {
+          streamError = error;
         }
       },
       signal
     );
 
-    let cleanJson = fullText.trim();
-    const match = cleanJson.match(/```(?:json)?([\s\S]*?)```/i);
-    if (match) {
-      cleanJson = match[1].trim();
-    }
+    if (streamError) throw new Error(`AI 评估请求失败: ${streamError}`);
+    if (!fullText.trim()) throw new Error('AI 评估未返回内容');
 
-    try {
-      return JSON.parse(cleanJson);
-    } catch (err) {
-      console.error('Failed to parse AI evaluation JSON:', fullText, err);
-      // 正则校验兜底解析
-      const isCorrectMatch = cleanJson.match(/"is_correct"\s*:\s*(true|false)/i);
-      const scoreMatch = cleanJson.match(/"score"\s*:\s*(\d+)/);
-      const feedbackMatch = cleanJson.match(/"feedback"\s*:\s*"([^"]*)"/);
-      const analysisMatch = cleanJson.match(/"analysis"\s*:\s*"([^"]*)"/);
-      const suggestionsMatch = cleanJson.match(/"suggestions"\s*:\s*"([^"]*)"/);
-
-      const is_correct = isCorrectMatch ? isCorrectMatch[1].toLowerCase() === 'true' : false;
-      const score = scoreMatch ? parseInt(scoreMatch[1], 10) : (is_correct ? 100 : 0);
-      const feedback = feedbackMatch ? feedbackMatch[1] : '评估完成，解析中...';
-      const analysis = analysisMatch ? analysisMatch[1] : '';
-      const suggestions = suggestionsMatch ? suggestionsMatch[1] : '';
-
-      return { is_correct, score, feedback, analysis, suggestions };
-    }
+    if (params.questionType === 'oral') return parseOralEvaluationResult(fullText);
+    if (params.questionType === 'essay') return parseEssayEvaluationResult(fullText);
+    return parseAiEvaluationResult(fullText);
   },
 
   /**
