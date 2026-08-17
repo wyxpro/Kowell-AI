@@ -1,5 +1,7 @@
-import { createParser } from 'eventsource-parser';
+﻿import { createParser } from 'eventsource-parser';
 import { STEPFUN_CONFIG } from './config';
+
+const AI_SERVICE_ERROR = 'AI 服务暂不可用，请稍后再试。';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -32,13 +34,11 @@ export const stepfunService = {
     options?: {
       temperature?: number;
       jsonMode?: boolean;
+      signal?: AbortSignal;
     }
   ): Promise<string> {
     const url = `${STEPFUN_CONFIG.baseUrl}/chat/completions`;
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...(STEPFUN_CONFIG.apiKey ? { 'Authorization': `Bearer ${STEPFUN_CONFIG.apiKey}` } : {}),
-    };
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
 
     const body: Record<string, any> = {
       model: STEPFUN_CONFIG.modelName,
@@ -51,21 +51,32 @@ export const stepfunService = {
       body.response_format = { type: 'json_object' };
     }
 
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      throw new Error(`StepFun Request Failed (${resp.status}): ${errText || resp.statusText}`);
+    let resp: Response;
+    try {
+      resp = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: options?.signal,
+      });
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') throw error;
+      throw new Error(AI_SERVICE_ERROR);
     }
 
-    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(AI_SERVICE_ERROR);
+    }
+
+    let data: any;
+    try {
+      data = await resp.json();
+    } catch {
+      throw new Error(AI_SERVICE_ERROR);
+    }
     const content = data.choices?.[0]?.message?.content;
     if (content === undefined || content === null) {
-      throw new Error('StepFun returned an empty or invalid response');
+      throw new Error(AI_SERVICE_ERROR);
     }
     return content;
   },
@@ -82,10 +93,7 @@ export const stepfunService = {
     }
   ): Promise<void> {
     const url = `${STEPFUN_CONFIG.baseUrl}/chat/completions`;
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...(STEPFUN_CONFIG.apiKey ? { 'Authorization': `Bearer ${STEPFUN_CONFIG.apiKey}` } : {}),
-    };
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
 
     const body = {
       model: STEPFUN_CONFIG.modelName,
@@ -103,7 +111,7 @@ export const stepfunService = {
       });
 
       if (!resp.ok || !resp.body) {
-        callbacks.onError(`请求失败: ${resp.status}`);
+        callbacks.onError(AI_SERVICE_ERROR);
         return;
       }
 
@@ -133,10 +141,10 @@ export const stepfunService = {
         callbacks.onDone();
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
-        callbacks.onError((err as Error).message);
+        callbacks.onError(AI_SERVICE_ERROR);
       }
     } catch (error) {
-      callbacks.onError((error as Error).message);
+      if ((error as Error).name !== 'AbortError') callbacks.onError(AI_SERVICE_ERROR);
     }
   }
 };

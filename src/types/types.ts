@@ -1,3 +1,7 @@
+﻿export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+export type JsonObject = { [key: string]: JsonValue };
+
 export interface Profile {
   id: string;
   username: string | null;
@@ -27,6 +31,9 @@ export interface LearningPortrait {
   is_complete: boolean;
   created_at: string;
   updated_at: string;
+  version?: number;
+  last_revision_id?: string | null;
+  last_updated_at?: string | null;
 }
 
 export interface Course {
@@ -38,12 +45,56 @@ export interface Course {
   created_at: string;
 }
 
+export interface CourseModule {
+  id: string;
+  course_id: string;
+  code: string;
+  title: string;
+  description?: string | null;
+  order: number;
+  learning_objectives: string[];
+  estimated_hours?: number | null;
+  metadata?: JsonObject;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface KnowledgePoint {
+  id: string;
+  course_id: string;
+  module_id: string | null;
+  code: string;
+  title: string;
+  description?: string | null;
+  difficulty?: string | null;
+  keywords: string[];
+  metadata?: JsonObject;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface KnowledgeEvidence {
+  id?: string;
+  course_id: string;
+  knowledge_point_id: string | null;
+  document_id?: string | null;
+  chunk_id?: string | null;
+  resource_id?: string | null;
+  quote?: string | null;
+  source_title?: string | null;
+  source_url?: string | null;
+  relevance?: number | null;
+  purpose?: string | null;
+  rank?: number | null;
+  metadata?: JsonObject;
+}
+
 export interface Resource {
   id: string;
   user_id: string;
   course_id: string | null;
   title: string;
-  resource_type: 'document' | 'mindmap' | 'exercise' | 'reading' | 'code' | 'ppt' | 'video';
+  resource_type: 'document' | 'mindmap' | 'exercise' | 'reading' | 'code' | 'ppt' | 'video' | 'micro_lesson';
   content: string | Record<string, unknown> | unknown[];
   chapter: string | null;
   status: 'generating' | 'completed' | 'failed';
@@ -56,10 +107,12 @@ export interface Resource {
   rating_count: number;
   view_count: number;
   favorite_count: number;
-  source: 'ai' | 'manual';
+  source: 'ai' | 'agent' | 'manual';
   created_at: string;
   updated_at: string;
-  // 前端聚合字段
+  agent_run_id?: string | null;
+  quality_status?: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'failed' | null;
+  quality_score?: number | null;
   is_favorited?: boolean;
   user_rating?: number;
 }
@@ -73,6 +126,10 @@ export interface LearningPath {
   progress_percent: number;
   created_at: string;
   updated_at: string;
+  course_id?: string | null;
+  version?: number;
+  reasoning?: JsonObject | null;
+  source_event_id?: string | null;
 }
 
 export interface PathStage {
@@ -82,6 +139,147 @@ export interface PathStage {
   order: number;
   resources: string[];
   completed: boolean;
+}
+
+export interface PathStageV2 extends PathStage {
+  knowledgePointIds: string[];
+  resourceIds: string[];
+  recommendedReason?: string | null;
+  completedAt?: string | null;
+  sourceEventId?: string | null;
+  status?: 'locked' | 'active' | 'available' | 'in_progress' | 'completed';
+}
+
+export interface LearningPathV2 extends Omit<LearningPath, 'stages'> {
+  stages: PathStageV2[];
+}
+
+export type AgentRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type AgentStepStatus = AgentRunStatus;
+export type AgentArtifactStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type AgentRole = 'analyst' | 'curator' | 'designer' | 'creator' | 'reviewer' | 'publisher' | 'path_planner';
+export type AgentResourceType = 'document' | 'mindmap' | 'exercise' | 'reading' | 'code' | 'video' | 'ppt' | 'micro_lesson';
+
+export interface AgentRun {
+  id: string;
+  user_id: string;
+  run_type: 'resource_generate' | 'learning_adapt' | string;
+  course_id: string | null;
+  status: AgentRunStatus;
+  input?: JsonObject | null;
+  output?: JsonObject | null;
+  error?: string | null;
+  requested_at: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  idempotency_key?: string | null;
+  cancel_requested?: boolean;
+  lease_token?: string | null;
+  lease_expires_at?: string | null;
+  attempt_count?: number;
+  /** @deprecated Display-only compatibility alias. Use error. */
+  error_summary?: string | null;
+}
+
+export interface AgentStep {
+  id: string;
+  run_id: string;
+  step_key: AgentRole | string;
+  status: AgentStepStatus;
+  input?: JsonObject | null;
+  output?: JsonObject | null;
+  error?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  /** @deprecated Display-only compatibility alias. Use step_key. */
+  role?: AgentRole | string;
+  /** @deprecated Legacy ordering field; runtime orders by step_key/created_at. */
+  sequence?: number;
+  /** @deprecated Display-only compatibility alias. Use input. */
+  input_summary?: JsonObject | null;
+  /** @deprecated Display-only compatibility alias. Use output. */
+  output_summary?: JsonObject | null;
+  /** @deprecated Display-only compatibility field. */
+  attempt_count?: number;
+  /** @deprecated Display-only compatibility field. */
+  duration_ms?: number | null;
+}
+
+export interface AgentArtifact {
+  id: string;
+  run_id: string;
+  step_id?: string | null;
+  artifact_type: AgentResourceType | string;
+  status: AgentArtifactStatus;
+  title?: string | null;
+  content?: JsonObject | null;
+  storage_path?: string | null;
+  content_hash?: string | null;
+  error?: string | null;
+  created_at: string;
+  updated_at: string;
+  /** @deprecated Display-only compatibility alias. Use artifact_type. */
+  resource_type?: AgentResourceType | string;
+  /** @deprecated Display-only compatibility field. */
+  quality_score?: number | null;
+}
+
+export type LearningEventType =
+  | 'resource_viewed'
+  | 'resource_completed'
+  | 'exercise_submitted'
+  | 'weakness_training_completed'
+  | 'path_stage_completed'
+  | 'resource_feedback';
+export type LearningEventStatus = 'pending' | 'processing' | 'processed' | 'failed' | 'ignored';
+
+export type LearningEventReferences = JsonObject & {
+  resource_id?: string;
+  exercise_id?: string;
+  submission_id?: string;
+};
+
+export interface LearningEvent {
+  id: string;
+  user_id: string;
+  course_id: string | null;
+  knowledge_point_id?: string | null;
+  event_type: LearningEventType;
+  idempotency_key: string;
+  payload: JsonObject & { references?: LearningEventReferences };
+  occurred_at: string;
+  processing_status: LearningEventStatus;
+  processed_at?: string | null;
+  processing_error?: string | null;
+  created_at: string;
+}
+
+export interface KnowledgeMastery {
+  user_id: string;
+  course_id: string;
+  knowledge_point_id: string;
+  mastery_score: number;
+  confidence: number;
+  evidence_count: number;
+  last_event_id?: string | null;
+  last_assessed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PortraitRevision {
+  id: string;
+  user_id: string;
+  portrait_id: string;
+  version: number;
+  source_event_id?: string | null;
+  snapshot: JsonObject;
+  reason: string;
+  created_at: string;
 }
 
 export interface ChatMessage {
@@ -143,7 +341,6 @@ export interface Exercise {
   tags: string[];
   ai_generated: boolean;
   created_at: string;
-  // 资源中心来源（前端扩展字段）
   source_resource_id?: string;
   source_title?: string;
 }
@@ -266,7 +463,6 @@ export const RESOURCE_TYPE_ICONS: Record<string, string> = {
   video: '🎬',
 };
 
-// 今日待办
 export interface DailyTodo {
   id: string;
   user_id: string;
@@ -280,7 +476,6 @@ export interface DailyTodo {
   updated_at: string;
 }
 
-// 笔记
 export interface Note {
   id: string;
   user_id: string;
@@ -293,7 +488,6 @@ export interface Note {
   updated_at: string;
 }
 
-// 每日打卡
 export interface UserCheckIn {
   id: string;
   user_id: string;
@@ -302,7 +496,6 @@ export interface UserCheckIn {
   created_at: string;
 }
 
-// 徽章定义
 export interface Badge {
   id: string;
   key: string;
@@ -315,7 +508,6 @@ export interface Badge {
   created_at: string;
 }
 
-// 用户徽章
 export interface UserBadge {
   id: string;
   user_id: string;
@@ -324,7 +516,6 @@ export interface UserBadge {
   badge?: Badge;
 }
 
-// 学习报告
 export interface StudyReport {
   id: string;
   user_id: string;
@@ -339,7 +530,6 @@ export interface StudyReport {
   created_at: string;
 }
 
-// 排行榜条目
 export interface LeaderboardEntry {
   user_id: string;
   username: string | null;
@@ -347,4 +537,3 @@ export interface LeaderboardEntry {
   total_minutes: number;
   rank: number;
 }
-

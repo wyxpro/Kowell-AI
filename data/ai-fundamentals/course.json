@@ -1,0 +1,19 @@
+﻿{
+  "code": "ai-fundamentals",
+  "name": "人工智能基础",
+  "major": "人工智能",
+  "description": "原创中文人工智能入门课程，覆盖智能体、搜索、推理、机器学习、深度学习、强化学习与负责任人工智能。",
+  "version": 1,
+  "modules": [
+    {"code":"M01","title":"人工智能问题与智能体","knowledge_points":["AI-AGENT","AI-ENV","AI-PERFORMANCE"]},
+    {"code":"M02","title":"搜索与问题求解","knowledge_points":["SEARCH-STATE","SEARCH-BFS","SEARCH-HEURISTIC"]},
+    {"code":"M03","title":"知识表示与逻辑推理","knowledge_points":["KR-PROPOSITION","KR-FIRST-ORDER","KR-INFERENCE"]},
+    {"code":"M04","title":"不确定性与概率推断","knowledge_points":["PROBABILITY","BAYES","BAYES-NET"]},
+    {"code":"M05","title":"机器学习工作流","knowledge_points":["ML-SPLIT","ML-OVERFIT","ML-METRICS"]},
+    {"code":"M06","title":"监督学习方法","knowledge_points":["SUP-REGRESSION","SUP-CLASSIFICATION","SUP-REGULARIZATION"]},
+    {"code":"M07","title":"无监督学习与表示","knowledge_points":["UNSUP-CLUSTER","UNSUP-PCA","UNSUP-EVALUATION"]},
+    {"code":"M08","title":"神经网络与深度学习","knowledge_points":["DL-NEURON","DL-BACKPROP","DL-OPTIMIZATION"]},
+    {"code":"M09","title":"强化学习基础","knowledge_points":["RL-MDP","RL-VALUE","RL-EXPLORE"]},
+    {"code":"M10","title":"负责任人工智能","knowledge_points":["RAI-FAIRNESS","RAI-PRIVACY","RAI-GOVERNANCE"]}
+  ]
+}

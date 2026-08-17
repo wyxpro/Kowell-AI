@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
+﻿import { defineConfig, loadEnv } from "vite";
 import { miaodaDevPlugin } from "miaoda-sc-plugin";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
@@ -7,6 +7,17 @@ import path from "path";
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const requireServerEnv = (name: string) => {
+    const value = env[name];
+    if (!value) {
+      throw new Error(`${name} must be configured in the server environment before starting the Vite proxy.`);
+    }
+    return value;
+  };
+  const deepseekApiKey = requireServerEnv("DEEPSEEK_API_KEY");
+  const stepApiKey = requireServerEnv("STEP_API_KEY");
+  const seedanceApiKey = requireServerEnv("SEEDANCE_API_KEY");
+
   return {
   plugins: [
     react(),
@@ -37,8 +48,7 @@ export default defineConfig(({ mode }) => {
         changeOrigin: true,
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq) => {
-            const apiKey = env.DEEPSEEK_API_KEY || "sk-02260d10c28c4bb4b65bace15ba5f754";
-            proxyReq.setHeader("X-Proxy-Key", apiKey);
+            proxyReq.setHeader("X-Proxy-Key", deepseekApiKey);
           });
         }
       },
@@ -48,8 +58,7 @@ export default defineConfig(({ mode }) => {
         rewrite: (path) => path.replace(/^\/api\/stepaudio/, ""),
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq) => {
-            const apiKey = env.STEP_API_KEY || "4EDctG0RQZrjTwF9UmDsXr56OmZOeLbrBKq7JKlrXyRZ4P2gd7sFWPboQvzaJ3J6W";
-            proxyReq.setHeader("Authorization", `Bearer ${apiKey}`);
+            proxyReq.setHeader("Authorization", `Bearer ${stepApiKey}`);
           });
         }
       },
@@ -59,8 +68,7 @@ export default defineConfig(({ mode }) => {
         rewrite: (path) => path.replace(/^\/api\/stepfun/, ""),
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq) => {
-            const apiKey = env.STEP_API_KEY || "4EDctG0RQZrjTwF9UmDsXr56OmZOeLbrBKq7JKlrXyRZ4P2gd7sFWPboQvzaJ3J6W";
-            proxyReq.setHeader("Authorization", `Bearer ${apiKey}`);
+            proxyReq.setHeader("Authorization", `Bearer ${stepApiKey}`);
           });
         }
       },
@@ -70,8 +78,7 @@ export default defineConfig(({ mode }) => {
         rewrite: (path) => path.replace(/^\/api\/gmicloud/, ""),
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq) => {
-            const apiKey = env.SEEDANCE_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE5OTJmOGNlLTg0NDAtNDA2MC1hN2YwLTdjNzExMzY2MDA3YyIsInNjb3BlIjoiaWVfbW9kZWwiLCJjbGllbnRJZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCJ9.IWRZ1LbtdXPx0XxHeGEYtlSZ1z1RD-6ZWmZxhpKT6bc";
-            proxyReq.setHeader("Authorization", `Bearer ${apiKey}`);
+            proxyReq.setHeader("Authorization", `Bearer ${seedanceApiKey}`);
           });
         }
       }

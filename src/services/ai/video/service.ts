@@ -1,4 +1,4 @@
-const SEEDANCE_API_KEY = import.meta.env.VITE_SEEDANCE_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE5OTJmOGNlLTg0NDAtNDA2MC1hN2YwLTdjNzExMzY2MDA3YyIsInNjb3BlIjoiaWVfbW9kZWwiLCJjbGllbnRJZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCJ9.IWRZ1LbtdXPx0XxHeGEYtlSZ1z1RD-6ZWmZxhpKT6bc";
+﻿const VIDEO_SERVICE_ERROR = '视频生成服务暂不可用，请稍后再试。';
 
 export interface VideoGenerationParams {
   prompt: string;
@@ -70,10 +70,7 @@ export const videoAIService = {
     try {
       const resp = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SEEDANCE_API_KEY}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'seedance-2-0-fast-260128',
           payload
@@ -81,14 +78,12 @@ export const videoAIService = {
       });
 
       if (!resp.ok) {
-        const errText = await resp.text();
-        throw new Error(`Seedance API failed (${resp.status}): ${errText}`);
+        throw new Error(VIDEO_SERVICE_ERROR);
       }
 
       return await resp.json();
-    } catch (e) {
-      console.error('Failed to submit Seedance video generation request:', e);
-      throw e;
+    } catch {
+      throw new Error(VIDEO_SERVICE_ERROR);
     }
   },
 
@@ -100,20 +95,16 @@ export const videoAIService = {
     try {
       const resp = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${SEEDANCE_API_KEY}`
-        }
+
       });
 
       if (!resp.ok) {
-        const errText = await resp.text();
-        throw new Error(`Seedance Status API failed (${resp.status}): ${errText}`);
+        throw new Error(VIDEO_SERVICE_ERROR);
       }
 
       return await resp.json();
-    } catch (e) {
-      console.error(`Failed to fetch video status for ${requestId}:`, e);
-      throw e;
+    } catch {
+      throw new Error(VIDEO_SERVICE_ERROR);
     }
   },
 
@@ -138,21 +129,21 @@ export const videoAIService = {
 
       if (status === 'success') {
         const videoUrl = data.outcome?.video_url;
-        if (!videoUrl) throw new Error('视频生成成功，但未返回 URL 链接');
+        if (!videoUrl) throw new Error(VIDEO_SERVICE_ERROR);
         return videoUrl;
       }
 
       if (status === 'failed') {
-        throw new Error('视频生成服务返回失败状态');
+        throw new Error(VIDEO_SERVICE_ERROR);
       }
 
       if (status === 'cancelled') {
-        throw new Error('视频生成任务已被取消');
+        throw new Error(VIDEO_SERVICE_ERROR);
       }
 
       await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
 
-    throw new Error('视频生成轮询超时');
+    throw new Error(VIDEO_SERVICE_ERROR);
   }
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'motion/react';
+import { getLearningReportData } from '@/services/learning/service';
+import type { ExerciseQuestionType, ExerciseSubmission, KnowledgeMastery } from '@/types/types';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line,
   PieChart, Pie, Cell, Legend
@@ -22,7 +24,12 @@ interface DayStat {
   minutes: number;
   resources: number;
   correct: number;
+  exercises: number;
 }
+
+type SubmissionRow = Pick<ExerciseSubmission, 'created_at' | 'is_correct' | 'ai_score' | 'ai_status'> & {
+  exercises: { question_type?: ExerciseQuestionType }[] | null;
+};
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
@@ -52,6 +59,8 @@ export default function ReportPage() {
   const [stats, setStats] = useState<DayStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({ totalMin: 0, totalRes: 0, totalExer: 0, correctRate: 0, checkInDays: 0 });
+  const [mastery, setMastery] = useState<KnowledgeMastery[]>([]);
+  const [reportInsight, setReportInsight] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) loadStats();
@@ -71,10 +80,10 @@ export default function ReportPage() {
       .gte('created_at', start)
       .lte('created_at', end + 'T23:59:59');
 
-    // 练习记录
+    // 真实答题提交：排除仍等待 AI 评分的主观题。
     const { data: exerciseData } = await supabase
-      .from('user_exercises')
-      .select('created_at, is_correct')
+      .from('user_exercise_submissions')
+      .select('created_at, is_correct, ai_score, ai_status, exercises(question_type)')
       .eq('user_id', user!.id)
       .gte('created_at', start)
       .lte('created_at', end + 'T23:59:59');
@@ -88,7 +97,13 @@ export default function ReportPage() {
       .lte('check_date', end);
 
     const progRows: { created_at: string; completed: boolean }[] = Array.isArray(progressData) ? progressData : [];
-    const exerRows: { created_at: string; is_correct: boolean }[] = Array.isArray(exerciseData) ? exerciseData : [];
+    const submissionRows = (Array.isArray(exerciseData) ? exerciseData : []) as SubmissionRow[];
+    const exerRows = submissionRows.filter(submission => {
+      const questionType = submission.exercises?.[0]?.question_type;
+      return questionType === 'subjective'
+        ? submission.ai_status === 'completed' && submission.ai_score !== null && submission.is_correct !== null
+        : submission.is_correct !== null;
+    });
     const cinRows: { check_date: string; study_minutes: number }[] = Array.isArray(checkinData) ? checkinData : [];
 
     // 构建每日统计
@@ -99,7 +114,7 @@ export default function ReportPage() {
       const label = period === 'weekly'
         ? ['周一','周二','周三','周四','周五','周六','周日'][cur.getDay() === 0 ? 6 : cur.getDay() - 1]
         : `${cur.getDate()}日`;
-      dayMap[k] = { label, minutes: 0, resources: 0, correct: 0 };
+      dayMap[k] = { label, minutes: 0, resources: 0, correct: 0, exercises: 0 };
       cur.setDate(cur.getDate() + 1);
     }
 
@@ -112,7 +127,9 @@ export default function ReportPage() {
     });
     exerRows.forEach(r => {
       const k = r.created_at.split('T')[0];
-      if (dayMap[k] && r.is_correct) dayMap[k].correct++;
+      if (!dayMap[k]) return;
+      dayMap[k].exercises++;
+      if (r.is_correct) dayMap[k].correct++;
     });
 
     const dayStats = Object.values(dayMap);
@@ -122,9 +139,18 @@ export default function ReportPage() {
     const totalExer = exerRows.length;
     const correctRate = totalExer > 0 ? Math.round(exerRows.filter(r => r.is_correct).length / totalExer * 100) : 0;
     const checkInDays = cinRows.length;
+    const learningReport = await getLearningReportData({
+      periodStart: `${start}T00:00:00`,
+      periodEnd: `${end}T23:59:59`,
+    }).catch(error => {
+      console.warn('学习洞察加载失败：', error);
+      return null;
+    });
 
     setStats(dayStats);
     setSummary({ totalMin, totalRes, totalExer, correctRate, checkInDays });
+    setMastery(learningReport?.mastery ?? []);
+    setReportInsight(learningReport?.report?.ai_summary ?? null);
     setLoading(false);
   };
 
@@ -138,6 +164,8 @@ export default function ReportPage() {
     { name: '练习题', value: summary.totalExer || 0 },
     { name: '打卡天数', value: summary.checkInDays || 0 },
   ].filter(d => d.value > 0);
+  const weakestMastery = mastery.slice().sort((a, b) => a.mastery_score - b.mastery_score)[0];
+  const strongestMastery = mastery.slice().sort((a, b) => b.mastery_score - a.mastery_score)[0];
 
   return (
     <AppLayout>
@@ -225,11 +253,11 @@ export default function ReportPage() {
             </CardContent>
           </Card>
 
-          {/* 资源学习折线图 */}
+          {/* 每日答题统计 */}
           <Card className="h-full">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-emerald-500" />每日学习资源数
+                <Target className="w-4 h-4 text-violet-500" />每日答题数与正确数
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -239,8 +267,9 @@ export default function ReportPage() {
                     <LineChart data={stats} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
                       <XAxis dataKey="label" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v: number) => [`${v} 个`, '资源']} />
-                      <Line type="monotone" dataKey="resources" stroke="hsl(var(--chart-2))" strokeWidth={2.5} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v: number, name: string) => [`${v} 题`, name === 'exercises' ? '答题数' : '正确数']} />
+                      <Line type="monotone" dataKey="exercises" name="exercises" stroke="hsl(var(--chart-2))" strokeWidth={2.5} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="correct" name="correct" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </motion.div>
@@ -309,10 +338,12 @@ export default function ReportPage() {
                       color: summary.totalRes >= 10 ? 'text-emerald-600' : 'text-amber-600',
                     },
                     {
-                      emoji: '⏱️',
-                      title: '时长投入',
-                      desc: summary.totalMin === 0 ? '记得打卡记录学习时间哦' : `累计投入 ${Math.floor(summary.totalMin / 60)} 小时 ${summary.totalMin % 60} 分钟，${summary.totalMin >= 300 ? '非常努力！' : '坚持下去效果会更好'}`,
-                      color: summary.totalMin >= 300 ? 'text-emerald-600' : 'text-amber-600',
+                      emoji: '🧠',
+                      title: '知识掌握',
+                      desc: mastery.length === 0
+                        ? '暂无知识点掌握度数据，完成带知识点的练习后将生成洞察'
+                        : reportInsight ?? `已评估 ${mastery.length} 个知识点；${weakestMastery ? `最低掌握度 ${Math.round(weakestMastery.mastery_score)} 分` : ''}${strongestMastery ? `，最高掌握度 ${Math.round(strongestMastery.mastery_score)} 分` : ''}`,
+                      color: mastery.length === 0 ? 'text-amber-600' : weakestMastery && weakestMastery.mastery_score < 60 ? 'text-rose-600' : 'text-emerald-600',
                     },
                   ].map((item, i) => (
                     <motion.div

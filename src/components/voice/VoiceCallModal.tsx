@@ -40,6 +40,33 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
   const animationFrameRef = useRef<number | null>(null);
   const activeStreamRef = useRef<MediaStream | null>(null);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ttsUrlRef = useRef<string | null>(null);
+  const ttsFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionIdRef = useRef(0);
+  const requestAbortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
+
+  const isCurrentSession = useCallback((sessionId: number) => (
+    mountedRef.current && open && sessionId === sessionIdRef.current
+  ), [open]);
+
+  const invalidateSession = useCallback(() => {
+    sessionIdRef.current += 1;
+    requestAbortRef.current?.abort();
+    requestAbortRef.current = null;
+  }, []);
+
+  const awaitWithAbort = useCallback(<T,>(promise: Promise<T>, signal: AbortSignal): Promise<T> => (
+    new Promise<T>((resolve, reject) => {
+      const abort = () => reject(new DOMException('Aborted', 'AbortError'));
+      if (signal.aborted) {
+        abort();
+        return;
+      }
+      signal.addEventListener('abort', abort, { once: true });
+      promise.then(resolve, reject).finally(() => signal.removeEventListener('abort', abort));
+    })
+  ), []);
 
   // 停止全部媒体资源
   const stopAllMedia = useCallback(() => {
@@ -63,10 +90,21 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
       }
     }
     
-    // 停止播放 TTS
+    // 停止播放 TTS，并清除事件、延迟回调和临时 URL。
+    if (ttsFallbackTimerRef.current) {
+      clearTimeout(ttsFallbackTimerRef.current);
+      ttsFallbackTimerRef.current = null;
+    }
     if (ttsAudioRef.current) {
+      ttsAudioRef.current.onended = null;
+      ttsAudioRef.current.onerror = null;
       ttsAudioRef.current.pause();
+      ttsAudioRef.current.src = '';
       ttsAudioRef.current = null;
+    }
+    if (ttsUrlRef.current) {
+      URL.revokeObjectURL(ttsUrlRef.current);
+      ttsUrlRef.current = null;
     }
 
     // 关闭 Web Audio API
@@ -87,54 +125,71 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
   }, []);
 
   // 语音合成播放逻辑
-  const playTTS = useCallback(async (text: string) => {
-    if (phase === 'idle') return;
+  const playTTS = useCallback(async (text: string, sessionId = sessionIdRef.current) => {
+    if (!isCurrentSession(sessionId)) return;
+    const controller = new AbortController();
+    requestAbortRef.current?.abort();
+    requestAbortRef.current = controller;
+
+    const resumeListeningLater = () => {
+      if (ttsFallbackTimerRef.current) clearTimeout(ttsFallbackTimerRef.current);
+      ttsFallbackTimerRef.current = setTimeout(() => {
+        if (isCurrentSession(sessionId)) startListening(sessionId);
+      }, 3000);
+    };
+
     try {
       setVoiceStatus('ai-speaking');
       setSubtitles(text);
 
-      const audioBlob = await stepAudioService.textToSpeech({
+      const audioBlob = await awaitWithAbort(stepAudioService.textToSpeech({
         text,
         voice: 'cixingnansheng',
-        instruction: '语气温柔，语速适中'
-      });
+        instruction: '语气温柔，语速适中',
+      }), controller.signal);
 
-      if (phase === 'idle') return;
+      if (controller.signal.aborted || !isCurrentSession(sessionId)) return;
       const url = URL.createObjectURL(audioBlob);
       if (ttsAudioRef.current) {
+        ttsAudioRef.current.onended = null;
+        ttsAudioRef.current.onerror = null;
         ttsAudioRef.current.pause();
       }
-      
+      if (ttsUrlRef.current) URL.revokeObjectURL(ttsUrlRef.current);
+
       const audio = new Audio(url);
       ttsAudioRef.current = audio;
+      ttsUrlRef.current = url;
 
       audio.onended = () => {
-        URL.revokeObjectURL(url);
-        // AI 播放完毕后开启听取
-        startListening();
+        if (ttsAudioRef.current === audio) ttsAudioRef.current = null;
+        if (ttsUrlRef.current === url) {
+          URL.revokeObjectURL(url);
+          ttsUrlRef.current = null;
+        }
+        if (isCurrentSession(sessionId)) startListening(sessionId);
       };
 
-      audio.onerror = (e) => {
-        console.error('Audio play error:', e);
-        URL.revokeObjectURL(url);
-        // 异常降级：等待3秒后启动录音，防止卡死
-        setTimeout(() => {
-          startListening();
-        }, 3000);
+      audio.onerror = () => {
+        if (ttsAudioRef.current === audio) ttsAudioRef.current = null;
+        if (ttsUrlRef.current === url) {
+          URL.revokeObjectURL(url);
+          ttsUrlRef.current = null;
+        }
+        if (isCurrentSession(sessionId)) resumeListeningLater();
       };
 
       await audio.play();
     } catch (err) {
-      console.error('TTS synthesis failed:', err);
-      // 降级：若失败则直接进入听取状态
-      setTimeout(() => {
-        startListening();
-      }, 3000);
+      if ((err as Error).name !== 'AbortError' && isCurrentSession(sessionId)) {
+        resumeListeningLater();
+      }
     }
-  }, [phase]);
+  }, [isCurrentSession]);
 
   // 开始录制学生声音并分析音量 (VAD 逻辑)
-  const startListening = useCallback(async () => {
+  const startListening = useCallback(async (sessionId = sessionIdRef.current) => {
+    if (!isCurrentSession(sessionId)) return;
     // 确保清理以前的录音
     if (activeStreamRef.current) {
       activeStreamRef.current.getTracks().forEach(t => t.stop());
@@ -149,6 +204,7 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
       animationFrameRef.current = null;
     }
 
+    if (!isCurrentSession(sessionId)) return;
     setVoiceStatus('user-listening');
     setAudioVolume(0);
 
@@ -161,6 +217,10 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!isCurrentSession(sessionId)) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
       activeStreamRef.current = stream;
 
       const recorder = new MediaRecorder(stream);
@@ -173,10 +233,11 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
         }
       };
 
-      recorder.onstop = async () => {
+      recorder.onstop = () => {
+        if (!isCurrentSession(sessionId)) return;
         const rawBlob = new Blob(chunks, { type: 'audio/webm' });
         // 开启 ASR -> LLM -> TTS 处理流
-        processUserSpeech(rawBlob);
+        void processUserSpeech(rawBlob, sessionId);
       };
 
       recorder.start();
@@ -196,7 +257,7 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
         let lastVoiceTime = Date.now();
 
         const checkVAD = () => {
-          if (!analyserRef.current || recorder.state === 'inactive') return;
+          if (!isCurrentSession(sessionId) || !analyserRef.current || recorder.state === 'inactive') return;
 
           analyser.getByteFrequencyData(dataArray);
           let sum = 0;
@@ -223,22 +284,29 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
         animationFrameRef.current = requestAnimationFrame(checkVAD);
       }
 
-    } catch (err) {
-      console.error('Failed to access microphone:', err);
-      setSubtitles('❌ 无法访问麦克风');
+    } catch {
+      if (isCurrentSession(sessionId)) setSubtitles('❌ 无法访问麦克风');
     }
-  }, [muted]);
+  }, [isCurrentSession, muted]);
 
   // 处理学生录音
-  const processUserSpeech = useCallback(async (audioBlob: Blob) => {
+  const processUserSpeech = useCallback(async (audioBlob: Blob, sessionId = sessionIdRef.current) => {
+    if (!isCurrentSession(sessionId)) return;
+    const controller = new AbortController();
+    requestAbortRef.current?.abort();
+    requestAbortRef.current = controller;
     setVoiceStatus('ai-thinking');
     setAudioVolume(0);
 
     try {
       // 1. 调用 StepAudio-2.5-ASR 语音转写
-      const text = await stepAudioService.transcribeBlob(audioBlob);
+      const text = await awaitWithAbort(
+        stepAudioService.transcribeBlob(audioBlob),
+        controller.signal,
+      );
+      if (controller.signal.aborted || !isCurrentSession(sessionId)) return;
       if (!text || !text.trim()) {
-        await playTTS('同学，我刚才没有听清楚，请您再说一遍。');
+        await playTTS('同学，我刚才没有听清楚，请您再说一遍。', sessionId);
         return;
       }
 
@@ -255,17 +323,19 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
       const recentHistory = conversationHistory.current.slice(-6);
       const messages = [systemPrompt, ...recentHistory];
 
-      const reply = await stepfunService.chat(messages);
+      const reply = await stepfunService.chat(messages, { signal: controller.signal });
+      if (controller.signal.aborted || !isCurrentSession(sessionId)) return;
       conversationHistory.current.push({ role: 'assistant', content: reply });
 
       // 3. 播放 AI TTS 回复
-      await playTTS(reply);
+      await playTTS(reply, sessionId);
 
     } catch (err) {
-      console.error('Error processing speech loop:', err);
-      await playTTS('网络好似有点开小差，请您再试一次。');
+      if ((err as Error).name !== 'AbortError' && isCurrentSession(sessionId)) {
+        await playTTS('网络好似有点开小差，请您再试一次。', sessionId);
+      }
     }
-  }, [playTTS]);
+  }, [awaitWithAbort, isCurrentSession, playTTS]);
 
   // 手动点击 "说完了，发送"
   const handleFinishSpeaking = useCallback(() => {
@@ -277,6 +347,11 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
   // 打开时初始化
   useEffect(() => {
     if (open) {
+      mountedRef.current = true;
+      const sessionId = sessionIdRef.current + 1;
+      sessionIdRef.current = sessionId;
+      requestAbortRef.current?.abort();
+      requestAbortRef.current = null;
       setPhase('connected');
       setElapsed(0);
       setMuted(false);
@@ -286,18 +361,27 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
       conversationHistory.current = [];
 
       // 通话连接成功，播报欢迎词
-      playTTS('同学你好！我是小智老师。今天有什么学业难题需要我解答吗？');
+      void playTTS('同学你好！我是小智老师。今天有什么学业难题需要我解答吗？', sessionId);
     } else {
+      invalidateSession();
       setPhase('idle');
       setVoiceStatus('idle');
       clearTimers();
       stopAllMedia();
     }
     return () => {
+      invalidateSession();
       clearTimers();
       stopAllMedia();
     };
-  }, [open, playTTS, stopAllMedia]);
+  }, [open, invalidateSession, playTTS, stopAllMedia]);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    invalidateSession();
+    clearTimers();
+    stopAllMedia();
+  }, [invalidateSession, stopAllMedia]);
 
   // 计时器
   useEffect(() => {
@@ -333,15 +417,22 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
   // 摄像头开关
   useEffect(() => {
     if (camOn) {
+      const sessionId = sessionIdRef.current;
       navigator.mediaDevices?.getUserMedia({ video: { facingMode: 'user' }, audio: false })
         .then(stream => {
+          if (!isCurrentSession(sessionId) || !camOn) {
+            stream.getTracks().forEach(track => track.stop());
+            return;
+          }
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
             videoRef.current.play().catch(() => {});
           }
         })
-        .catch(() => setCamOn(false));
+        .catch(() => {
+          if (isCurrentSession(sessionId)) setCamOn(false);
+        });
     } else {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(t => t.stop());
@@ -349,7 +440,7 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
       }
       if (videoRef.current) videoRef.current.srcObject = null;
     }
-  }, [camOn]);
+  }, [camOn, isCurrentSession]);
 
   const clearTimers = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -357,6 +448,8 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
   };
 
   const handleHangup = () => {
+    // Invalidate before stopping the recorder so its onstop handler cannot upload.
+    invalidateSession();
     clearTimers();
     stopAllMedia();
     onClose();

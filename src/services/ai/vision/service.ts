@@ -1,6 +1,4 @@
-import { createParser } from 'eventsource-parser';
-import { STEPFUN_CONFIG } from '../stepfun/config';
-
+﻿import { createParser } from 'eventsource-parser';
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -75,7 +73,6 @@ export const visionAIService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(STEPFUN_CONFIG.apiKey ? { 'Authorization': `Bearer ${STEPFUN_CONFIG.apiKey}` } : {}),
         },
         body: JSON.stringify(body)
       });
@@ -138,7 +135,6 @@ export const visionAIService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(STEPFUN_CONFIG.apiKey ? { 'Authorization': `Bearer ${STEPFUN_CONFIG.apiKey}` } : {}),
         },
         body: JSON.stringify({
           model: 'step-3.7-flash',
@@ -208,7 +204,6 @@ export const visionAIService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(STEPFUN_CONFIG.apiKey ? { 'Authorization': `Bearer ${STEPFUN_CONFIG.apiKey}` } : {}),
         },
         body: JSON.stringify(body),
         signal
