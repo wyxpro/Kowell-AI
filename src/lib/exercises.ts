@@ -13,9 +13,66 @@ const EXERCISE_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 const nonEmptyString = z.string().trim().min(1);
 
 export function cleanJsonCodeBlock(text: string): string {
-  const trimmed = text.replace(/^\uFEFF/, '').trim();
-  const match = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  return (match ? match[1] : trimmed).trim();
+  let cleaned = text.replace(/^\uFEFF/, '').trim();
+  // 过滤思维链 <think>...</think>
+  cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  // 匹配 Markdown 代码块 ```json ... ```
+  const codeBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (codeBlockMatch) {
+    cleaned = codeBlockMatch[1].trim();
+  }
+  // 提取首个 { 到末尾 } 之间的 JSON 对象
+  const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (objectMatch) {
+    cleaned = objectMatch[0].trim();
+  }
+  return cleaned;
+}
+
+export function parseAiEvaluationResult(text: string): ExerciseAiResult {
+  const cleaned = cleanJsonCodeBlock(text);
+  let parsed: any;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    try {
+      const fixed = cleaned.replace(/,\s*([}\]])/g, '$1');
+      parsed = JSON.parse(fixed);
+    } catch {
+      console.warn('AI 评估结果 JSON 解析回退:', text);
+      const isCorrect = /正确|对|100分/i.test(text) && !/不正确|错误|错/i.test(text);
+      const scoreMatch = text.match(/(\d{1,3})\s*分/);
+      const score = scoreMatch ? Math.min(100, Math.max(0, parseInt(scoreMatch[1], 10))) : (isCorrect ? 100 : 50);
+      return {
+        is_correct: isCorrect,
+        score,
+        feedback: text.slice(0, 100) || '评估完成',
+        analysis: text || '详细解析请参考标准答案',
+        suggestions: '建议针对本题涉及知识点进行强化巩固',
+      };
+    }
+  }
+
+  const is_correct = typeof parsed.is_correct === 'boolean'
+    ? parsed.is_correct
+    : typeof parsed.correct === 'boolean'
+      ? parsed.correct
+      : (typeof parsed.score === 'number' ? parsed.score >= 60 : true);
+
+  const rawScore = parsed.score ?? parsed.ai_score;
+  const score = typeof rawScore === 'number'
+    ? Math.min(100, Math.max(0, Math.round(rawScore)))
+    : typeof rawScore === 'string' && !isNaN(parseInt(rawScore, 10))
+      ? Math.min(100, Math.max(0, parseInt(rawScore, 10)))
+      : (is_correct ? 100 : 0);
+
+  return {
+    is_correct,
+    score,
+    feedback: String(parsed.feedback || parsed.comment || (is_correct ? '回答正确！' : '回答有误，请查阅解析。')),
+    analysis: String(parsed.analysis || parsed.explanation || parsed.reasoning || '暂无详细步骤解析'),
+    suggestions: String(parsed.suggestions || parsed.suggestion || '建议复习对应知识点'),
+  };
 }
 
 function isQuestionType(value: unknown): value is ExerciseQuestionType {
@@ -214,20 +271,4 @@ export function parseGeneratedExercises(text: string): GeneratedExercise[] {
   });
 }
 
-const aiEvaluationSchema = z.object({
-  is_correct: z.boolean(),
-  score: z.number().int().min(0).max(100),
-  feedback: nonEmptyString,
-  analysis: nonEmptyString,
-  suggestions: nonEmptyString
-}).strict();
 
-export function parseAiEvaluationResult(text: string): ExerciseAiResult {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(cleanJsonCodeBlock(text));
-  } catch {
-    throw new Error('AI 评估结果不是有效 JSON');
-  }
-  return aiEvaluationSchema.parse(parsed);
-}

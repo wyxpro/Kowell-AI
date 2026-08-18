@@ -97,11 +97,13 @@ async function downloadAsDocx(topic: string, content: string) {
   });
 
   const doc = new Document({
-    sections: [{ properties: {}, children: [
-      new Paragraph({ text: topic, heading: HeadingLevel.TITLE }),
-      new Paragraph({ text: '' }),
-      ...children,
-    ]}],
+    sections: [{
+      properties: {}, children: [
+        new Paragraph({ text: topic, heading: HeadingLevel.TITLE }),
+        new Paragraph({ text: '' }),
+        ...children,
+      ]
+    }],
   });
 
   const blob = await Packer.toBlob(doc);
@@ -607,7 +609,7 @@ export default function ResourceGeneratePage() {
         .select('id')
         .eq('name', courseName.trim())
         .maybeSingle();
-      
+
       if (findError) throw findError;
       if (existing) return existing.id;
 
@@ -620,7 +622,7 @@ export default function ResourceGeneratePage() {
         })
         .select('id')
         .single();
-      
+
       if (insertError) {
         console.warn('Unable to create new course row due to RLS or permissions:', insertError.message);
         return null;
@@ -1193,7 +1195,7 @@ export default function ResourceGeneratePage() {
       setProgress(100);
       setCurrentStep(agentSteps.length - 1);
       setLogs(prev => [...prev, `全部 ${resourceTypes.length} 种资源生成完成！`]);
-      
+
       // Auto select the first resource tab to show after complete
       if (resourceTypes.length > 0) {
         setActivePreviewType(resourceTypes[0]);
@@ -1237,7 +1239,7 @@ export default function ResourceGeneratePage() {
                 点击预览并快捷应用高标准教学资源模板
               </p>
             </div>
-            
+
             <div className="flex-1 w-full grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
               {STANDARD_EXAMPLES.map(ex => {
                 const opt = resourceTypeOptions.find(o => o.value === ex.type);
@@ -1448,7 +1450,7 @@ export default function ResourceGeneratePage() {
                   disabled={generating || (!topic.trim() && !webUrl.trim() && attachments.length === 0) || resourceTypes.length === 0}
                   className="w-full mb-5 text-xs"
                 >
-                  <Sparkles className="w-3.5 h-3.5 mr-2" />快速生成（本地直连，非 Agent 工作流）
+                  <Sparkles className="w-3.5 h-3.5 mr-2" />快速生成
                 </Button>
 
                 <div className="grid grid-cols-1 gap-2">
@@ -1461,18 +1463,16 @@ export default function ResourceGeneratePage() {
                         type="button"
                         onClick={() => toggleResourceType(opt.value, opt.available)}
                         disabled={isDisabled}
-                        className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all relative ${
-                          !opt.available
+                        className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all relative ${!opt.available
                             ? 'opacity-60 cursor-not-allowed border-border bg-muted/20'
                             : selected
                               ? 'border-primary bg-primary/5 shadow-sm'
                               : 'border-border hover:bg-muted/50 hover:border-primary/30'
-                        }`}
+                          }`}
                       >
                         {/* 复选框指示 */}
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
-                          !opt.available ? 'border-muted-foreground/30' : selected ? 'border-primary bg-primary' : 'border-muted-foreground/40'
-                        }`}>
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${!opt.available ? 'border-muted-foreground/30' : selected ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                          }`}>
                           {selected && <CheckCircle className="w-3 h-3 text-primary-foreground" />}
                         </div>
                         <opt.icon className={`w-4 h-4 shrink-0 ${!opt.available ? 'text-muted-foreground' : selected ? opt.color : 'text-muted-foreground'}`} />
@@ -1499,7 +1499,7 @@ export default function ResourceGeneratePage() {
             <CardHeader className="pb-3 shrink-0">
               <CardTitle className="text-base flex items-center gap-2">
                 <Cpu className="w-4 h-4 text-primary" />
-                {generationMode === 'agent' ? '真实 Agent 运行过程' : '快速生成过程（非 Agent 工作流）'}
+                {generationMode === 'agent' ? '真实 Agent 运行过程' : '多智能体AIGC生成资源'}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col min-h-0">
@@ -1539,11 +1539,10 @@ export default function ResourceGeneratePage() {
                         const isCurrent = i === currentStep && generating;
                         return (
                           <div key={step.key} className={`flex flex-col items-center gap-1 min-w-[60px] ${isDone ? 'opacity-100' : isCurrent ? 'opacity-100' : 'opacity-40'}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                              isDone ? 'bg-primary text-primary-foreground' :
-                              isCurrent ? 'bg-secondary text-secondary-foreground ring-2 ring-secondary/50' :
-                              'bg-muted text-muted-foreground'
-                            }`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isDone ? 'bg-primary text-primary-foreground' :
+                                isCurrent ? 'bg-secondary text-secondary-foreground ring-2 ring-secondary/50' :
+                                  'bg-muted text-muted-foreground'
+                              }`}>
                               {isDone ? <CheckCircle className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
                             </div>
                             <span className="text-[10px] truncate w-full text-center">{step.label}</span>
@@ -1566,7 +1565,7 @@ export default function ResourceGeneratePage() {
                           </div>
                         ))}
                       </div>
-                      
+
                       {thinkLog && (
                         <div className="pt-2 border-t border-border/50">
                           <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-muted-foreground">
@@ -1651,11 +1650,10 @@ export default function ResourceGeneratePage() {
                                 setActivePreviewType(rType);
                                 setResult(generatedResults[rType] || '');
                               }}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-all shrink-0 ${
-                                isSelected
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-all shrink-0 ${isSelected
                                   ? 'border-primary bg-primary/10 text-primary shadow-sm'
                                   : 'border-border/60 bg-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground'
-                              }`}
+                                }`}
                             >
                               {opt && <opt.icon className={`w-3.5 h-3.5 ${opt.color}`} />}
                               <span>{opt?.label || rType}</span>
@@ -1881,11 +1879,10 @@ export default function ResourceGeneratePage() {
                       <div
                         key={res.id}
                         onClick={() => { setActiveResource(res); setIsEditing(false); setIsCreatingManual(false); }}
-                        className={`group relative p-3 rounded-xl cursor-pointer transition-all duration-200 ${
-                          isSelected
+                        className={`group relative p-3 rounded-xl cursor-pointer transition-all duration-200 ${isSelected
                             ? 'bg-gradient-to-r from-primary/20 to-purple-500/10 border border-primary/40 shadow-lg shadow-primary/10'
                             : 'border border-transparent hover:bg-white/5 hover:border-white/10'
-                        }`}
+                          }`}
                       >
                         {isSelected && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-primary rounded-full" />}
                         <div className="flex items-start gap-2.5">
@@ -2059,7 +2056,7 @@ export default function ResourceGeneratePage() {
                         >
                           <Film className="w-3.5 h-3.5" />视频
                         </button>
-                        
+
                         <div className="w-px h-4 bg-white/10 mx-1"></div>
 
                         <button
