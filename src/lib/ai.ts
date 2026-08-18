@@ -52,23 +52,48 @@ export async function streamChat(
   }
   formattedMessages.push(...messages);
 
-  await deepseekService.streamChat(
-    formattedMessages,
-    {
-      onChunk: (chunk) => {
-        callbacks.onChunk(chunk);
+  let directError: string | null = null;
+  try {
+    await deepseekService.streamChat(
+      formattedMessages,
+      {
+        onChunk: (chunk) => {
+          callbacks.onChunk(chunk);
+        },
+        onDone: () => {
+          callbacks.onDone();
+        },
+        onError: (err) => {
+          directError = err;
+        }
       },
-      onDone: () => {
-        callbacks.onDone();
-      },
-      onError: (err) => {
-        callbacks.onError(err);
+      {
+        signal
       }
-    },
-    {
-      signal
+    );
+  } catch (err) {
+    directError = (err as Error).message;
+  }
+
+  if (directError) {
+    console.warn('[streamChat] 直连 DeepSeek 服务响应异常，自动降级至 Supabase 云函数 ai-chat:', directError);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: { messages: formattedMessages, prompt_type: promptType, stream: false }
+      });
+      if (!error && data) {
+        const content = typeof data === 'string' ? data : (data?.content || data?.choices?.[0]?.message?.content || '');
+        if (content) {
+          callbacks.onChunk(content);
+          callbacks.onDone();
+          return;
+        }
+      }
+    } catch (fallbackErr) {
+      console.error('[streamChat] 云函数降级同样失败:', fallbackErr);
     }
-  );
+    callbacks.onError(directError);
+  }
 }
 
 export async function generateResource(

@@ -57,72 +57,98 @@ function parseEssayEvaluationResult(text: string): ExerciseAiResult {
 /**
  * 带有思维链（CoT）过滤的流式 API 桥接函数
  */
-export function makeCleanStreamChat(
+export async function makeCleanStreamChat(
   messages: ChatMessage[],
   callbacks: TextStreamCallbacks,
   options?: { temperature?: number; signal?: AbortSignal }
 ): Promise<void> {
   let isThinking = false;
   let fullText = '';
-
-  // 保证系统级提示词存在且不重复
   const cleanMessages = [...messages];
+  let directError: string | null = null;
 
-  return deepseekService.streamChat(
-    cleanMessages,
-    {
-      onChunk: (chunk) => {
-        let textToEmit = '';
-        let thinkToEmit = '';
-        let remaining = chunk;
+  try {
+    await deepseekService.streamChat(
+      cleanMessages,
+      {
+        onChunk: (chunk) => {
+          let textToEmit = '';
+          let thinkToEmit = '';
+          let remaining = chunk;
 
-        while (remaining.length > 0) {
-          if (!isThinking) {
-            const index = remaining.indexOf('<think>');
-            if (index !== -1) {
-              textToEmit += remaining.substring(0, index);
-              isThinking = true;
-              remaining = remaining.substring(index + 7);
+          while (remaining.length > 0) {
+            if (!isThinking) {
+              const index = remaining.indexOf('<think>');
+              if (index !== -1) {
+                textToEmit += remaining.substring(0, index);
+                isThinking = true;
+                remaining = remaining.substring(index + 7);
+              } else {
+                textToEmit += remaining;
+                remaining = '';
+              }
             } else {
-              textToEmit += remaining;
-              remaining = '';
-            }
-          } else {
-            const index = remaining.indexOf('</think>');
-            if (index !== -1) {
-              thinkToEmit += remaining.substring(0, index);
-              isThinking = false;
-              remaining = remaining.substring(index + 8);
-            } else {
-              thinkToEmit += remaining;
-              remaining = '';
+              const index = remaining.indexOf('</think>');
+              if (index !== -1) {
+                thinkToEmit += remaining.substring(0, index);
+                isThinking = false;
+                remaining = remaining.substring(index + 8);
+              } else {
+                textToEmit += remaining;
+                remaining = '';
+              }
             }
           }
-        }
 
-        if (textToEmit) {
-          fullText += textToEmit;
-          if (callbacks.onChunk) {
-            callbacks.onChunk(textToEmit);
+          if (textToEmit) {
+            fullText += textToEmit;
+            if (callbacks.onChunk) {
+              callbacks.onChunk(textToEmit);
+            }
           }
-        }
-        if (thinkToEmit && callbacks.onThink) {
-          callbacks.onThink(thinkToEmit);
+          if (thinkToEmit && callbacks.onThink) {
+            callbacks.onThink(thinkToEmit);
+          }
+        },
+        onDone: () => {
+          if (callbacks.onDone) {
+            callbacks.onDone(fullText);
+          }
+        },
+        onError: (err) => {
+          directError = err;
         }
       },
-      onDone: () => {
-        if (callbacks.onDone) {
-          callbacks.onDone(fullText);
-        }
-      },
-      onError: (err) => {
-        if (callbacks.onError) {
-          callbacks.onError(err);
+      options
+    );
+  } catch (err) {
+    directError = (err as Error).message;
+  }
+
+  // 若直连 API 失败（例如 401 密钥失效或 403 跨域/防护拒绝），平滑自动降级到 Supabase 云函数
+  if (directError && !fullText) {
+    console.warn('[Text AI Service] 直连服务响应异常，平滑降级至云函数 ai-chat:', directError);
+    try {
+      const { supabase } = await import('@/db/supabase');
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: { messages: cleanMessages, prompt_type: 'tutoring', stream: false }
+      });
+      if (!error && data) {
+        const content = typeof data === 'string' ? data : (data?.content || data?.choices?.[0]?.message?.content || '');
+        if (content) {
+          if (callbacks.onChunk) callbacks.onChunk(content);
+          if (callbacks.onDone) callbacks.onDone(content);
+          return;
         }
       }
-    },
-    options
-  );
+    } catch (fallbackErr) {
+      console.error('[Text AI Service] 云函数降级同样失败:', fallbackErr);
+    }
+
+    if (callbacks.onError) {
+      callbacks.onError(directError);
+    }
+  }
 }
 
 export const textAIService = {

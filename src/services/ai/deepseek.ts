@@ -81,7 +81,10 @@ export const deepseekService = {
     if (!resp.ok) {
       const errText = await resp.text().catch(() => '');
       console.error(`DeepSeek API Non-Stream Error HTTP ${resp.status}:`, errText);
-      throw new Error(AI_SERVICE_ERROR);
+      const detail = resp.status === 401 ? 'API 密钥验证失败 (401 Invalid Key)，请校验 DEEPSEEK_API_KEY 配置。' :
+                     resp.status === 403 ? 'API 请求被拒绝 (403 Forbidden)，请检查代理或权限设置。' :
+                     `AI 服务响应错误 (HTTP ${resp.status})`;
+      throw new Error(detail);
     }
 
     let data: any;
@@ -129,7 +132,10 @@ export const deepseekService = {
       if (!resp.ok || !resp.body) {
         const errText = await resp.text().catch(() => '');
         console.error(`DeepSeek API Stream Error HTTP ${resp.status}:`, errText);
-        callbacks.onError(AI_SERVICE_ERROR);
+        const detail = resp.status === 401 ? 'AI 密钥验证失败 (401 Invalid Key)，请校验 DEEPSEEK_API_KEY 配置。' :
+                       resp.status === 403 ? 'AI 代理请求被拒绝 (403 Forbidden)，请检查代理设置。' :
+                       `AI 服务开小差了 (${resp.status})`;
+        callbacks.onError(detail);
         return;
       }
 
