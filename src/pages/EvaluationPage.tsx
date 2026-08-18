@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
@@ -168,10 +168,18 @@ export default function EvaluationPage() {
       const exercisesResult = resourceIds.length > 0
         ? await exercisesQuery.or(`resource_id.is.null,resource_id.in.(${resourceIds.join(',')})`)
         : await exercisesQuery.is('resource_id', null);
-      const submissionsResult = await supabase.from('user_exercise_submissions')
+      let submissionsResult = await supabase.from('user_exercise_submissions')
         .select('*, exercises(question_type, options)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+
+      if (submissionsResult.error && submissionsResult.error.message.includes('question_type')) {
+        console.warn('exercises 表缺失 question_type 列，降级查询:', submissionsResult.error.message);
+        submissionsResult = await supabase.from('user_exercise_submissions')
+          .select('*, exercises(options)')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+      }
       const exerciseIds = (exercisesResult.data ?? []).map(exercise => exercise.id);
       const [exerciseKnowledgePointsResult, learningReportResult] = await Promise.all([
         exerciseIds.length > 0
@@ -460,7 +468,9 @@ export default function EvaluationPage() {
     try {
       const userAnswer = serializeExerciseAnswer(answer, questionType, exercise.options);
       const aiRequestId = crypto.randomUUID();
-      const { data, error } = await supabase.from('user_exercise_submissions').upsert({
+      let data: any = null;
+      let error: any = null;
+      const fullPayload = {
         id: submissionId,
         user_id: user.id,
         exercise_id: exercise.id,
@@ -473,7 +483,26 @@ export default function EvaluationPage() {
         ai_suggestions: null,
         ai_request_id: aiRequestId,
         time_spent: timeSpent,
-      }, { onConflict: 'id' }).select('*').single();
+      };
+      const res = await supabase.from('user_exercise_submissions').upsert(fullPayload, { onConflict: 'id' }).select('*').single();
+      data = res.data;
+      error = res.error;
+
+      if (error) {
+        console.warn('user_exercise_submissions 完整字段写入异常，平滑切换基础字段提交:', error.message);
+        const basicPayload = {
+          id: submissionId,
+          user_id: user.id,
+          exercise_id: exercise.id,
+          user_answer: userAnswer,
+          is_correct: localResult?.is_correct ?? null,
+          ai_score: localResult?.score ?? null,
+          time_spent: timeSpent,
+        };
+        const fallbackRes = await supabase.from('user_exercise_submissions').upsert(basicPayload, { onConflict: 'id' }).select('*').single();
+        data = fallbackRes.data;
+        error = fallbackRes.error;
+      }
       if (error) throw error;
       const submission = data as ExerciseSubmission;
       if (localResult && !localResult.is_correct) void addWrongBookEntry(exercise.id, submission.id);
