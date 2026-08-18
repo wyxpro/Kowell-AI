@@ -30,35 +30,16 @@ import {
   gradeObjectiveExercise,
   serializeExerciseAnswer,
 } from '@/lib/exercises';
+import { getLearningReportData, recordExerciseSubmitted, triggerLearningAdapt } from '@/services/learning/service';
 import type {
+  Evaluation,
   Exercise,
   ExerciseAiResult,
   ExerciseLocalResult,
   ExerciseQuestionType,
   ExerciseSubmission,
+  KnowledgeMastery,
 } from '@/types/types';
-
-const radarData = [
-  { subject: '知识掌握', A: 85, fullMark: 100 },
-  { subject: '实践能力', A: 72, fullMark: 100 },
-  { subject: '学习效率', A: 68, fullMark: 100 },
-  { subject: '问题解决', A: 78, fullMark: 100 },
-  { subject: '创新思维', A: 65, fullMark: 100 },
-  { subject: '协作学习', A: 70, fullMark: 100 },
-];
-
-const scoreHistory = [
-  { date: '第1周', score: 68, avg: 72 }, { date: '第2周', score: 72, avg: 73 },
-  { date: '第3周', score: 75, avg: 74 }, { date: '第4周', score: 78, avg: 75 },
-  { date: '第5周', score: 74, avg: 76 }, { date: '第6周', score: 82, avg: 77 },
-  { date: '第7周', score: 85, avg: 78 }, { date: '第8周', score: 88, avg: 79 },
-];
-
-const weaknessStats = [
-  { name: '数据结构', score: 65, threshold: 75 }, { name: '算法设计', score: 58, threshold: 75 },
-  { name: '数据库', score: 72, threshold: 75 }, { name: '操作系统', score: 80, threshold: 75 },
-  { name: '网络协议', score: 70, threshold: 75 },
-];
 
 interface ExerciseState {
   selectedAnswer: string | string[];
@@ -78,6 +59,7 @@ type ExerciseSource = { id: string; title: string; chapter: string | null };
 type ExerciseSubmissionRow = ExerciseSubmission & {
   exercises: { question_type?: unknown; options?: unknown } | null;
 };
+type KnowledgePointRow = { id: string; title: string };
 
 const initialExerciseState = (): ExerciseState => ({
   selectedAnswer: '',
@@ -104,6 +86,10 @@ export default function EvaluationPage() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [submissions, setSubmissions] = useState<ExerciseSubmission[]>([]);
   const [submissionQuestionTypes, setSubmissionQuestionTypes] = useState<Record<string, ExerciseQuestionType>>({});
+  const [exerciseKnowledgePointIds, setExerciseKnowledgePointIds] = useState<Record<string, string>>({});
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [mastery, setMastery] = useState<KnowledgeMastery[]>([]);
+  const [knowledgePointTitles, setKnowledgePointTitles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'practice' | 'oral' | 'essay' | 'history'>('practice');
   const [exState, setExState] = useState<Record<string, ExerciseState>>({});
@@ -117,12 +103,14 @@ export default function EvaluationPage() {
   const [oralRecording, setOralRecording] = useState(false);
   const [oralText, setOralText] = useState('');
   const [oralResult, setOralResult] = useState<{ score: number; feedback: string; strengths: string[]; improvements: string[] } | null>(null);
+  const [oralError, setOralError] = useState<string | null>(null);
   const [oralLoading, setOralLoading] = useState(false);
 
   // 综合论述评估状态
   const [essayTopic, setEssayTopic] = useState('');
   const [essayContent, setEssayContent] = useState('');
   const [essayResult, setEssayResult] = useState<{ score: number; feedback: string; dimensions: { name: string; score: number }[] } | null>(null);
+  const [essayError, setEssayError] = useState<string | null>(null);
   const [essayLoading, setEssayLoading] = useState(false);
 
   // 资源中心练习题来源
@@ -184,9 +172,25 @@ export default function EvaluationPage() {
         .select('*, exercises(question_type, options)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+      const exerciseIds = (exercisesResult.data ?? []).map(exercise => exercise.id);
+      const [exerciseKnowledgePointsResult, learningReportResult] = await Promise.all([
+        exerciseIds.length > 0
+          ? supabase.from('exercise_knowledge_points').select('exercise_id, knowledge_point_id').in('exercise_id', exerciseIds)
+          : Promise.resolve({ data: [], error: null }),
+        getLearningReportData().catch(error => {
+          console.warn('学习概览数据加载失败：', error);
+          return null;
+        }),
+      ]);
+      const knowledgePointIds = [...new Set((exerciseKnowledgePointsResult.data ?? []).map(row => row.knowledge_point_id))];
+      const knowledgePointsResult = knowledgePointIds.length > 0
+        ? await supabase.from('knowledge_points').select('id, title').in('id', knowledgePointIds)
+        : { data: [], error: null };
 
       if (exercisesResult.error) toast.error(`练习题加载失败：${exercisesResult.error.message}`);
       if (submissionsResult.error) toast.error(`答题记录加载失败：${submissionsResult.error.message}`);
+      if (exerciseKnowledgePointsResult.error) console.warn('练习知识点映射加载失败：', exerciseKnowledgePointsResult.error.message);
+      if (knowledgePointsResult.error) console.warn('知识点名称加载失败：', knowledgePointsResult.error.message);
       if (cancelled || !mountedRef.current) return;
 
       const sourceById = new Map(resources.map(resource => [resource.id, resource]));
@@ -212,11 +216,23 @@ export default function EvaluationPage() {
       loadedSubmissions.forEach(submission => {
         if (!newestByExercise.has(submission.exercise_id)) newestByExercise.set(submission.exercise_id, submission);
       });
+      const knowledgePointByExercise = (exerciseKnowledgePointsResult.data ?? []).reduce<Record<string, string>>((result, row) => {
+        if (!result[row.exercise_id]) result[row.exercise_id] = row.knowledge_point_id;
+        return result;
+      }, {});
+      const titlesByKnowledgePoint = ((knowledgePointsResult.data ?? []) as KnowledgePointRow[]).reduce<Record<string, string>>((result, point) => {
+        result[point.id] = point.title;
+        return result;
+      }, {});
 
       setExerciseSources(availableSources);
       setExercises(loadedExercises);
       setSubmissions(loadedSubmissions);
       setSubmissionQuestionTypes(loadedSubmissionQuestionTypes);
+      setExerciseKnowledgePointIds(knowledgePointByExercise);
+      setEvaluations(learningReportResult?.evaluations ?? []);
+      setMastery(learningReportResult?.mastery ?? []);
+      setKnowledgePointTitles(titlesByKnowledgePoint);
       setExState(previous => {
         const next = { ...previous };
         newestByExercise.forEach((submission, exerciseId) => {
@@ -301,6 +317,36 @@ export default function EvaluationPage() {
     if (error) toast.error(`错题本保存失败：${error.message}`);
   };
 
+  const recordSubmissionLearningEvent = async (
+    exercise: Exercise,
+    submission: ExerciseSubmission,
+    phase: 'submitted' | 'ai-scored',
+  ) => {
+    try {
+      const event = await recordExerciseSubmitted({
+        eventType: 'exercise_submitted',
+        exerciseId: exercise.id,
+        submissionId: submission.id,
+        knowledgePointId: exerciseKnowledgePointIds[exercise.id] ?? null,
+        idempotencyKey: `exercise-submission:${submission.id}:${phase}:${phase === 'ai-scored' ? submission.ai_request_id ?? 'completed' : 'initial'}`,
+        payload: {
+          is_correct: submission.is_correct,
+          ai_score: submission.ai_score,
+          attempt_no: 1,
+          references: {
+            exercise_id: exercise.id,
+            submission_id: submission.id,
+          },
+        },
+      });
+      void triggerLearningAdapt(event.id).catch(error => {
+        console.warn('学习适配触发失败，不影响答题结果：', error);
+      });
+    } catch (error) {
+      console.warn('学习事件记录失败，不影响答题结果：', error);
+    }
+  };
+
   const runAiEvaluation = async (
     exercise: Exercise,
     answer: string | string[],
@@ -365,15 +411,17 @@ export default function EvaluationPage() {
       if (error) throw error;
       if (!updatedSubmission || !mountedRef.current || aiRequestVersions.current[exercise.id] !== version) return;
 
-      upsertSubmission(updatedSubmission as ExerciseSubmission);
+      const completedSubmission = updatedSubmission as ExerciseSubmission;
+      upsertSubmission(completedSubmission);
       setExerciseState(exercise.id, state => ({
         ...state,
         aiStatus: 'completed',
         aiResult,
         aiError: null,
       }));
-      if (questionType === 'subjective' && !aiResult.is_correct) {
-        void addWrongBookEntry(exercise.id, submissionId);
+      if (questionType === 'subjective') {
+        void recordSubmissionLearningEvent(exercise, completedSubmission, 'ai-scored');
+        if (!aiResult.is_correct) void addWrongBookEntry(exercise.id, submissionId);
       }
     } catch (error) {
       if (aiRequestVersions.current[exercise.id] !== version) return;
@@ -439,6 +487,7 @@ export default function EvaluationPage() {
       }
       setSubmissionQuestionTypes(previous => ({ ...previous, [exercise.id]: questionType }));
       upsertSubmission(submission);
+      void recordSubmissionLearningEvent(exercise, submission, 'submitted');
       setExerciseState(exercise.id, state => ({
         ...state,
         submissionStatus: 'saved',
@@ -554,6 +603,48 @@ export default function EvaluationPage() {
     ? Math.round((answeredSubmissions.filter(submission => submission.is_correct).length / answeredSubmissions.length) * 100)
     : 0;
   const totalDurationMinutes = Math.round(submissions.reduce((sum, submission) => sum + (submission.time_spent || 0), 0) / 60);
+  const radarData = useMemo(() => {
+    if (mastery.length > 0) {
+      return mastery.slice(0, 6).map(item => ({
+        subject: knowledgePointTitles[item.knowledge_point_id] ?? '知识点',
+        A: Math.round(item.mastery_score),
+        fullMark: 100,
+      }));
+    }
+    if (answeredSubmissions.length > 0) {
+      return [{ subject: '练习正确率', A: correctRate, fullMark: 100 }];
+    }
+    return [];
+  }, [answeredSubmissions.length, correctRate, knowledgePointTitles, mastery]);
+  const weaknessStats = useMemo(() => mastery
+    .slice()
+    .sort((a, b) => a.mastery_score - b.mastery_score)
+    .slice(0, 5)
+    .map(item => ({
+      name: knowledgePointTitles[item.knowledge_point_id] ?? '未命名知识点',
+      score: Math.round(item.mastery_score),
+      threshold: 75,
+    })), [knowledgePointTitles, mastery]);
+  const scoreHistory = useMemo(() => {
+    const points = new Map<string, { total: number; count: number }>();
+    answeredSubmissions.forEach(submission => {
+      const date = submission.created_at.slice(0, 10);
+      const questionType = exerciseTypeById.get(submission.exercise_id);
+      const score = questionType === 'subjective' ? Number(submission.ai_score ?? 0) : submission.is_correct ? 100 : 0;
+      const current = points.get(date) ?? { total: 0, count: 0 };
+      points.set(date, { total: current.total + score, count: current.count + 1 });
+    });
+    evaluations.forEach(evaluation => {
+      const date = evaluation.created_at.slice(0, 10);
+      if (points.has(date)) return;
+      const score = evaluation.score ?? evaluation.knowledge_score;
+      if (typeof score === 'number') points.set(date, { total: score, count: 1 });
+    });
+    return [...points.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12)
+      .map(([date, point]) => ({ date: `${date.slice(5, 7)}-${date.slice(8, 10)}`, score: Math.round(point.total / point.count) }));
+  }, [answeredSubmissions, evaluations, exerciseTypeById]);
 
   return (
     <AppLayout>
@@ -633,16 +724,20 @@ export default function EvaluationPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={320}>
-                  <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
-                    <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10 }} />
-                    <Radar name="能力得分" dataKey="A" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.25} strokeWidth={2} />
-                    <Legend wrapperStyle={{ paddingTop: 8 }} />
-                    <Tooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
+                {radarData.length === 0 ? (
+                  <div className="h-80 flex items-center justify-center text-sm text-muted-foreground">暂无已评估的知识点或答题数据</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={320}>
+                    <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
+                      <PolarGrid stroke="hsl(var(--border))" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10 }} />
+                      <Radar name="能力得分" dataKey="A" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.25} strokeWidth={2} />
+                      <Legend wrapperStyle={{ paddingTop: 8 }} />
+                      <Tooltip />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -652,7 +747,9 @@ export default function EvaluationPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {weaknessStats.map(item => (
+                {weaknessStats.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-muted-foreground">暂无知识点掌握度数据，完成带知识点的练习后将显示薄弱项</p>
+                ) : weaknessStats.map(item => (
                   <div key={item.name} className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{item.name}</span>
@@ -680,19 +777,22 @@ export default function EvaluationPage() {
               <CardTitle className="text-base flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" />分数变化趋势</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="w-full min-w-0 overflow-hidden">
-                <ResponsiveContainer width="100%" height={360}>
-                  <LineChart data={scoreHistory}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-                    <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }} />
-                    <Legend wrapperStyle={{ paddingTop: 8 }} />
-                    <Line type="monotone" dataKey="score" name="我的得分" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 4, fill: 'hsl(var(--primary))' }} />
-                    <Line type="monotone" dataKey="avg" name="班级平均" stroke="hsl(var(--muted-foreground))" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              {scoreHistory.length === 0 ? (
+                <div className="h-80 flex items-center justify-center text-sm text-muted-foreground">暂无已完成评分的答题或评估记录</div>
+              ) : (
+                <div className="w-full min-w-0 overflow-hidden">
+                  <ResponsiveContainer width="100%" height={360}>
+                    <LineChart data={scoreHistory}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                      <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                      <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }} />
+                      <Legend wrapperStyle={{ paddingTop: 8 }} />
+                      <Line type="monotone" dataKey="score" name="我的得分" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 4, fill: 'hsl(var(--primary))' }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -964,6 +1064,8 @@ export default function EvaluationPage() {
                     if (!oralTopic.trim()) { toast.error('请填写评估主题'); return; }
                     if (!oralText.trim()) { toast.error('请输入口述内容'); return; }
                     setOralLoading(true);
+                    setOralError(null);
+                    setOralResult(null);
                     try {
                       const data = await textAIService.evaluateAnswer({
                         question: `请评估以下关于「${oralTopic}」的口述表达：\n\n${oralText}`,
@@ -971,22 +1073,18 @@ export default function EvaluationPage() {
                         correctAnswer: '',
                         userAnswer: oralText,
                       });
+                      if (typeof data?.score !== 'number') throw new Error('AI 未返回有效评分');
                       setOralResult({
-                        score: data?.score ?? Math.floor(Math.random() * 25 + 70),
-                        feedback: data?.feedback ?? '表达较为流畅，知识点覆盖基本完整。建议在关键概念处给出更具体的示例，以增强说服力。',
-                        strengths: data?.strengths ?? ['逻辑结构清晰', '关键概念理解正确'],
-                        improvements: data?.improvements ?? ['可以补充实际应用场景', '部分术语可更精准'],
+                        score: data.score,
+                        feedback: data.feedback ?? 'AI 已完成评分。',
+                        strengths: data.strengths ?? [],
+                        improvements: data.improvements ?? [],
                       });
                       toast.success('口述评估完成！');
-                    } catch {
-                      // 降级：本地模拟评估结果
-                      setOralResult({
-                        score: Math.floor(Math.random() * 20 + 72),
-                        feedback: `你对「${oralTopic}」的口述表达整体清晰，知识掌握程度良好。建议增加具体案例来加强说明。`,
-                        strengths: ['逻辑层次分明', '核心概念把握准确', '语言表达流畅'],
-                        improvements: ['可增加实际案例', '结论部分可更加明确'],
-                      });
-                      toast.success('评估完成');
+                    } catch (error) {
+                      const message = error instanceof Error ? error.message : '口述评估暂不可用';
+                      setOralError(message);
+                      toast.error(`口述评估失败：${message}`);
                     } finally {
                       setOralLoading(false);
                     }
@@ -996,6 +1094,10 @@ export default function EvaluationPage() {
                 >
                   {oralLoading ? <><Loader2 className="w-4 h-4 animate-spin" />AI评估中...</> : <><Brain className="w-4 h-4" />提交评估</>}
                 </Button>
+
+                {oralError && (
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">口述评估失败：{oralError}</div>
+                )}
 
                 <AnimatePresence>
                   {oralResult && (
@@ -1078,6 +1180,8 @@ export default function EvaluationPage() {
                     if (!essayTopic.trim()) { toast.error('请填写论述题目'); return; }
                     if (essayContent.trim().length < 50) { toast.error('论述内容至少50字'); return; }
                     setEssayLoading(true);
+                    setEssayError(null);
+                    setEssayResult(null);
                     try {
                       const data = await textAIService.evaluateAnswer({
                         question: `请对以下关于「${essayTopic}」的综合论述进行多维度评估：\n\n${essayContent}`,
@@ -1085,29 +1189,17 @@ export default function EvaluationPage() {
                         correctAnswer: '',
                         userAnswer: essayContent,
                       });
+                      if (typeof data?.score !== 'number') throw new Error('AI 未返回有效评分');
                       setEssayResult({
-                        score: data?.score ?? Math.floor(Math.random() * 20 + 74),
-                        feedback: data?.feedback ?? '论述结构完整，论点清晰。知识准确性高，建议加强论据的多样性。',
-                        dimensions: data?.dimensions ?? [
-                          { name: '内容深度', score: Math.floor(Math.random() * 20 + 72) },
-                          { name: '论证逻辑', score: Math.floor(Math.random() * 20 + 70) },
-                          { name: '语言表达', score: Math.floor(Math.random() * 20 + 75) },
-                          { name: '知识准确', score: Math.floor(Math.random() * 20 + 78) },
-                        ],
+                        score: data.score,
+                        feedback: data.feedback ?? 'AI 已完成评分。',
+                        dimensions: data.dimensions ?? [],
                       });
                       toast.success('论述评估完成！');
-                    } catch {
-                      setEssayResult({
-                        score: Math.floor(Math.random() * 20 + 72),
-                        feedback: `你对「${essayTopic}」的论述整体思路清晰，建议进一步深化论据，增加具体案例支撑。`,
-                        dimensions: [
-                          { name: '内容深度', score: Math.floor(Math.random() * 20 + 70) },
-                          { name: '论证逻辑', score: Math.floor(Math.random() * 20 + 72) },
-                          { name: '语言表达', score: Math.floor(Math.random() * 20 + 75) },
-                          { name: '知识准确', score: Math.floor(Math.random() * 20 + 76) },
-                        ],
-                      });
-                      toast.success('评估完成');
+                    } catch (error) {
+                      const message = error instanceof Error ? error.message : '论述评估暂不可用';
+                      setEssayError(message);
+                      toast.error(`论述评估失败：${message}`);
                     } finally {
                       setEssayLoading(false);
                     }
@@ -1117,6 +1209,10 @@ export default function EvaluationPage() {
                 >
                   {essayLoading ? <><Loader2 className="w-4 h-4 animate-spin" />AI评估中...</> : <><Brain className="w-4 h-4" />提交评估</>}
                 </Button>
+
+                {essayError && (
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">论述评估失败：{essayError}</div>
+                )}
 
                 <AnimatePresence>
                   {essayResult && (

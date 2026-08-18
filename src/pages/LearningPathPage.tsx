@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+﻿import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
 import { textAIService } from '@/services/ai';
@@ -16,7 +16,8 @@ import {
   Maximize2, Info, Trash2, X, MousePointer2, GitBranch,
   Type, Palette, Move, GripVertical,
 } from 'lucide-react';
-import type { LearningPath, PathStage } from '@/types/types';
+import { recordLearningEvent, triggerLearningAdapt } from '@/services/learning/service';
+import type { KnowledgePoint, LearningPath, PathStage, PathStageV2, Resource } from '@/types/types';
 
 // ─── 资源类型定义 ───────────────────────────────────────────────
 const RESOURCE_TYPES = [
@@ -40,8 +41,47 @@ const STAGE_THEMES = [
   { from: 'from-rose-400',    to: 'to-pink-500',    ring: 'ring-rose-400',    glow: 'shadow-rose-200 dark:shadow-rose-900/50'     },
 ];
 
-// ─── 按资源类型生成路径模板 ──────────────────────────────────────
-function buildStagesForResource(rid: ResourceId): PathStage[] {
+type DisplayPathStage = PathStageV2;
+type NormalizedLearningPath = Omit<LearningPath, 'stages'> & { stages: DisplayPathStage[] };
+
+function normalizeStage(stage: PathStage | Partial<PathStageV2>, index: number): DisplayPathStage {
+  const candidate = stage as Partial<PathStageV2>;
+  const resourceIds = Array.isArray(candidate.resourceIds)
+    ? candidate.resourceIds.filter((id): id is string => typeof id === 'string')
+    : Array.isArray(candidate.resources)
+      ? candidate.resources.filter((id): id is string => typeof id === 'string')
+      : [];
+  return {
+    id: typeof candidate.id === 'string' ? candidate.id : crypto.randomUUID(),
+    title: typeof candidate.title === 'string' ? candidate.title : `学习阶段 ${index + 1}`,
+    description: typeof candidate.description === 'string' ? candidate.description : '',
+    order: typeof candidate.order === 'number' ? candidate.order : index + 1,
+    resources: resourceIds,
+    resourceIds,
+    knowledgePointIds: Array.isArray(candidate.knowledgePointIds)
+      ? candidate.knowledgePointIds.filter((id): id is string => typeof id === 'string')
+      : [],
+    recommendedReason: typeof candidate.recommendedReason === 'string'
+      ? candidate.recommendedReason
+      : typeof (candidate as { reason?: unknown }).reason === 'string'
+        ? (candidate as { reason: string }).reason
+        : null,
+    completedAt: typeof candidate.completedAt === 'string' ? candidate.completedAt : null,
+    sourceEventId: typeof candidate.sourceEventId === 'string' ? candidate.sourceEventId : null,
+    status: candidate.status,
+    completed: Boolean(candidate.completed),
+  };
+}
+
+function normalizePath(path: LearningPath): NormalizedLearningPath {
+  return { ...path, stages: Array.isArray(path.stages) ? path.stages.map(normalizeStage) : [] };
+}
+
+function toStageRecord(stage: DisplayPathStage): PathStageV2 {
+  return { ...stage, resources: stage.resourceIds, resourceIds: stage.resourceIds };
+}
+
+function buildStagesForResource(rid: ResourceId, resourceIds: string[], knowledgePointIds: string[]): DisplayPathStage[] {
   const base: Record<ResourceId, Array<{ title: string; description: string }>> = {
     document: [
       { title: '基础概念精读', description: '系统阅读课程文档，掌握核心概念与基本原理' },
@@ -87,16 +127,19 @@ function buildStagesForResource(rid: ResourceId): PathStage[] {
     ],
   };
   return (base[rid] || base.document).map((s, i) => ({
-    id: `${rid}-${i + 1}`,
+    id: crypto.randomUUID(),
     title: s.title,
     description: s.description,
     order: i + 1,
-    resources: [rid],
+    resources: resourceIds,
+    resourceIds,
+    knowledgePointIds,
+    recommendedReason: `基于当前课程中的 ${rid} 资源生成`,
     completed: false,
   }));
 }
 
-interface AIRecommendation { title: string; stages: PathStage[]; reasoning: string; }
+interface AIRecommendation { title: string; stages: DisplayPathStage[]; reasoning: string; }
 
 // ─── 单节点卡片 ──────────────────────────────────────────────────
 function StageNode({
@@ -105,7 +148,7 @@ function StageNode({
   onDragStart, onDragOver, onDrop,
   isDragging, activeTool,
 }: {
-  stage: PathStage; index: number; isCurrent: boolean; isCompleted: boolean; isLocked: boolean;
+  stage: DisplayPathStage; index: number; isCurrent: boolean; isCompleted: boolean; isLocked: boolean;
   onComplete: () => void; completing: boolean; onDelete: () => void;
   onDragStart: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
@@ -173,24 +216,20 @@ function StageNode({
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                 <p className="text-xs text-muted-foreground text-pretty mb-3 leading-relaxed">{stage.description}</p>
-                {stage.resources.length > 0 && (
+                {stage.resourceIds.length > 0 && (
                   <div className="space-y-1.5 mb-3">
                     <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">配套资源</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {stage.resources.map(rId => {
-                        const r = RESOURCE_TYPES.find(rt => rt.id === rId);
-                        if (!r) return null;
-                        return (
-                          <div key={rId} className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${r.bg} ${r.color} ${r.border}`}>
-                            <r.icon className="w-2.5 h-2.5" />
-                            {r.label}
-                            {!r.available && <Lock className="w-2 h-2 ml-0.5 opacity-50" />}
-                          </div>
-                        );
-                      })}
+                      {stage.resourceIds.map(resourceId => (
+                        <div key={resourceId} title={resourceId} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-muted text-muted-foreground border-border">
+                          <FileText className="w-2.5 h-2.5" />
+                          已绑定资源
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
+                {stage.recommendedReason && <p className="text-[10px] text-muted-foreground mb-3">推荐原因：{stage.recommendedReason}</p>}
               </motion.div>
             )}
           </AnimatePresence>
@@ -229,7 +268,7 @@ const CANVAS_TOOLS: { id: CanvasTool; icon: React.ElementType; label: string; co
 // ─── 主页面 ──────────────────────────────────────────────────────
 export default function LearningPathPage() {
   const { user, profile } = useAuth();
-  const [path, setPath] = useState<LearningPath | null>(null);
+  const [path, setPath] = useState<NormalizedLearningPath | null>(null);
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -251,8 +290,58 @@ export default function LearningPathPage() {
   const dragStartRef = useRef<{ mx: number; my: number; ox: number; oy: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  const currentCourseId = path?.course_id ?? null;
+
+  const loadUserResources = useCallback(async (courseId: string | null, resourceType?: ResourceId): Promise<Resource[]> => {
+    if (!user) return [];
+    let query = supabase.from('resources').select('*').eq('user_id', user.id).eq('status', 'completed');
+    if (courseId) query = query.eq('course_id', courseId);
+    if (resourceType) query = query.eq('resource_type', resourceType);
+    const { data, error } = await query.order('updated_at', { ascending: false }).limit(24);
+    if (error) throw error;
+    return (data as Resource[] | null) ?? [];
+  }, [user]);
+
+  const resolvePreferredCourseId = useCallback(async (resourceType?: ResourceId): Promise<string | null> => {
+    if (currentCourseId) return currentCourseId;
+    const resources = await loadUserResources(null, resourceType);
+    return resources.find(resource => resource.course_id)?.course_id ?? null;
+  }, [currentCourseId, loadUserResources]);
+
+  const loadKnowledgePoints = useCallback(async (courseId: string | null): Promise<KnowledgePoint[]> => {
+    if (!courseId) return [];
+    const { data, error } = await supabase.from('knowledge_points').select('*').eq('course_id', courseId).order('code');
+    if (error) throw error;
+    return (data as KnowledgePoint[] | null) ?? [];
+  }, []);
+
+  const savePathVersion = useCallback(async (
+    next: { title: string; stages: DisplayPathStage[]; courseId: string | null; reasoning?: Record<string, unknown> },
+  ) => {
+    if (!user) return null;
+    const completedCount = next.stages.filter(stage => stage.completed).length;
+    const progressPercent = next.stages.length ? Math.round((completedCount / next.stages.length) * 100) : 0;
+    const currentStage = Math.max(0, next.stages.findIndex(stage => !stage.completed));
+    const payload = {
+      user_id: user.id,
+      course_id: next.courseId,
+      title: next.title,
+      stages: next.stages.map(toStageRecord),
+      current_stage: currentStage,
+      progress_percent: progressPercent,
+      reasoning: next.reasoning ?? {},
+      version: (path?.version ?? 0) + 1,
+    };
+    const request = path
+      ? supabase.from('learning_paths').update(payload).eq('id', path.id)
+      : supabase.from('learning_paths').insert(payload);
+    const { data, error } = await request.select().maybeSingle();
+    if (error) throw error;
+    return data ? normalizePath(data as LearningPath) : null;
+  }, [path, user]);
+
   // 初始化节点位置（横向排列）
-  const initPositions = useCallback((stages: PathStage[]) => {
+  const initPositions = useCallback((stages: Array<Pick<PathStage, 'id'>>) => {
     setNodePositions(prev => {
       const next = { ...prev };
       stages.forEach((s, i) => {
@@ -265,11 +354,14 @@ export default function LearningPathPage() {
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     supabase.from('learning_paths').select('*').eq('user_id', user.id)
-      .order('created_at', { ascending: false }).limit(1)
-      .then(({ data }) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setPath(data[0]);
-          initPositions(data[0].stages);
+      .order('updated_at', { ascending: false }).limit(1)
+      .then(({ data, error }) => {
+        if (error) {
+          toast.error(`加载学习路径失败：${error.message}`);
+        } else if (Array.isArray(data) && data.length > 0) {
+          const latestPath = normalizePath(data[0] as LearningPath);
+          setPath(latestPath);
+          initPositions(latestPath.stages);
         }
         setLoading(false);
       });
@@ -283,21 +375,32 @@ export default function LearningPathPage() {
   const generateByResource = async (rid: ResourceId) => {
     if (!user) return;
     setGenerating(true);
-    const rt = RESOURCE_TYPES.find(r => r.id === rid)!;
-    const stages = buildStagesForResource(rid);
-    if (path) await supabase.from('learning_paths').delete().eq('id', path.id);
-    const { data } = await supabase.from('learning_paths').insert({
-      user_id: user.id,
-      title: `${rt.label}学习路径`,
-      stages, current_stage: 0, progress_percent: 0,
-    }).select().maybeSingle();
-    if (data) {
-      setPath(data);
+    try {
+      const rt = RESOURCE_TYPES.find(resource => resource.id === rid)!;
+      const courseId = await resolvePreferredCourseId(rid);
+      const resources = await loadUserResources(courseId, rid);
+      if (!resources.length) {
+        toast.error(`当前${courseId ? '课程中' : '用户下'}没有已完成的「${rt.label}」资源，无法绑定真实资源 ID`);
+        return;
+      }
+      const knowledgePoints = await loadKnowledgePoints(courseId);
+      const stages = buildStagesForResource(rid, resources.map(resource => resource.id), knowledgePoints.map(point => point.id));
+      const saved = await savePathVersion({
+        title: `${rt.label}学习路径`,
+        stages,
+        courseId,
+        reasoning: { source: 'resource_type_generation', resourceType: rid, resourceIds: resources.map(resource => resource.id) },
+      });
+      if (!saved) throw new Error('路径保存未返回数据');
+      setPath(saved);
       setNodePositions({});
-      initPositions(stages);
-      toast.success(`已生成「${rt.label}」个性化学习路径！`);
+      initPositions(saved.stages);
+      toast.success(`已更新「${rt.label}」学习路径 v${saved.version ?? 1}`);
+    } catch (error) {
+      toast.error(`生成路径失败：${error instanceof Error ? error.message : '未知错误'}`);
+    } finally {
+      setGenerating(false);
     }
-    setGenerating(false);
   };
 
   // ── AI 推荐 ──
@@ -340,24 +443,33 @@ export default function LearningPathPage() {
         portraitSummary
       });
 
-      // 4. Map the recommendation JSON to AIRecommendation interface
-      const stages: PathStage[] = (result.resources && result.resources.length > 0)
-        ? result.resources.map((res: any, i: number) => ({
-            id: `ai-stage-${Date.now()}-${i}`,
-            title: res.title || `强化: ${result.next_topic}`,
-            description: `推荐类型：${res.type === 'document' ? '课程文档' : res.type === 'exercise' ? '练习题' : '代码示例'}。建议重点：${(result.focus_points || []).join('、')}。优先级：${res.priority || '高'}。`,
-            order: i + 1,
-            resources: [res.type || 'document'],
-            completed: false
-          }))
-        : (result.focus_points || ['核心原理', '案例实践', '巩固练习']).map((fp: string, i: number) => ({
-            id: `ai-stage-${Date.now()}-${i}`,
-            title: fp,
-            description: `针对核心考点「${fp}」进行深入学习。难度：${result.difficulty || '中级'}。建议学时：${result.estimated_hours || 4}小时。`,
-            order: i + 1,
-            resources: ['document'],
-            completed: false
-          }));
+      // 4. AI 只决定排序和重点；每个阶段必须绑定当前用户真实资源 UUID。
+      const courseId = await resolvePreferredCourseId();
+      const resources = await loadUserResources(courseId);
+      if (!resources.length) throw new Error('当前用户没有可绑定的已完成资源，请先生成学习资源');
+      const courseResources = courseId ? resources.filter(resource => resource.course_id === courseId) : resources;
+      const usableResources = courseResources.length ? courseResources : resources;
+      const knowledgePoints = await loadKnowledgePoints(courseId);
+      const requestedTypes = (result.resources ?? []).map((resource: { type?: unknown }) => resource.type).filter((type): type is ResourceId => typeof type === 'string' && RESOURCE_TYPES.some(item => item.id === type));
+      const stageInputs: Array<{ title?: string; type?: string; priority?: string }> = result.resources && result.resources.length > 0
+        ? result.resources
+        : (result.focus_points || ['核心原理', '案例实践', '巩固练习']).map((title: string) => ({ title, priority: '高' }));
+      const stages: DisplayPathStage[] = stageInputs.map((res, i) => {
+        const resourceType = RESOURCE_TYPES.some(item => item.id === res.type) ? res.type as ResourceId : undefined;
+        const matching = resourceType ? usableResources.filter(resource => resource.resource_type === resourceType) : [];
+        const boundResources = matching.length ? matching : usableResources;
+        return {
+          id: crypto.randomUUID(),
+          title: res.title || `强化: ${result.next_topic}`,
+          description: `建议重点：${(result.focus_points || []).join('、')}。优先级：${res.priority || '高'}。`,
+          order: i + 1,
+          resources: boundResources.map(resource => resource.id),
+          resourceIds: boundResources.map(resource => resource.id),
+          knowledgePointIds: knowledgePoints.map(point => point.id),
+          recommendedReason: result.reason || `根据 AI 推荐的${requestedTypes.join('、') || '当前'}资源安排`,
+          completed: false,
+        };
+      });
 
       setRecommendation({
         title: `${result.next_topic}推荐路径`,
@@ -376,16 +488,21 @@ export default function LearningPathPage() {
 
   const applyRecommendation = async () => {
     if (!user || !recommendation) return;
-    const { data } = await supabase.from('learning_paths').insert({
-      user_id: user.id, title: recommendation.title,
-      stages: recommendation.stages, current_stage: 0, progress_percent: 0,
-    }).select().maybeSingle();
-    if (data) {
-      setPath(data);
+    try {
+      const saved = await savePathVersion({
+        title: recommendation.title,
+        stages: recommendation.stages,
+        courseId: recommendation.stages[0]?.resourceIds.length ? await resolvePreferredCourseId() : currentCourseId,
+        reasoning: { source: 'ai_recommendation', reason: recommendation.reasoning },
+      });
+      if (!saved) throw new Error('路径保存未返回数据');
+      setPath(saved);
       setNodePositions({});
-      initPositions(recommendation.stages);
+      initPositions(saved.stages);
       setRecommendation(null);
-      toast.success('AI 推荐路径已应用！');
+      toast.success(`AI 推荐路径已应用为 v${saved.version ?? 1}`);
+    } catch (error) {
+      toast.error(`应用路径失败：${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
 
@@ -393,79 +510,129 @@ export default function LearningPathPage() {
   const completeStage = async (stageId: string) => {
     if (!path) return;
     setCompletingId(stageId);
-    const updatedStages = path.stages.map(s => s.id === stageId ? { ...s, completed: true } : s);
-    const completedCount = updatedStages.filter(s => s.completed).length;
-    const progressPercent = Math.round((completedCount / updatedStages.length) * 100);
-    const currentStage = updatedStages.findIndex(s => !s.completed);
-    const { data } = await supabase.from('learning_paths').update({
-      stages: updatedStages, progress_percent: progressPercent,
-      current_stage: currentStage >= 0 ? currentStage : updatedStages.length - 1,
-    }).eq('id', path.id).select().maybeSingle();
-    if (data) {
-      setPath(data);
+    try {
+      const stage = path.stages.find(item => item.id === stageId);
+      if (!stage) throw new Error('未找到待完成阶段');
+      const completedAt = new Date().toISOString();
+      const updatedStages = path.stages.map(item => item.id === stageId
+        ? { ...item, completed: true, completedAt, status: 'completed' as const }
+        : item);
+      const saved = await savePathVersion({
+        title: path.title,
+        stages: updatedStages,
+        courseId: path.course_id ?? null,
+        reasoning: path.reasoning ?? {},
+      });
+      if (!saved) throw new Error('路径保存未返回数据');
+      setPath(saved);
+      const progressPercent = saved.progress_percent;
       if (progressPercent === 100) { setShowCelebration(true); setTimeout(() => setShowCelebration(false), 3500); }
       toast.success('🎉 阶段完成！继续加油！');
+
+      // 事件与适配不阻塞用户完成操作；缺少课程/知识点时仍保留事件，但适配服务可能拒绝证据不足的事件。
+      void (async () => {
+        try {
+          const event = await recordLearningEvent({
+            eventType: 'path_stage_completed',
+            courseId: path.course_id ?? null,
+            knowledgePointId: stage.knowledgePointIds[0] ?? null,
+            resourceId: stage.resourceIds[0] ?? null,
+            payload: {
+              stageId: stage.id,
+              resourceIds: stage.resourceIds,
+              knowledgePointIds: stage.knowledgePointIds,
+              progress: progressPercent,
+            },
+            idempotencyKey: `path-stage:${path.id}:${stage.id}:${completedAt}`,
+          });
+          void triggerLearningAdapt(event.id).catch(error => console.warn('阶段完成后的学习适配失败', error));
+        } catch (error) {
+          console.warn('记录路径阶段完成事件失败', error);
+        }
+      })();
+    } catch (error) {
+      toast.error(`完成阶段失败：${error instanceof Error ? error.message : '未知错误'}`);
+    } finally {
+      setCompletingId(null);
     }
-    setCompletingId(null);
   };
 
   // ── 删除节点 ──
   const deleteStage = async (stageId: string) => {
     if (!path) return;
-    const updatedStages = path.stages.filter(s => s.id !== stageId).map((s, i) => ({ ...s, order: i + 1 }));
-    const completedCount = updatedStages.filter(s => s.completed).length;
-    const progressPercent = updatedStages.length ? Math.round((completedCount / updatedStages.length) * 100) : 0;
-    const currentStage = updatedStages.findIndex(s => !s.completed);
-    const { data } = await supabase.from('learning_paths').update({
-      stages: updatedStages, progress_percent: progressPercent,
-      current_stage: currentStage >= 0 ? currentStage : Math.max(0, updatedStages.length - 1),
-    }).eq('id', path.id).select().maybeSingle();
-    if (data) {
-      setPath(data);
-      // 清除已删除节点位置
-      setNodePositions(prev => { const next = { ...prev }; delete next[stageId]; return next; });
+    try {
+      const updatedStages = path.stages.filter(stage => stage.id !== stageId).map((stage, index) => ({ ...stage, order: index + 1 }));
+      const saved = await savePathVersion({ title: path.title, stages: updatedStages, courseId: path.course_id ?? null, reasoning: path.reasoning ?? {} });
+      if (!saved) throw new Error('路径保存未返回数据');
+      setPath(saved);
+      setNodePositions(previous => { const next = { ...previous }; delete next[stageId]; return next; });
       toast.success('节点已删除');
+    } catch (error) {
+      toast.error(`删除节点失败：${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
 
   // ── 新增节点 ──
   const addStage = async () => {
     if (!path || !newNodeTitle.trim()) return;
-    const newStage: PathStage = {
-      id: `custom-${Date.now()}`,
-      title: newNodeTitle.trim(),
-      description: newNodeDesc.trim() || '自定义学习阶段',
-      order: path.stages.length + 1,
-      resources: [selectedResource],
-      completed: false,
-    };
-    const updatedStages = [...path.stages, newStage];
-    const { data } = await supabase.from('learning_paths').update({ stages: updatedStages })
-      .eq('id', path.id).select().maybeSingle();
-    if (data) {
-      setPath(data);
+    try {
+      const resources = await loadUserResources(path.course_id ?? null, selectedResource);
+      if (!resources.length) {
+        toast.error('当前课程没有可绑定的所选资源，无法新增阶段');
+        return;
+      }
+      const newStage: DisplayPathStage = {
+        id: crypto.randomUUID(),
+        title: newNodeTitle.trim(),
+        description: newNodeDesc.trim() || '自定义学习阶段',
+        order: path.stages.length + 1,
+        resources: resources.map(resource => resource.id),
+        resourceIds: resources.map(resource => resource.id),
+        knowledgePointIds: [],
+        recommendedReason: '用户在画布中新增的阶段',
+        completed: false,
+      };
+      const saved = await savePathVersion({
+        title: path.title,
+        stages: [...path.stages, newStage],
+        courseId: path.course_id ?? null,
+        reasoning: path.reasoning ?? {},
+      });
+      if (!saved) throw new Error('路径保存未返回数据');
+      setPath(saved);
       const existing = Object.values(nodePositions);
-      const maxX = existing.length ? Math.max(...existing.map(p => p.x)) : 0;
-      setNodePositions(prev => ({ ...prev, [newStage.id]: { x: maxX + 290, y: 40 } }));
-      setNewNodeTitle(''); setNewNodeDesc(''); setAddingNode(false);
+      const maxX = existing.length ? Math.max(...existing.map(position => position.x)) : 0;
+      setNodePositions(previous => ({ ...previous, [newStage.id]: { x: maxX + 290, y: 40 } }));
+      setNewNodeTitle('');
+      setNewNodeDesc('');
+      setAddingNode(false);
       toast.success('节点已添加');
+    } catch (error) {
+      toast.error(`新增节点失败：${error instanceof Error ? error.message : '未知错误'}`);
     }
   };
 
   // ── 拖拽重排（兼容旧列表模式，画板模式用鼠标拖拽）──
   const handleDrop = async (dropIndex: number) => {
     if (dragIndex === null || dragIndex === dropIndex || !path) return;
-    const stages = [...path.stages];
-    const [moved] = stages.splice(dragIndex, 1);
-    stages.splice(dropIndex, 0, moved);
-    const reordered = stages.map((s, i) => ({ ...s, order: i + 1 }));
-    const currentStage = reordered.findIndex(s => !s.completed);
-    const { data } = await supabase.from('learning_paths').update({
-      stages: reordered,
-      current_stage: currentStage >= 0 ? currentStage : reordered.length - 1,
-    }).eq('id', path.id).select().maybeSingle();
-    if (data) { setPath(data); toast.success('顺序已更新'); }
-    setDragIndex(null);
+    try {
+      const stages = [...path.stages];
+      const [moved] = stages.splice(dragIndex, 1);
+      stages.splice(dropIndex, 0, moved);
+      const saved = await savePathVersion({
+        title: path.title,
+        stages: stages.map((stage, index) => ({ ...stage, order: index + 1 })),
+        courseId: path.course_id ?? null,
+        reasoning: path.reasoning ?? {},
+      });
+      if (!saved) throw new Error('路径保存未返回数据');
+      setPath(saved);
+      toast.success('顺序已更新');
+    } catch (error) {
+      toast.error(`更新顺序失败：${error instanceof Error ? error.message : '未知错误'}`);
+    } finally {
+      setDragIndex(null);
+    }
   };
 
   // ── 画板鼠标拖拽（仅 select 工具时生效）──
@@ -557,11 +724,22 @@ export default function LearningPathPage() {
                 </div>
               )}
               {path && (
-                <button type="button" title="重置路径"
+                <button type="button" title="重置路径进度"
                   className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                   onClick={async () => {
-                    await supabase.from('learning_paths').delete().eq('id', path.id);
-                    setPath(null);
+                    try {
+                      const saved = await savePathVersion({
+                        title: path.title,
+                        stages: path.stages.map(stage => ({ ...stage, completed: false, completedAt: null, status: 'available' })),
+                        courseId: path.course_id ?? null,
+                        reasoning: { ...(path.reasoning ?? {}), resetAt: new Date().toISOString() },
+                      });
+                      if (!saved) throw new Error('路径保存未返回数据');
+                      setPath(saved);
+                      toast.success(`已重置路径进度并更新为 v${saved.version ?? 1}`);
+                    } catch (error) {
+                      toast.error(`重置路径失败：${error instanceof Error ? error.message : '未知错误'}`);
+                    }
                   }}>
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>

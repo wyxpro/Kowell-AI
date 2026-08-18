@@ -1,0 +1,7 @@
+﻿[
+  {"key":"russell-norvig-course","title":"Artificial Intelligence: A Modern Approach supporting materials","url":"https://aima.cs.berkeley.edu/","license":"Copyrighted material; this repository stores citation metadata and URL only, with no source text reproduced.","accessed_at":"2026-08-10","use":"智能体、搜索、推理课程参考"},
+  {"key":"sklearn-user-guide","title":"scikit-learn User Guide","url":"https://scikit-learn.org/stable/user_guide.html","license":"BSD 3-Clause License","accessed_at":"2026-08-10","use":"机器学习工作流与模型概念参考"},
+  {"key":"tensorflow-tutorials","title":"TensorFlow Tutorials","url":"https://www.tensorflow.org/tutorials","license":"Apache License 2.0","accessed_at":"2026-08-10","use":"神经网络教学概念参考"},
+  {"key":"stanford-ai-index","title":"Stanford AI Index Report","url":"https://hai.stanford.edu/ai-index","license":"Copyrighted report; this repository stores citation metadata and URL only, with no report text reproduced.","accessed_at":"2026-08-10","use":"AI 发展与治理背景参考"},
+  {"key":"nist-ai-rmf","title":"NIST AI Risk Management Framework","url":"https://www.nist.gov/itl/ai-risk-management-framework","license":"Public-domain U.S. government work unless otherwise noted by NIST","accessed_at":"2026-08-10","use":"风险管理与治理参考"}
+]

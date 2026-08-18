@@ -1,4 +1,4 @@
-import {
+﻿import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -14,6 +14,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
 import { parseGeneratedExercises, serializeExerciseAnswer } from '@/lib/exercises';
 import { textAIService, visionAIService, videoAIService } from '@/services/ai';
+import {
+  createRun,
+  invokeRun,
+  subscribeToRun,
+  type AgentRunSnapshot,
+  type OrchestrationResourceType,
+  type OrchestrationSubscription,
+} from '@/services/ai/orchestration';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,7 +35,7 @@ import {
   CheckCircle, PenTool, Cpu, MessageSquare, FileCheck, Layers,
   Video, Presentation, Lock, Paperclip, X, ImageIcon, Film, FileUp,
   ChevronDown, ChevronUp, Link2, Download, Image as ImageIcon2, Play,
-  RefreshCw, FileDown, Plus, Trash2, Edit, Search,
+  RefreshCw, FileDown, Plus, Trash2, Edit, Search, Activity,
 } from 'lucide-react';
 
 /* ──────────────────────────────────────────────────────────────
@@ -491,6 +499,20 @@ const resourceTypeOptions = [
   { value: 'video', label: '教学短视频', icon: Video, desc: '多模态动画讲解', color: 'text-indigo-500', available: true, tag: '' },
 ];
 
+const ORCHESTRATED_RESOURCE_TYPES: OrchestrationResourceType[] = [
+  'document', 'mindmap', 'exercise', 'reading', 'code',
+];
+
+function summarizeAgentValue(value: unknown): string {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return '';
+  }
+}
+
 export default function ResourceGeneratePage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -507,6 +529,7 @@ export default function ResourceGeneratePage() {
       if (abortRef.current) {
         abortRef.current.abort();
       }
+      void agentSubscriptionRef.current?.unsubscribe();
     };
   }, []);
 
@@ -521,6 +544,8 @@ export default function ResourceGeneratePage() {
   const [result, setResult] = useState<string | null>(null);
   const [activePreviewType, setActivePreviewType] = useState<string>('document');
   const [generatedResults, setGeneratedResults] = useState<Record<string, string>>({});
+  const [agentRunId, setAgentRunId] = useState<string | null>(null);
+  const [generationMode, setGenerationMode] = useState<'agent' | 'quick'>('agent');
   // 网页 URL 输入
   const [webUrl, setWebUrl] = useState('');
   const [webFetching, setWebFetching] = useState(false);
@@ -535,6 +560,7 @@ export default function ResourceGeneratePage() {
   const [attachments, setAttachments] = useState<{ name: string; type: string; size: number; url?: string }[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const agentSubscriptionRef = useRef<OrchestrationSubscription | null>(null);
 
   const [previewExample, setPreviewExample] = useState<typeof STANDARD_EXAMPLES[0] | null>(null);
 
@@ -839,10 +865,86 @@ export default function ResourceGeneratePage() {
 
   const [thinkLog, setThinkLog] = useState('');
 
+  const applyAgentSnapshot = useCallback((snapshot: AgentRunSnapshot) => {
+    const { run, steps, artifacts } = snapshot;
+    const completedSteps = steps.filter(item => item.status === 'completed').length;
+    const activeIndex = steps.findIndex(item => item.status === 'running' || item.status === 'queued');
+    const terminal = run.status === 'completed' || run.status === 'failed' || run.status === 'cancelled';
+
+    setGenerating(!terminal);
+    setProgress(run.status === 'completed' ? 100 : steps.length ? Math.round((completedSteps / steps.length) * 100) : 0);
+    setCurrentStep(activeIndex >= 0 ? Math.min(activeIndex, agentSteps.length - 1) : Math.min(completedSteps, agentSteps.length - 1));
+    setLogs([
+      ...steps.map(item => {
+        const detail = summarizeAgentValue(item.error);
+        return `${item.step_key}：${item.status}${detail ? ` · ${detail.slice(0, 160)}` : ''}`;
+      }),
+      ...artifacts.map(item => `产物「${item.artifact_type}」：${item.status}${item.title ? ` · ${item.title}` : ''}`),
+      ...(run.error ? [`运行错误：${run.error}`] : []),
+    ]);
+  }, []);
+
   const handleGenerate = async () => {
+    if (!user) { toast.error('请先登录'); return; }
+    if (!selectedCourse.trim()) { toast.error('请先选择或填写课程名称，再启动 Agent 工作流'); return; }
+
+    const courseId = await getOrCreateCourseId(selectedCourse);
+    if (!courseId) { toast.error('无法创建或读取课程，暂不能启动 Agent 工作流'); return; }
+
+    const request = topic.trim() || webUrl.trim() || attachments[0]?.name;
+    if (!request) { toast.error('请填写资源主题，或提供网页抓取/上传参考资料'); return; }
+
+    try {
+      await agentSubscriptionRef.current?.unsubscribe();
+      setGenerationMode('agent');
+      setGenerating(true);
+      setProgress(0);
+      setCurrentStep(0);
+      setResult(null);
+      setGeneratedResults({});
+      setThinkLog('');
+      setLogs(['正在创建真实 Agent run…']);
+
+      const run = await createRun({
+        courseId,
+        request,
+        selectedResourceTypes: ORCHESTRATED_RESOURCE_TYPES,
+        workflowType: 'resource_generate',
+        context: {
+          topic: topic.trim(),
+          web_url: webUrl.trim(),
+          attachment_names: attachments.map(item => item.name),
+          requested_ui_resource_types: resourceTypes,
+        },
+      });
+      setAgentRunId(run.id);
+      setLogs([`已创建 Agent run：${run.id}`]);
+
+      agentSubscriptionRef.current = await subscribeToRun(run.id, {
+        onSnapshot: applyAgentSnapshot,
+        onError: error => {
+          setGenerating(false);
+          setLogs(previous => [...previous, `订阅错误：${error.message}`]);
+          toast.error(`Agent 状态订阅失败：${error.message}`);
+        },
+      });
+      await invokeRun(run.id);
+      toast.success('真实 Agent 工作流已启动');
+    } catch (error) {
+      setGenerating(false);
+      const message = (error as Error).message;
+      setLogs(previous => [...previous, `启动失败：${message}`]);
+      toast.error(`Agent 工作流启动失败：${message}`);
+    }
+  };
+
+  const handleQuickGenerate = async () => {
     if (!user) { toast.error('请先登录'); return; }
     if (resourceTypes.length === 0) { toast.error('请至少选择一种资源类型'); return; }
 
+    await agentSubscriptionRef.current?.unsubscribe();
+    setAgentRunId(null);
+    setGenerationMode('quick');
     abortRef.current = new AbortController();
     setGenerating(true);
     setProgress(0);
@@ -851,15 +953,6 @@ export default function ResourceGeneratePage() {
     setResult('');
     setGeneratedResults({});
     setThinkLog('');
-
-    const stepInterval = setInterval(() => {
-      setCurrentStep(prev => {
-        if (prev >= agentSteps.length - 1) { clearInterval(stepInterval); return prev; }
-        setLogs(l => [...l, `${agentSteps[prev + 1].label} 进行中...`]);
-        return prev + 1;
-      });
-      setProgress(prev => Math.min(prev + Math.floor(85 / resourceTypes.length / agentSteps.length * agentSteps.length), 85));
-    }, 1200);
 
     try {
       let activeWebContent = webContent;
@@ -891,7 +984,6 @@ export default function ResourceGeneratePage() {
             finalTopic = '网页参考资源';
           }
         } else {
-          clearInterval(stepInterval);
           toast.error('请填写资源主题，或提供网页抓取/上传参考资料');
           setGenerating(false);
           return;
@@ -1095,7 +1187,6 @@ export default function ResourceGeneratePage() {
         setProgress(Math.round(((i + 1) / resourceTypes.length) * 100));
       }
 
-      clearInterval(stepInterval);
       setProgress(100);
       setCurrentStep(agentSteps.length - 1);
       setLogs(prev => [...prev, `全部 ${resourceTypes.length} 种资源生成完成！`]);
@@ -1107,7 +1198,6 @@ export default function ResourceGeneratePage() {
       }
       toast.success(resourceTypes.length > 1 ? `成功生成 ${resourceTypes.length} 种资源！` : '资源生成成功！');
     } catch (err) {
-      clearInterval(stepInterval);
       toast.error('生成失败：' + (err as Error).message);
       setLogs(prev => [...prev, `生成失败：${(err as Error).message}`]);
     } finally {
@@ -1329,20 +1419,33 @@ export default function ResourceGeneratePage() {
                 {/* 开始生成按钮，紧靠资源类型 label 下方显示 */}
                 <Button
                   onClick={handleGenerate}
-                  disabled={generating || (!topic.trim() && !webUrl.trim() && attachments.length === 0) || resourceTypes.length === 0}
-                  className="w-full mt-4 mb-5 shadow-lg shadow-indigo-500/20 font-semibold py-5 text-sm bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white border-0 transition-all duration-300 hover:scale-[1.01]"
+                  disabled={generating || (!topic.trim() && !webUrl.trim() && attachments.length === 0)}
+                  className="w-full mt-4 mb-2 shadow-lg shadow-indigo-500/20 font-semibold py-5 text-sm bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white border-0 transition-all duration-300 hover:scale-[1.01]"
                 >
                   {generating ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      生成中...
+                      Agent 工作流运行中...
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 mr-2" />
-                      开始生成
+                      启动 Agent 工作流（5 类资源）
                     </>
                   )}
+                </Button>
+                {agentRunId && (
+                  <Button variant="outline" size="sm" className="w-full mb-5" onClick={() => navigate(`/agent-viz?runId=${encodeURIComponent(agentRunId)}`)}>
+                    <Activity className="w-4 h-4 mr-2" />查看真实 Agent Run
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={handleQuickGenerate}
+                  disabled={generating || (!topic.trim() && !webUrl.trim() && attachments.length === 0) || resourceTypes.length === 0}
+                  className="w-full mb-5 text-xs"
+                >
+                  <Sparkles className="w-3.5 h-3.5 mr-2" />快速生成（本地直连，非 Agent 工作流）
                 </Button>
 
                 <div className="grid grid-cols-1 gap-2">
@@ -1393,7 +1496,7 @@ export default function ResourceGeneratePage() {
             <CardHeader className="pb-3 shrink-0">
               <CardTitle className="text-base flex items-center gap-2">
                 <Cpu className="w-4 h-4 text-primary" />
-                生成过程
+                {generationMode === 'agent' ? '真实 Agent 运行过程' : '快速生成过程（非 Agent 工作流）'}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col min-h-0">
@@ -1407,7 +1510,7 @@ export default function ResourceGeneratePage() {
                   >
                     <Sparkles className="w-12 h-12 text-muted-foreground/30 mb-4" />
                     <p className="text-sm text-muted-foreground">配置生成参数，点击开始生成</p>
-                    <p className="text-xs text-muted-foreground mt-1">系统将通过6个AI智能体协作完成资源生成</p>
+                    <p className="text-xs text-muted-foreground mt-1">主按钮会启动真实 Agent run；快速生成是直连模式，不代表 Agent 工作流</p>
                   </motion.div>
                 )}
 

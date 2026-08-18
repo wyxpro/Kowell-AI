@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+﻿import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { Brain, Sparkles, CheckCircle, Target, BookOpen, Clock, AlertCircle, TrendingUp, ArrowRight, FileText, Loader2, Plus, MessageSquare, Pin, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import type { LearningPortrait, PortraitRevision } from '@/types/types';
 
 const portraitDimensions = [
   { key: 'major_direction', label: '专业方向', icon: Brain, desc: '专业领域 and 发展方向', color: 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400' },
@@ -37,7 +38,11 @@ export default function PortraitPage() {
   const [pinnedSessionIds, setPinnedSessionIds] = useState<string[]>([]);
   const [initialMessages, setInitialMessages] = useState<ChatMsg[]>([]);
   const [completedDims, setCompletedDims] = useState<string[]>([]);
-  const [isComplete, setIsComplete] = useState(false);
+  const [portrait, setPortrait] = useState<LearningPortrait | null>(null);
+  const [portraitRevisions, setPortraitRevisions] = useState<PortraitRevision[]>([]);
+  const [portraitLoadError, setPortraitLoadError] = useState<string | null>(null);
+  const [adaptError, setAdaptError] = useState<string | null>(null);
+  const [adaptingSessionId, setAdaptingSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [voiceCallOpen] = useState(false);
@@ -85,6 +90,44 @@ export default function PortraitPage() {
       setReportGenerating(false);
     }
   }, [profile, messages]);
+
+  const loadPortraitData = useCallback(async () => {
+    if (!user) return;
+    setPortraitLoadError(null);
+    const [portraitResult, revisionsResult] = await Promise.all([
+      supabase.from('learning_portraits').select('*').eq('user_id', user.id).maybeSingle(),
+      supabase.from('learning_portrait_revisions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
+    ]);
+    const error = portraitResult.error ?? revisionsResult.error;
+    if (error) {
+      setPortraitLoadError(`无法加载服务端画像数据：${error.message}`);
+      return;
+    }
+    setPortrait((portraitResult.data as LearningPortrait | null) ?? null);
+    setPortraitRevisions((revisionsResult.data as PortraitRevision[] | null) ?? []);
+  }, [user]);
+
+  const requestPortraitAdaptation = useCallback(async (sessionId: string) => {
+    if (!user) return;
+    setAdaptError(null);
+    setAdaptingSessionId(sessionId);
+    try {
+      const { data, error } = await supabase.functions.invoke('learning-adapt', {
+        method: 'POST',
+        body: { session_id: sessionId },
+      });
+      if (error) throw error;
+      if (!data || data.status !== 'accepted') throw new Error(data?.error || data?.message || '适配服务未接受本次画像对话');
+      await loadPortraitData();
+      toast.success('已提交服务端画像适配，画像状态已刷新');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '未知错误';
+      setAdaptError(`六问已完成，但服务端画像适配失败：${message}`);
+      toast.error('服务端画像适配失败，请稍后重试');
+    } finally {
+      setAdaptingSessionId(null);
+    }
+  }, [loadPortraitData, user]);
 
   const loadSessions = useCallback(async (selectId?: string) => {
     if (!user) return;
@@ -174,11 +217,10 @@ export default function PortraitPage() {
       setInitialMessages(activeMsgs);
       setMessages(activeMsgs);
 
-      // Update progress and completion state
+      // 六问仅表示 onboarding 进度；真实完成状态始终由服务端画像的 is_complete/version 决定。
       const userMsgs = activeMsgs.filter(m => m.role === 'user');
-      const dims = portraitDimensions.slice(0, userMsgs.length).map(d => d.key);
+      const dims = portraitDimensions.slice(0, Math.min(userMsgs.length, portraitDimensions.length)).map(d => d.key);
       setCompletedDims(dims);
-      setIsComplete(userMsgs.length >= 6);
     } catch (err) {
       console.error(err);
     } finally {
@@ -188,11 +230,11 @@ export default function PortraitPage() {
 
   useEffect(() => {
     if (user) {
-      loadSessions();
+      void Promise.all([loadSessions(), loadPortraitData()]);
     } else {
       setLoading(false);
     }
-  }, [user, loadSessions]);
+  }, [user, loadPortraitData, loadSessions]);
 
   // 同步置顶状态
   useEffect(() => {
@@ -313,22 +355,11 @@ export default function PortraitPage() {
         setInitialMessages(msgs);
 
         const userMsgs = msgs.filter(m => m.role === 'user');
-        const dims = portraitDimensions.slice(0, userMsgs.length).map(d => d.key);
+        const dims = portraitDimensions.slice(0, Math.min(userMsgs.length, portraitDimensions.length)).map(d => d.key);
         setCompletedDims(dims);
 
-        if (msg.role === 'user' && userMsgs.length >= 6) {
-          setIsComplete(true);
-          await supabase.from('learning_portraits').upsert({
-            user_id: user.id,
-            is_complete: true,
-            major_direction: { value: userMsgs?.[0]?.content || '' },
-            knowledge_base: { value: userMsgs?.[1]?.content || '' },
-            cognitive_style: { value: userMsgs?.[2]?.content || '' },
-            error_patterns: { value: userMsgs?.[3]?.content || '' },
-            learning_rhythm: { value: userMsgs?.[4]?.content || '' },
-            learning_goals: { value: userMsgs?.[5]?.content || '' },
-          }, { onConflict: 'user_id' });
-          toast.success('🎉 学习画像构建完成！');
+        if (msg.role === 'user' && userMsgs.length === portraitDimensions.length) {
+          await requestPortraitAdaptation(currentSessionId);
         }
       }
 
@@ -366,6 +397,9 @@ export default function PortraitPage() {
   };
 
   const progressPct = Math.round((completedDims.length / 6) * 100);
+  const isComplete = Boolean(portrait?.is_complete && portrait.version);
+  const latestRevision = portraitRevisions[0];
+  const portraitUpdatedAt = portrait?.last_updated_at || portrait?.updated_at;
 
   return (
     <AppLayout>
@@ -510,6 +544,30 @@ export default function PortraitPage() {
                   <Progress value={progressPct} className="h-2" />
                 </div>
                 {/* 维度列表 */}
+                <div className="rounded-lg border border-border/70 bg-muted/30 p-3 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-foreground">服务端真实画像</span>
+                    {portrait?.version ? <Badge variant="secondary">版本 v{portrait.version}</Badge> : <Badge variant="outline">尚未生成</Badge>}
+                  </div>
+                  {portraitUpdatedAt && <p className="text-muted-foreground">最近更新：{new Date(portraitUpdatedAt).toLocaleString('zh-CN')}</p>}
+                  {latestRevision ? (
+                    <>
+                      <p className="text-muted-foreground">最近修订：v{latestRevision.version} · {new Date(latestRevision.created_at).toLocaleString('zh-CN')}</p>
+                      <p className="text-muted-foreground">修订原因：{latestRevision.reason}</p>
+                    </>
+                  ) : <p className="text-muted-foreground">尚无服务端修订记录。</p>}
+                  {portraitLoadError && <p className="text-destructive">{portraitLoadError}</p>}
+                  {adaptError && <p className="text-destructive">{adaptError}</p>}
+                  {completedDims.length >= 6 && !isComplete && !adaptError && (
+                    <p className="text-amber-600 dark:text-amber-400">六问已完成，正等待服务端确认真实画像完成状态。</p>
+                  )}
+                  {completedDims.length >= 6 && currentSessionId && (
+                    <Button size="sm" variant="outline" className="w-full mt-1" onClick={() => requestPortraitAdaptation(currentSessionId)} disabled={adaptingSessionId === currentSessionId}>
+                      {adaptingSessionId === currentSessionId ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Sparkles className="w-3 h-3 mr-1" />}
+                      {adaptingSessionId === currentSessionId ? '正在适配服务端画像…' : '重新提交画像适配'}
+                    </Button>
+                  )}
+                </div>
                 <div className="space-y-2.5">
                   {portraitDimensions.map((dim, i) => {
                     const completed = completedDims.includes(dim.key);
@@ -557,7 +615,7 @@ export default function PortraitPage() {
                     <span className="font-medium text-sm">画像构建完成！</span>
                   </div>
                   <p className="text-xs text-muted-foreground text-pretty">
-                    系统已生成包含 6 个维度的个性化学习画像。现在可以开始生成学习资源或规划路径了。
+                    服务端已确认画像完成（v{portrait?.version}）。现在可以开始生成学习资源或规划路径了。
                   </p>
                   <div className="flex flex-col gap-1.5">
                     {/* 生成 AI 分析报告 */}
