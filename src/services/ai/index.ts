@@ -1,9 +1,9 @@
-﻿export { AI_CONFIG } from './config';
+export { AI_CONFIG } from './config';
 export { stepfunService, STEPFUN_CONFIG } from './stepfun';
 export type { ChatMessage as StepFunChatMessage, StreamCallbacks as StepFunStreamCallbacks } from './stepfun';
 export { stepAudioService } from './stepaudio';
 export type { ASRRequest, TTSRequest, ASRCallbacks } from './stepaudio';
-export { textAIService, makeCleanStreamChat } from './text';
+export { textAIService, makeCleanStreamChat, stripThinkingProcess } from './text';
 export type { TextStreamCallbacks } from './text';
 export { visionAIService, convertToStepMultimodalMessages } from './vision';
 export type { ChatMessage as VisionChatMessage, VisionStreamCallbacks } from './vision';

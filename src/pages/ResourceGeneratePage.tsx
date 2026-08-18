@@ -142,7 +142,7 @@ async function fetchWebContent(webUrl: string): Promise<string> {
    视频生成（Seedance 2.0 API）
 ────────────────────────────────────────────────────────────── */
 async function createVideoTask(prompt: string): Promise<string> {
-  const data = await videoAIService.submitVideoGeneration({
+  const data = videoAIService.submitVideoGeneration({
     prompt,
     duration: 5,
     resolution: '720p',
@@ -163,7 +163,8 @@ function resourceContentToText(content: unknown): string {
 
 /* ─── Markdown 块渲染（AI生成内容用） ─── */
 function renderMarkdownBlocks(text: string): React.ReactNode {
-  const lines = text.split('\n');
+  const cleanedText = stripThinkingProcess(text);
+  const lines = cleanedText.split('\n');
   const elements: React.ReactNode[] = [];
   let i = 0;
   while (i < lines.length) {
@@ -1218,13 +1219,32 @@ export default function ResourceGeneratePage() {
             <Sparkles className="w-5 h-5 text-primary" />
             AI资源生成
           </h1>
-          <button
-            onClick={() => setShowMyInterface(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-primary/15 to-purple-500/15 text-primary border border-primary/25 hover:border-primary/60 hover:from-primary/25 hover:to-purple-500/25 transition-all duration-200 hover:scale-105 shadow-sm"
-          >
-            <Layers className="w-3.5 h-3.5" />
-            我的资源
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setShowMyInterface(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-primary/15 to-purple-500/15 text-primary border border-primary/25 hover:border-primary/60 hover:from-primary/25 hover:to-purple-500/25 transition-all duration-200 hover:scale-105 shadow-sm shrink-0"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              我的资源
+            </button>
+            <button
+              onClick={handleGenerate}
+              disabled={generating || (!topic.trim() && !webUrl.trim() && attachments.length === 0)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-primary/15 to-purple-500/15 text-primary border border-primary/25 hover:border-primary/60 hover:from-primary/25 hover:to-purple-500/25 transition-all duration-200 hover:scale-105 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              {generating && generationMode === 'agent' ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Agent 运行中...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  启动 Agent 工作流（5 类资源）
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* 生成标准示例 - 桌面端横向排版 */}
@@ -1421,37 +1441,28 @@ export default function ResourceGeneratePage() {
                   <span className="text-[11px] font-normal text-muted-foreground">已选 {resourceTypes.length} 种（可多选）</span>
                 </label>
 
-                {/* 开始生成按钮，紧靠资源类型 label 下方显示 */}
                 <Button
-                  onClick={handleGenerate}
-                  disabled={generating || (!topic.trim() && !webUrl.trim() && attachments.length === 0)}
-                  className="w-full mt-4 mb-2 shadow-lg shadow-indigo-500/20 font-semibold py-5 text-sm bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white border-0 transition-all duration-300 hover:scale-[1.01]"
+                  onClick={handleQuickGenerate}
+                  disabled={generating || (!topic.trim() && !webUrl.trim() && attachments.length === 0) || resourceTypes.length === 0}
+                  className="w-full mt-4 mb-3 shadow-lg shadow-indigo-500/20 font-semibold py-5 text-sm bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white border-0 transition-all duration-300 hover:scale-[1.01]"
                 >
-                  {generating ? (
+                  {generating && generationMode === 'quick' ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Agent 工作流运行中...
+                      正在生成资源...
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 mr-2" />
-                      启动 Agent 工作流（5 类资源）
+                      启动生成资源
                     </>
                   )}
                 </Button>
                 {agentRunId && (
-                  <Button variant="outline" size="sm" className="w-full mb-5" onClick={() => navigate(`/agent-viz?runId=${encodeURIComponent(agentRunId)}`)}>
+                  <Button variant="outline" size="sm" className="w-full mb-3" onClick={() => navigate(`/agent-viz?runId=${encodeURIComponent(agentRunId)}`)}>
                     <Activity className="w-4 h-4 mr-2" />查看真实 Agent Run
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  onClick={handleQuickGenerate}
-                  disabled={generating || (!topic.trim() && !webUrl.trim() && attachments.length === 0) || resourceTypes.length === 0}
-                  className="w-full mb-5 text-xs"
-                >
-                  <Sparkles className="w-3.5 h-3.5 mr-2" />快速生成
-                </Button>
 
                 <div className="grid grid-cols-1 gap-2">
                   {resourceTypeOptions.map(opt => {

@@ -54,6 +54,17 @@ function parseEssayEvaluationResult(text: string): ExerciseAiResult {
   };
 }
 
+export function stripThinkingProcess(text: string): string {
+  if (!text) return '';
+  // 过滤闭合的 <think>...</think> 标签
+  let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '');
+  // 过滤流式传输中未闭合的 <think>... 尾部
+  cleaned = cleaned.replace(/<think>[\s\S]*$/gi, '');
+  // 过滤残留的单独标签
+  cleaned = cleaned.replace(/<\/?think>/gi, '');
+  return cleaned;
+}
+
 /**
  * 带有思维链（CoT）过滤的流式 API 桥接函数
  */
@@ -62,8 +73,8 @@ export async function makeCleanStreamChat(
   callbacks: TextStreamCallbacks,
   options?: { temperature?: number; signal?: AbortSignal }
 ): Promise<void> {
-  let isThinking = false;
-  let fullText = '';
+  let rawContentBuffer = '';
+  let emittedCleanText = '';
   const cleanMessages = [...messages];
   let directError: string | null = null;
 
@@ -72,47 +83,20 @@ export async function makeCleanStreamChat(
       cleanMessages,
       {
         onChunk: (chunk) => {
-          let textToEmit = '';
-          let thinkToEmit = '';
-          let remaining = chunk;
-
-          while (remaining.length > 0) {
-            if (!isThinking) {
-              const index = remaining.indexOf('<think>');
-              if (index !== -1) {
-                textToEmit += remaining.substring(0, index);
-                isThinking = true;
-                remaining = remaining.substring(index + 7);
-              } else {
-                textToEmit += remaining;
-                remaining = '';
-              }
-            } else {
-              const index = remaining.indexOf('</think>');
-              if (index !== -1) {
-                thinkToEmit += remaining.substring(0, index);
-                isThinking = false;
-                remaining = remaining.substring(index + 8);
-              } else {
-                textToEmit += remaining;
-                remaining = '';
-              }
-            }
-          }
-
-          if (textToEmit) {
-            fullText += textToEmit;
+          rawContentBuffer += chunk;
+          const currentCleanText = stripThinkingProcess(rawContentBuffer);
+          const delta = currentCleanText.slice(emittedCleanText.length);
+          if (delta.length > 0) {
+            emittedCleanText = currentCleanText;
             if (callbacks.onChunk) {
-              callbacks.onChunk(textToEmit);
+              callbacks.onChunk(delta);
             }
-          }
-          if (thinkToEmit && callbacks.onThink) {
-            callbacks.onThink(thinkToEmit);
           }
         },
         onDone: () => {
+          const finalCleanText = stripThinkingProcess(rawContentBuffer);
           if (callbacks.onDone) {
-            callbacks.onDone(fullText);
+            callbacks.onDone(finalCleanText);
           }
         },
         onError: (err) => {
@@ -126,7 +110,7 @@ export async function makeCleanStreamChat(
   }
 
   // 若直连 API 失败（例如 401 密钥失效或 403 跨域/防护拒绝），平滑自动降级到 Supabase 云函数
-  if (directError && !fullText) {
+  if (directError && !emittedCleanText) {
     console.warn('[Text AI Service] 直连服务响应异常，平滑降级至云函数 ai-chat:', directError);
     try {
       const { supabase } = await import('@/db/supabase');
@@ -134,10 +118,11 @@ export async function makeCleanStreamChat(
         body: { messages: cleanMessages, prompt_type: 'tutoring', stream: false }
       });
       if (!error && data) {
-        const content = typeof data === 'string' ? data : (data?.content || data?.choices?.[0]?.message?.content || '');
-        if (content) {
-          if (callbacks.onChunk) callbacks.onChunk(content);
-          if (callbacks.onDone) callbacks.onDone(content);
+        const rawContent = typeof data === 'string' ? data : (data?.content || data?.choices?.[0]?.message?.content || '');
+        const cleanContent = stripThinkingProcess(rawContent);
+        if (cleanContent) {
+          if (callbacks.onChunk) callbacks.onChunk(cleanContent);
+          if (callbacks.onDone) callbacks.onDone(cleanContent);
           return;
         }
       }
