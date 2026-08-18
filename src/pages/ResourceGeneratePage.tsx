@@ -1,4 +1,4 @@
-﻿import {
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -621,7 +621,10 @@ export default function ResourceGeneratePage() {
         .select('id')
         .single();
       
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.warn('Unable to create new course row due to RLS or permissions:', insertError.message);
+        return null;
+      }
       if (newCourse) {
         fetchDbCourses();
         return newCourse.id;

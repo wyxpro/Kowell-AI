@@ -288,6 +288,7 @@ SEEDANCE_API_KEY=your_seedance_api_key
 | 11 | `00011_agent_workflow_runtime.sql` | Agent 工作流运行时表与租约状态机 |
 | 12 | `00012_dynamic_learning_loop.sql` | 动态学习闭环、能力掌握度与同事务自适应 |
 | 13 | `00013_a3_runtime_consistency.sql` | 运行时一致性约束与 SECURITY DEFINER RPC 函数 |
+| 14 | `00014_fix_courses_rls_policy.sql` | 允许用户创建/更新课程并修复 RLS 权限策略 |
 
 #### Step 4 — 配置 Edge Functions Secrets
 

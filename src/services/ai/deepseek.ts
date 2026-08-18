@@ -1,4 +1,4 @@
-﻿import { createParser } from 'eventsource-parser';
+import { createParser } from 'eventsource-parser';
 import { AI_CONFIG } from './config';
 
 const AI_SERVICE_ERROR = 'AI 服务暂不可用，请稍后再试。';
@@ -25,6 +25,20 @@ function cleanMessages(messages: ChatMessage[]): ChatMessage[] {
   });
 }
 
+function getAuthHeaders(): HeadersInit {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  const apiKey =
+    import.meta.env.VITE_DEEPSEEK_API_KEY ||
+    import.meta.env.VITE_STEP_API_KEY ||
+    'sk-xpFW-5LiEZ20VU9711CVJEbztoowzt5';
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+  return headers;
+}
+
 export const deepseekService = {
   /**
    * 非流式对话调用 (Non-streaming Chat)
@@ -38,7 +52,7 @@ export const deepseekService = {
     }
   ): Promise<string> {
     const url = `${AI_CONFIG.baseUrl}/chat/completions`;
-    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    const headers = getAuthHeaders();
 
     const body: Record<string, any> = {
       model: AI_CONFIG.modelName,
@@ -65,6 +79,8 @@ export const deepseekService = {
     }
 
     if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      console.error(`DeepSeek API Non-Stream Error HTTP ${resp.status}:`, errText);
       throw new Error(AI_SERVICE_ERROR);
     }
 
@@ -93,7 +109,7 @@ export const deepseekService = {
     }
   ): Promise<void> {
     const url = `${AI_CONFIG.baseUrl}/chat/completions`;
-    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    const headers = getAuthHeaders();
 
     const body = {
       model: AI_CONFIG.modelName,
@@ -111,6 +127,8 @@ export const deepseekService = {
       });
 
       if (!resp.ok || !resp.body) {
+        const errText = await resp.text().catch(() => '');
+        console.error(`DeepSeek API Stream Error HTTP ${resp.status}:`, errText);
         callbacks.onError(AI_SERVICE_ERROR);
         return;
       }
