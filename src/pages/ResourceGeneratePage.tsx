@@ -13,7 +13,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/db/supabase';
 import { parseGeneratedExercises, serializeExerciseAnswer } from '@/lib/exercises';
-import { textAIService, visionAIService, videoAIService } from '@/services/ai';
+import { textAIService, visionAIService, videoAIService, stripThinkingProcess } from '@/services/ai';
 import {
   createRun,
   invokeRun,
@@ -953,9 +953,9 @@ export default function ResourceGeneratePage() {
     setGenerationMode('quick');
     abortRef.current = new AbortController();
     setGenerating(true);
-    setProgress(0);
+    setProgress(5);
     setCurrentStep(0);
-    setLogs([`开始生成 ${resourceTypes.length} 种资源...`]);
+    setLogs([`需求提取：正在提取生成配置与目标资源参数...`]);
     setResult('');
     setGeneratedResults({});
     setThinkLog('');
@@ -963,16 +963,22 @@ export default function ResourceGeneratePage() {
     try {
       let activeWebContent = webContent;
       if (webUrl.trim() && !activeWebContent) {
-        setLogs(l => [...l, `正在自动抓取网页参考: ${webUrl.trim()} ...`]);
+        setProgress(15);
+        setCurrentStep(1);
+        setLogs(l => [...l, `知识检索：正在自动抓取网页参考: ${webUrl.trim()} ...`]);
         try {
           const fetched = await fetchWebContent(webUrl.trim());
           activeWebContent = fetched;
           setWebContent(fetched);
-          setLogs(l => [...l, `网页抓取成功，已提取 ${fetched.length} 字`]);
+          setLogs(l => [...l, `知识检索成功：已提取 ${fetched.length} 字参考内容`]);
         } catch (err) {
           console.error('自动抓取网页失败:', err);
-          setLogs(l => [...l, `自动抓取网页失败，将直接生成`]);
+          setLogs(l => [...l, `自动抓取网页失败，使用初始配置直接生成`]);
         }
+      } else {
+        setProgress(25);
+        setCurrentStep(1);
+        setLogs(l => [...l, `知识检索：已锁定学科与课程教学参考标准`]);
       }
 
       let finalTopic = topic.trim();
@@ -1005,7 +1011,9 @@ export default function ResourceGeneratePage() {
       for (let i = 0; i < resourceTypes.length; i++) {
         const rType = resourceTypes[i];
         const typeLabel = resourceTypeOptions.find(t => t.value === rType)?.label || rType;
-        setLogs(l => [...l, `正在生成「${typeLabel}」（${i + 1}/${resourceTypes.length}）...`]);
+        setProgress(40);
+        setCurrentStep(2);
+        setLogs(l => [...l, `内容设计：规划「${typeLabel}」（${i + 1}/${resourceTypes.length}）大纲结构...`]);
         setActivePreviewType(rType);
         setResult('');
 
@@ -1024,11 +1032,14 @@ export default function ResourceGeneratePage() {
             {
               onChunk: (chunk) => {
                 contentBuffer += chunk;
+                const cleanBuffer = stripThinkingProcess(contentBuffer);
+                setCurrentStep(3);
+                setProgress(prev => Math.min(80, Math.max(55, prev + 0.5)));
                 if (rType !== 'exercise') {
-                  setResult(contentBuffer);
+                  setResult(cleanBuffer);
                   setGeneratedResults(prev => ({
                     ...prev,
-                    [rType]: contentBuffer
+                    [rType]: cleanBuffer
                   }));
                 }
               },
@@ -1045,6 +1056,10 @@ export default function ResourceGeneratePage() {
             abortRef.current?.signal
           );
         });
+
+        setCurrentStep(4);
+        setProgress(88);
+        setLogs(l => [...l, `质量审核：对「${typeLabel}」生成内容进行规范校验...`]);
 
         if (rType === 'exercise') {
           try {
@@ -1155,6 +1170,9 @@ export default function ResourceGeneratePage() {
 
           setLogs(l => [...l, `保存「${typeLabel}」成功`]);
         } else {
+          setCurrentStep(5);
+          setProgress(95);
+          setLogs(l => [...l, `格式编排：保存「${typeLabel}」到资源库...`]);
           const { error: insertError } = await supabase.from('resources').insert({
             user_id: user.id,
             course_id: courseId,
@@ -1169,9 +1187,9 @@ export default function ResourceGeneratePage() {
 
           if (insertError) {
             console.error('保存生成资源失败:', insertError);
-            setLogs(l => [...l, `保存「${typeLabel}」到数据库失败: ${insertError.message}`]);
+            setLogs(l => [...l, `格式编排失败: ${insertError.message}`]);
           } else {
-            setLogs(l => [...l, `保存「${typeLabel}」成功`]);
+            setLogs(l => [...l, `格式编排完成：保存「${typeLabel}」成功`]);
           }
         }
 
@@ -1535,29 +1553,45 @@ export default function ResourceGeneratePage() {
                     className="flex-1 flex flex-col min-h-0"
                   >
                     {/* 进度条 */}
-                    <div className="mb-4">
-                      <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-                        <span>生成进度</span>
-                        <span>{Math.round(progress)}%</span>
+                    <div className="mb-4 bg-muted/30 p-3 rounded-xl border border-border/50">
+                      <div className="flex justify-between text-xs font-semibold text-foreground mb-2">
+                        <span className="flex items-center gap-1.5">
+                          <Activity className="w-3.5 h-3.5 text-primary animate-spin" />
+                          生成进度
+                        </span>
+                        <span className="text-primary font-bold">{Math.round(progress)}%</span>
                       </div>
-                      <Progress value={progress} className="h-2" />
+                      <Progress value={progress} className="h-2.5 bg-muted transition-all duration-300" />
                     </div>
 
-                    {/* 步骤 */}
-                    <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+                    {/* 步骤动画展示 */}
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4 overflow-x-auto pb-1">
                       {agentSteps.map((step, i) => {
-                        const isDone = i < currentStep;
-                        const isCurrent = i === currentStep && generating;
+                        const isDone = i < currentStep || progress === 100;
+                        const isCurrent = i === currentStep && generating && progress < 100;
                         return (
-                          <div key={step.key} className={`flex flex-col items-center gap-1 min-w-[60px] ${isDone ? 'opacity-100' : isCurrent ? 'opacity-100' : 'opacity-40'}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isDone ? 'bg-primary text-primary-foreground' :
-                                isCurrent ? 'bg-secondary text-secondary-foreground ring-2 ring-secondary/50' :
-                                  'bg-muted text-muted-foreground'
-                              }`}>
-                              {isDone ? <CheckCircle className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
+                          <motion.div
+                            key={step.key}
+                            initial={{ scale: 0.9, opacity: 0.5 }}
+                            animate={{ scale: isCurrent ? 1.05 : 1, opacity: isDone || isCurrent ? 1 : 0.4 }}
+                            transition={{ duration: 0.3 }}
+                            className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border text-center transition-all ${
+                              isDone ? 'bg-primary/10 border-primary/30 text-primary' :
+                              isCurrent ? 'bg-secondary/20 border-secondary text-foreground ring-2 ring-secondary/40 shadow-sm' :
+                              'bg-muted/20 border-border/40 text-muted-foreground'
+                            }`}
+                          >
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                              isDone ? 'bg-primary text-primary-foreground' :
+                              isCurrent ? 'bg-secondary text-secondary-foreground shadow' :
+                              'bg-muted text-muted-foreground'
+                            }`}>
+                              {isDone ? <CheckCircle className="w-3.5 h-3.5" /> :
+                               isCurrent ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> :
+                               <step.icon className="w-3.5 h-3.5" />}
                             </div>
-                            <span className="text-[10px] truncate w-full text-center">{step.label}</span>
-                          </div>
+                            <span className="text-[10px] font-medium leading-tight truncate w-full">{step.label}</span>
+                          </motion.div>
                         );
                       })}
                     </div>
