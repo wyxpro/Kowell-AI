@@ -1,6 +1,6 @@
-# 🎓 Kowell AI —   基于多智能体的AIGC资源生成与学习助手
+# 🎓 Kowell AI — 基于多智能体的AIGC资源生成与学习助手
 
-![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-Rolldown-646CFF?logo=vite&logoColor=white) ![TailwindCSS](https://img.shields.io/badge/Tailwind-3.x-38B2AC?logo=tailwindcss&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E?logo=supabase&logoColor=white) ![Zustand](https://img.shields.io/badge/Zustand-5.x-764ABC) ![DeepSeek](https://img.shields.io/badge/DeepSeek-v4--pro-orange) ![Three.js](https://img.shields.io/badge/Three.js-3D-000000) ![ReactRouter](https://img.shields.io/badge/React_Router-7.x-CA4245?logo=reactrouter&logoColor=white) ![FramerMotion](https://img.shields.io/badge/Framer_Motion-12.x-FF0080)
+![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-Rolldown-646CFF?logo=vite&logoColor=white) ![TailwindCSS](https://img.shields.io/badge/Tailwind-3.x-38B2AC?logo=tailwindcss&logoColor=white) ![Supabase](https://img.shields.io/badge/Supabase-BaaS-3ECF8E?logo=supabase&logoColor=white) ![Zustand](https://img.shields.io/badge/Zustand-5.x-764ABC) ![DeepSeek](https://img.shields.io/badge/DeepSeek-V4--Flash-orange) ![Three.js](https://img.shields.io/badge/Three.js-3D-000000) ![ReactRouter](https://img.shields.io/badge/React_Router-7.x-CA4245?logo=reactrouter&logoColor=white) ![FramerMotion](https://img.shields.io/badge/Framer_Motion-12.x-FF0080)
 
 ---
 
@@ -14,7 +14,8 @@
 
 | 亮点 | 描述 |
 | :--- | :--- |
-| 🤖 **多模型 AI 对接层** | 独立封装 DeepSeek-v4-pro、MiniMax-M3、阶跃 StepAudio、Kling 视频生成、MiniMax-TTS 等多种大模型服务，支持流式 SSE 与非流式两种模式 |
+| 🤖 **多模型 AI 对接层** | 独立封装 DeepSeek-V4-Flash、MiniMax-M3、阶跃 StepAudio、Kling 视频生成、MiniMax-TTS 等多种大模型服务，支持流式 SSE 与非流式两种模式 |
+| 🔄 **动态学习闭环与 Agent 编排** | 支持 Multi-Agent 工作流编排（`agent_runs` / 租约状态机）、课程知识库检索、学习事件同事务更新及非阻塞 AI 评估判分 |
 | 🎨 **拟物手风琴交互** | 首页「六大核心特色功能」采用硬件加速的 CSS Flex 变宽手风琴卡片，悬停即自动展开，过渡丝滑 |
 | 🗂️ **资源一站式 CRUD** | 「AI 资源生成」页面内置「我的资源」管理抽屉，暗色玻璃拟态分栏支持检索、预览、编辑及增删改查 |
 | 🕸️ **3D 知识图谱** | 基于 Three.js 力导向布局渲染，节点可旋转、拖拽、双击跳转关联资源 |
@@ -50,17 +51,17 @@
 | 技术/框架 | 用途/核心功能 |
 | :--- | :--- |
 | **Supabase BaaS** | 托管 PostgreSQL 数据库，自动生成 REST APIs，支持实时订阅 |
-| **Supabase Edge Functions** | 13 个 Deno 无服务器云函数，承载 AI 调用、微信支付、TTS 等安全业务 |
+| **Supabase Edge Functions** | 15 个 Deno 无服务器云函数，承载 AI 对接、Agent 编排、动态路径自适应、微信支付、TTS 等安全业务 |
 | **GoTrue Auth** | 用户注册、邮箱验证、会话管理及密码重置 |
 | **Supabase Storage** | 头像、课件、思维导图等非结构化媒介存储分发，支持加密防盗链 |
-| **Database Migrations** | 8 个版本化 SQL 迁移脚本，同步表结构、触发器及 RLS 策略 |
+| **Database Migrations** | 13 个版本化 SQL 迁移脚本，同步表结构、触发器、RPC 函数及 RLS 策略 |
 | **Row Level Security (RLS)** | 行级安全策略，确保用户仅能访问自有数据 |
 
 ### 🤖 AI 服务层
 
 | 服务名称 | 调用方式 | 用途/核心功能 |
 | :--- | :--- | :--- |
-| **DeepSeek-v4-pro** | 前端直连（代理） + Edge Function | 文本对话、代码审查、答疑、画像构建，支持 SSE 流式输出 |
+| **DeepSeek-V4-Flash** | 前端直连（代理 https://ai.dxkp.com/v1） + Edge Function | 文本对话、代码审查、答疑、画像构建、资源生成，支持 SSE 流式输出 |
 | **MiniMax-M3** | Edge Function 网关调用 | 通用对话、资源生成、智能评估，含主模型降级到 `ernie-speed` |
 | **阶跃 StepAudio** | 前端代理 `/api/stepaudio` | 语音对话与音频理解，支持实时语音交互 |
 | **MiniMax TTS** | Edge Function `minimax-tts` | 文本转语音合成，数字人讲解配音 |
@@ -114,8 +115,10 @@ Kowell AI/
 │   ├── routes.tsx                   # 25 条路由配置（Lazy 加载）
 │   └── index.css                    # Tailwind 全局样式与动画
 ├── supabase/
-│   ├── functions/                   # 13 个 Deno Edge Functions
-│   │   ├── _shared/cors.ts          # CORS 共享处理
+│   ├── functions/                   # 15 个 Deno Edge Functions
+│   │   ├── _shared/                 # 共享模块 (agent-runtime, content-safety, knowledge-retrieval 等)
+│   │   ├── agent-orchestrate/       # 多智能体资源编排与工作流运行时
+│   │   ├── learning-adapt/          # 动态学习闭环与路径自适应
 │   │   ├── ai-chat/                 # AI 对话（含滑动窗口+模型降级）
 │   │   ├── ai-generate/             # 5 类学习资源生成
 │   │   ├── ai-evaluate/             # 智能评分与反馈
@@ -128,7 +131,7 @@ Kowell AI/
 │   │   ├── create-payment-order/    # 微信支付订单创建
 │   │   ├── wechat-payment-webhook/  # 微信支付回调
 │   │   └── admin-setup/             # 管理员初始化
-│   ├── migrations/                  # 8 个版本化数据库迁移脚本
+│   ├── migrations/                  # 13 个版本化数据库迁移脚本
 │   └── schema.sql                   # 数据库最新 Schema 镜像
 ├── .rules/                          # 代码规范 YAML 检测规则
 ├── package.json                     # 依赖声明（79 生产 + 16 开发）
@@ -256,9 +259,8 @@ pnpm install   # 或 npm install
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-# DeepSeek-v4-pro 配置
-VITE_DEEPSEEK_PROXY_URL=/api/innoreation/v1/proxy
-VITE_DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# DeepSeek-V4-Flash 配置（通过代理服务端访问 https://ai.dxkp.com/v1）
+DEEPSEEK_API_KEY=sk-xpFW-5LiEZ20VU9711CVJEbztoowzt5
 
 # 阶跃 StepAudio（可选）
 STEP_API_KEY=your_step_api_key
@@ -269,7 +271,7 @@ SEEDANCE_API_KEY=your_seedance_api_key
 
 #### Step 3 — 初始化 Supabase 数据库
 
-打开 Supabase 控制台 SQL Editor，按文件名序号依次执行 `supabase/migrations/` 下的 8 个迁移脚本：
+打开 Supabase 控制台 SQL Editor，按文件名序号依次执行 `supabase/migrations/` 下的 13 个迁移脚本：
 
 | 序号 | 文件名 | 作用 |
 | :--- | :--- | :--- |
@@ -281,6 +283,11 @@ SEEDANCE_API_KEY=your_seedance_api_key
 | 6 | `00006_invite_points_plans.sql` | 邀请人积分机制 |
 | 7 | `00007_create_payment_tables.sql` | 付费套餐订单表 |
 | 8 | `00008_add_plan_fields_to_user_profiles.sql` | 完善用户套餐权益 |
+| 9 | `00009_exercise_types_and_ai_status.sql` | 扩展习题类型与非阻塞 AI 判分状态 |
+| 10 | `00010_ai_course_knowledge_base.sql` | AI 课程知识库、文档分块与全文检索 |
+| 11 | `00011_agent_workflow_runtime.sql` | Agent 工作流运行时表与租约状态机 |
+| 12 | `00012_dynamic_learning_loop.sql` | 动态学习闭环、能力掌握度与同事务自适应 |
+| 13 | `00013_a3_runtime_consistency.sql` | 运行时一致性约束与 SECURITY DEFINER RPC 函数 |
 
 #### Step 4 — 配置 Edge Functions Secrets
 
@@ -345,6 +352,8 @@ server {
 
 | 函数名 | 方法 | 功能描述 | 关键参数 |
 | :--- | :--- | :--- | :--- |
+| `agent-orchestrate` | POST | 多智能体资源编排与工作流执行 | `agent_run_id`, `step_keys` |
+| `learning-adapt` | POST | 动态学习闭环与自适应路径更新 | `user_id`, `event_type`, `payload` |
 | `ai-chat` | POST | AI 对话（含滑动窗口+模型降级），支持流式 | `messages`, `prompt_type`, `stream` |
 | `ai-generate` | POST | 生成 5 类学习资源（文档/思维导图/习题/阅读/代码） | `course_name`, `topic`, `resource_type` |
 | `ai-evaluate` | POST | 智能评分与反馈，输出 JSON | 题目、标准答案、学生答案 |
@@ -369,7 +378,7 @@ server {
 
 ```json
 {
-  "model": "deepseek-v4-pro",
+  "model": "DeepSeek-V4-Flash",
   "messages": [
     { "role": "system", "content": "你是一位代码审查专家。" },
     { "role": "user", "content": "帮我看看这段代码的优化空间。" }
@@ -392,8 +401,8 @@ server {
 | **业务子页面** | 29 个 | 画像、生成、实验室、图谱等 |
 | **UI 原子组件** | 50+ 个 | Radix/Shadcn 风格二次封装 |
 | **SPA 路由** | 25 条 | 配置在 `routes.tsx`，启用懒加载 |
-| **Edge Functions** | 13 个 | AI、视频、TTS、支付、Web 抓取 |
-| **数据库迁移** | 8 个版本 | `supabase/migrations/` 版本控制 |
+| **Edge Functions** | 15 个 | AI、Agent 编排、自适应、视频、TTS、支付 |
+| **数据库迁移** | 13 个版本 | `supabase/migrations/` 版本控制 |
 
 ---
 
