@@ -1,6 +1,6 @@
 import { supabase } from '@/db/supabase';
 import { createParser } from 'eventsource-parser';
-import { stepfunService } from '@/services/ai/stepfun';
+import { deepseekService } from '@/services/ai/deepseek';
 
 
 const PORTRAIT_SYSTEM_PROMPT = `你是一位专业的AI学业规划师和学习画像构建助手。
@@ -52,7 +52,7 @@ export async function streamChat(
   }
   formattedMessages.push(...messages);
 
-  await stepfunService.streamChat(
+  await deepseekService.streamChat(
     formattedMessages,
     {
       onChunk: (chunk) => {

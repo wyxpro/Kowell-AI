@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { cleanJsonCodeBlock, parseAiEvaluationResult } from '@/lib/exercises';
 import type { ExerciseAiResult } from '@/types/types';
-import { stepfunService, type ChatMessage } from '../stepfun';
+import { deepseekService, type ChatMessage } from '../deepseek';
 import {
   PORTRAIT_SYSTEM_PROMPT,
   TUTORING_SOCRATIC_PROMPT,
@@ -68,7 +68,7 @@ export function makeCleanStreamChat(
   // 保证系统级提示词存在且不重复
   const cleanMessages = [...messages];
 
-  return stepfunService.streamChat(
+  return deepseekService.streamChat(
     cleanMessages,
     {
       onChunk: (chunk) => {

@@ -14,7 +14,7 @@
     },
     {
       "source": "/api/innoreation/v1/proxy/:path*",
-      "destination": "https://mangdream.com/:path*"
+      "destination": "https://ai.dxkp.com/v1/:path*"
     },
     {
       "source": "/(.*)",

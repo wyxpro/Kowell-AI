@@ -40,11 +40,14 @@ export default defineConfig(({ mode }) => {
     },
     proxy: {
       "/api/innoreation/v1/proxy": {
-        target: "https://mangdream.com",
+        target: "https://ai.dxkp.com/v1",
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/innoreation\/v1\/proxy/, ""),
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq) => {
-            proxyReq.setHeader("X-Proxy-Key", deepseekApiKey);
+            if (deepseekApiKey) {
+              proxyReq.setHeader("Authorization", `Bearer ${deepseekApiKey}`);
+            }
           });
         }
       },

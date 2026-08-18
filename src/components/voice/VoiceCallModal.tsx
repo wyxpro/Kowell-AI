@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, PhoneOff, Video, VideoOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { stepAudioService } from '@/services/ai';
-import { stepfunService } from '@/services/ai/stepfun';
+import { deepseekService } from '@/services/ai/deepseek';
 
 // 老师头像 — 使用真实智能辅导形象
 const TEACHER_AVATAR = 'https://img1.baidu.com/it/u=2930906500,654780520&fm=253&fmt=auto&app=138&f=PNG?w=500&h=529';
@@ -323,7 +323,7 @@ export default function VoiceCallModal({ open, onClose }: VoiceCallModalProps) {
       const recentHistory = conversationHistory.current.slice(-6);
       const messages = [systemPrompt, ...recentHistory];
 
-      const reply = await stepfunService.chat(messages, { signal: controller.signal });
+      const reply = await deepseekService.chat(messages, { signal: controller.signal });
       if (controller.signal.aborted || !isCurrentSession(sessionId)) return;
       conversationHistory.current.push({ role: 'assistant', content: reply });
 
